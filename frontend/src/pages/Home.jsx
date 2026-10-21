@@ -1,35 +1,12 @@
 import { Link } from "react-router-dom";
+import HomeContent from "../components/HomeComponents/HomeContents";
 
 const Home = ({user, error}) => {
     return (
     <>
-    <div className="min-h-[80vh] flex items-center justify-center p-4">
-        <div className="bg-white/80 p-8 rounded-lg shadow-md w-full shadow-blue-500/50 max-w-lg text-center backdrop-blur-sm">
-            {error && <p className="text-red-500">{error}</p>}
-            {user ? (
-                <div>
-                    <h2 className="text-2xl font-bold mb-4 text-gray-800">
-                        Welcone, {user.username}!
-                    </h2>
-                    <p className="text-gray-600"> Email : {user.email}</p>    
-                    </div>
-            ): (
-                <div>
-                    <h2 className="text-2xl font-bold mb-6 text-gray-800">Please log in or Register</h2>
-                    <div className="flex flex-col gap-y-4">
-                        <Link 
-                            to="/login" className="w-full text-white bg-blue-500 p-3 rounded-md hover:bg-blue-600 font-medium"
-                            >Login</Link>
-                         <Link 
-                            to="/register" className="w-full text-gray-800 bg-gray-200 p-3 rounded-md hover:bg-gray-500 font-medium"
-                            >Register</Link>
-                    </div>
-                </div>
-            )
-            }
-            
-        </div>
-    </div>
+    <main>
+        <HomeContent />
+    </main>
     </>
     )
 }

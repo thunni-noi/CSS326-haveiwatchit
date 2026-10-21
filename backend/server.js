@@ -2,11 +2,16 @@ import express from "express";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import cors from 'cors';
-import authRoutes from "./routes/auth.js"
+import { adminRoute, authRoute, showsRoute } from "./routes/routes.js";
+import watchlistRoute from "./routes/watchlist.js";
+import collectionsRoute from "./routes/collections.js";
+import path from "path";
 
 dotenv.config();
 
 const app = express();
+
+// app.use((req, res, next) => setTimeout(next, 5000));
 
 app.use(cors({
     origin: process.env.CLIENT_URL || "http://localhost:5000",
@@ -15,11 +20,21 @@ app.use(cors({
 app.use(express.json());
 app.use(cookieParser());
 
-app.use('/api/auth', authRoutes);
+app.use("/images", express.static(path.join(path.resolve(), "images")));
+
+app.use('/api/auth', authRoute);
+app.use('/api/admin', adminRoute);
+app.use('/api/shows', showsRoute);
+app.use('/api/watchlist', watchlistRoute);
+app.use('/api/collections', collectionsRoute);
+
+// app.get("/", (req, res) => {
+//     res.send("This is home page!")
+// })
 
 app.get("/", (req, res) => {
-    res.send("This is home page!")
-})
+    res.send("This is haveiwatchit home api!")
+});
 
 const PORT = process.env.PORT || 5000;
 

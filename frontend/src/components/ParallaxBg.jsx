@@ -3,7 +3,7 @@ import { useEffect, useRef } from "react";
 const IMAGE_URL =
     "https://puppiizsunniiz.github.io/Arknight-Images/characters/char_124_kroos_sale%2314_sp.png";
 
-const ParallaxBackground = () => {
+const ParallaxBackground = ({ hideCharacter = false }) => {
     const gradientRef = useRef(null);
     const imageRef = useRef(null);
 
@@ -41,12 +41,14 @@ const ParallaxBackground = () => {
             />
 
             {/* front layer: image with opacity */}
-            <img
-                ref={imageRef}
-                src={IMAGE_URL}
-                alt=""
-                className="absolute -left-75 top-50 h-[120vh] w-auto max-w-none opacity-75 will-change-transform select-none pointer-events-none"
-            />
+            {!hideCharacter && (
+                <img
+                    ref={imageRef}
+                    src={IMAGE_URL}
+                    alt=""
+                    className="absolute -left-75 top-50 h-[120vh] w-auto max-w-none opacity-75 will-change-transform select-none pointer-events-none"
+                />
+            )}
         </div>
     );
 };
