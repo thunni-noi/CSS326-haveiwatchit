@@ -42,6 +42,7 @@ const CollectionCard = ({ col, onDelete, onEdit }) => {
     };
 
     const itemCount = col.item_count ?? 0;
+    const previewItems = Array.isArray(col.preview_items) ? col.preview_items : [];
 
     return (
         <div className="group flex flex-col gap-3 rounded-2xl border border-[#66568f] bg-gradient-to-br from-[#211d35] via-[#211d35] to-[#30203f] p-5 shadow-lg shadow-black/20 transition hover:border-[#9596D6] hover:from-[#28213f] hover:to-[#382247]">
@@ -71,6 +72,46 @@ const CollectionCard = ({ col, onDelete, onEdit }) => {
                     </button>
                 </div>
             </div>
+
+            {previewItems.length > 0 ? (
+                <div className="flex min-h-[76px] items-center gap-1.5 overflow-hidden" aria-label="Collection movie previews">
+                    {previewItems.map((item, index) => {
+                        const extraCount = Math.max(0, itemCount - previewItems.length);
+                        const showMoreOverlay = index === previewItems.length - 1 && extraCount > 0;
+
+                        return (
+                            <div
+                                key={item.id}
+                                className="relative h-[72px] w-12 shrink-0 overflow-hidden rounded-md border border-white/10 bg-[#171526]"
+                                title={item.name}
+                            >
+                                {item.photo_url ? (
+                                    <img
+                                        src={item.photo_url}
+                                        alt={item.name}
+                                        loading="lazy"
+                                        className="h-full w-full object-cover"
+                                    />
+                                ) : (
+                                    <div className="flex h-full items-center justify-center px-1 text-center text-[9px] text-[#b7add1]">
+                                        {item.name}
+                                    </div>
+                                )}
+                                {showMoreOverlay && (
+                                    <div className="absolute inset-0 flex items-center justify-center bg-black/65 text-sm font-bold text-white">
+                                        +{extraCount}
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
+            ) : (
+                <div className="flex min-h-[76px] items-center gap-3 rounded-xl border border-dashed border-[#66568f]/70 bg-black/10 px-3 text-sm text-[#aaa3bc]">
+                    <BookMarked className="h-5 w-5 shrink-0 text-[#9596D6]" />
+                    No movies added yet
+                </div>
+            )}
 
             <div className="flex items-center gap-3 text-sm text-[#c9c2d8]">
                 <span className="flex items-center gap-1">

@@ -38,6 +38,38 @@ export const listCollections = async (req, res) => {
              ORDER BY c.id DESC`,
             [req.user.id]
         );
+
+        if (collections.length) {
+            const [previewRows] = await pool.execute(
+                `SELECT previews.collection_id, previews.id, previews.name,
+                        previews.type, previews.photo_url
+                 FROM (
+                     SELECT ci.collection_id, s.id, s.name, s.type, s.photo_url,
+                            ROW_NUMBER() OVER (
+                                PARTITION BY ci.collection_id
+                                ORDER BY ci.show_id DESC
+                            ) AS preview_order
+                     FROM collection_items ci
+                     JOIN collections c ON c.id = ci.collection_id
+                     JOIN shows s ON s.id = ci.show_id
+                     WHERE c.user_id = ?
+                 ) AS previews
+                 WHERE previews.preview_order <= 5
+                 ORDER BY previews.collection_id, previews.preview_order`,
+                [req.user.id]
+            );
+            const previewsByCollection = new Map();
+            for (const item of previewRows) {
+                const key = String(item.collection_id);
+                const items = previewsByCollection.get(key) ?? [];
+                items.push(item);
+                previewsByCollection.set(key, items);
+            }
+            for (const collection of collections) {
+                collection.preview_items = previewsByCollection.get(String(collection.id)) ?? [];
+            }
+        }
+
         return res.json({ collections });
     } catch (error) {
         console.error("Failed to load collections:", error);
