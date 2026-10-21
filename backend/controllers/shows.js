@@ -5,7 +5,7 @@ const show_query = `
 SELECT  s.id, s.name AS title, s.synopsis, s.status, s.type,
         DATE_FORMAT(s.release_date, '%d-%m-%Y') AS release_date,
         YEAR(s.release_date) AS release_year,
-        s.episode_count, s.duration, s.content_rating, s.photo_url, s.cover_url,
+        s.episode_count, s.duration, s.content_rating, s.photo_url,
         ROUND(r.avg_score, 1) AS avg_score,
         COALESCE(r.review_count, 0) as review_count
 FROM    shows s
@@ -28,8 +28,8 @@ const showToJson = (row) => ({
     episode_count: row.episode_count,
     duration: row.duration,
     content_rating: row.content_rating,
-    poster_url: row.photo_url || row.cover_url || null,
-    backdrop_url: row.cover_url || row.photo_url || null,
+    poster_url: row.photo_url || null,
+    backdrop_url: row.photo_url || null,
     avg_score: row.avg_score === null ? null : Number(row.avg_score),
     review_count: Number(row.review_count)
 });
@@ -163,7 +163,7 @@ export const getRandomShows = wrapper("Unable to fetch random shows!", async(req
 
     const [rows] = await pool.execute(`
         ${show_query}
-        ${need_cover? `WHERE s.cover_url IS NOT NULL` : ""}
+        ${need_cover? `WHERE s.photo_url IS NOT NULL` : ""}
         ORDER BY RAND()
         LIMIT ?
         `, [count]);
@@ -185,7 +185,7 @@ export const getTopShows = wrapper("Unable to fetch top rated shows", async(req,
     SELECT  s.id, s.name AS title, s.synopsis, s.status, s.type,
             DATE_FORMAT(s.release_date, '%d-%m-%Y') AS release_date,
             YEAR(s.release_date) AS release_year,
-            s.episode_count, s.duration, s.content_rating, s.photo_url, s.cover_url,
+            s.episode_count, s.duration, s.content_rating, s.photo_url,
             ROUND(r.avg_score, 1) AS avg_score,
             r.review_count as review_count,
             ROUND (
