@@ -1,21 +1,33 @@
 import React , { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Star as StarIcon, Clapperboard as ClapperBoardIcon, SquarePlus as AddWatchIcon } from "lucide-react";
+import ErrorDisplay from "../ErrorDisplay";
 
 const AUTOMOVE_MS = 10000; // 10 sec
 
-function HeroUI( { shows =[], loading = false }) {
+function HeroUI( { shows =[], loading = false, error = false }) {
     const navigate = useNavigate()
     const [showIndex, setShowIndex] = useState(0);
 
     // auto rotate shows
     useEffect(() => {
+        if (shows.length < 2) return;
         const timer = setTimeout(() => setShowIndex((i) => (i + 1) % shows.length), AUTOMOVE_MS);
         console.log(shows[showIndex]);
         return () => clearTimeout(timer);
     }, [showIndex, shows.length]);
 
     const heroShow = shows[showIndex];
+    if (error || shows.length === 0) {
+        console.log("showing error?")
+        return (
+            <div className="relative w-screen h-screen overflow-hidden bg-neutral-900">
+            <ErrorDisplay
+                text={error ? "Couldn't load featured shows." : "No featured shows right now."}
+                className="relative w-full h-screen bg-neutral-900"
+            />
+            </div>
+        );}
     if (!heroShow) return null;
 
     return (

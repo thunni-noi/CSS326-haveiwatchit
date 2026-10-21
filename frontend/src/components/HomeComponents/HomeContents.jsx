@@ -8,7 +8,11 @@ import LoadingPlaceHolder from "../LoadingScreen";
 function HomeContent(){
     const [featured, setFeatured] = useState([]);
     const [topRated, setTopRated] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [isLoading, setLoading] = useState(true);
+
+    // to track api issue
+    const [featuredError, setFeaturedError] = useState(false);
+    const [topRatedError, setTopRatedError] = useState(false);
 
     useEffect(() => {
         const controller = new AbortController();
@@ -27,6 +31,8 @@ function HomeContent(){
             ]);
 
             if (controller.signal.aborted) return;
+            setFeaturedError(randoms.status === "rejected");
+            setTopRatedError(toprated.status === "rejected");
             if (randoms.status === "fulfilled") setFeatured(randoms.value.data);
             if (toprated.status === "fulfilled") setTopRated(toprated.value.data);
 
@@ -40,7 +46,7 @@ function HomeContent(){
         return () => controller.abort();
     }, []);
 
-    if (loading) {
+    if (isLoading) {
         return (
             <LoadingPlaceHolder className="relative w-full h-screen bg-neutral-900"/>
         );
@@ -50,13 +56,14 @@ function HomeContent(){
         <>
             <img src="https://puppiizsunniiz.github.io/Arknight-Images/characters/char_124_kroos_sale%2314_sp.png" alt="" aria-hidden="true"
             className="fixed -bottom-75 -left-64 z-0 w-4xl md:w-5xl pointer-events-none select-none opacity-10" />
-            <HeroUI shows={featured} loading = {loading} />
+            <HeroUI shows={featured} loading = {isLoading} error={featuredError} />
             <div className="bg-linear-to-b from-neutral-900 to-neutral-950">
                 <ShowSlider 
                     title="Top Rated"
                     subtitle="Ranked by reviewed scores"
                     shows={topRated}
-                    loading={loading}
+                    loading={isLoading}
+                    error={topRatedError}
                 />
                 <ShowTypeSelect />
             </div>

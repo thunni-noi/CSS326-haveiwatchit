@@ -218,7 +218,7 @@ export const getTopShows = wrapper("Unable to fetch top rated shows", async(req,
 // use for home page "browse by type"
 // /api/shows/getByType?type=movie?limit=12?offset=0
 export const getShowByType = wrapper("Unable to fetch show by types", async(req, res) => {
-    const SHOW_TYPES = ["movies", "series", "tv_shows", "anime"];
+    const SHOW_TYPES = ["movie", "anime", "series"];
     const showType = req.query.type;
     if (!SHOW_TYPES.includes(showType)) return res.status(400).json({message: `${showType} does not exists in database!`})
 
