@@ -1,13 +1,19 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, BookMarked, Globe, Lock, Trash2 } from "lucide-react";
+import { ArrowLeft, BookMarked, Globe, Lock, Trash2, Plus, Search, LoaderCircle } from "lucide-react";
 
 const CollectionDetailPage = ({ shared = false }) => {
     const { id, uuid } = useParams();
     const endpoint = shared ? `/api/collections/share/${uuid}` : `/api/collections/${id}`;
     const [result, setResult] = useState({ endpoint: null, collection: null, error: "" });
     const [removingId, setRemovingId] = useState(null);
+    const [showAddForm, setShowAddForm] = useState(false);
+    const [addQuery, setAddQuery] = useState("");
+    const [searchResults, setSearchResults] = useState([]);
+    const [searching, setSearching] = useState(false);
+    const [addingId, setAddingId] = useState(null);
+    const [addError, setAddError] = useState("");
 
     useEffect(() => {
         const controller = new AbortController();
@@ -30,6 +36,38 @@ const CollectionDetailPage = ({ shared = false }) => {
 
         return () => controller.abort();
     }, [endpoint]);
+
+    useEffect(() => {
+        const query = addQuery.trim();
+        if (shared || !showAddForm || query.length < 2) {
+            setSearchResults([]);
+            setSearching(false);
+            return undefined;
+        }
+
+        const controller = new AbortController();
+        const timer = setTimeout(() => {
+            setSearching(true);
+            axios.get("/api/shows/search", {
+                params: { q: query, limit: 8 },
+                signal: controller.signal,
+            })
+                .then(({ data }) => setSearchResults(Array.isArray(data) ? data : []))
+                .catch((requestError) => {
+                    if (!axios.isCancel(requestError)) {
+                        setAddError(requestError.response?.data?.message || "Unable to search titles.");
+                    }
+                })
+                .finally(() => {
+                    if (!controller.signal.aborted) setSearching(false);
+                });
+        }, 250);
+
+        return () => {
+            clearTimeout(timer);
+            controller.abort();
+        };
+    }, [addQuery, shared, showAddForm]);
 
     const currentResult = result.endpoint === endpoint ? result : null;
     const collection = currentResult?.collection ?? null;
@@ -55,6 +93,33 @@ const CollectionDetailPage = ({ shared = false }) => {
                 : current);
         } finally {
             setRemovingId(null);
+        }
+    };
+
+    const addShow = async (show) => {
+        setAddingId(show.id);
+        setAddError("");
+        try {
+            await axios.post(`/api/collections/${id}/items`, { show_id: show.id });
+            setResult((current) => current.endpoint !== endpoint || !current.collection
+                ? current
+                : {
+                    ...current,
+                    collection: {
+                        ...current.collection,
+                        items: [...current.collection.items, {
+                            id: show.id,
+                            name: show.title,
+                            type: show.type,
+                            photo_url: show.poster_url,
+                        }],
+                    },
+                });
+            setSearchResults((current) => current.filter((item) => item.id !== show.id));
+        } catch (requestError) {
+            setAddError(requestError.response?.data?.message || "Unable to add this title to the collection.");
+        } finally {
+            setAddingId(null);
         }
     };
 
@@ -88,17 +153,87 @@ const CollectionDetailPage = ({ shared = false }) => {
                                     {collection.is_public ? "Public" : "Private"}
                                 </span>
                             </div>
-                            <p className="mt-5 inline-flex items-center gap-2 text-sm text-neutral-300">
-                                <BookMarked className="h-4 w-4" /> {items.length} {items.length === 1 ? "show" : "shows"}
-                            </p>
+                            <div className="mt-5 flex flex-wrap items-center gap-4">
+                                <p className="inline-flex items-center gap-2 text-sm text-neutral-300">
+                                    <BookMarked className="h-4 w-4" /> {items.length} {items.length === 1 ? "movie" : "movies"}
+                                </p>
+                                {!shared && (
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setShowAddForm((current) => !current);
+                                            setAddError("");
+                                        }}
+                                        className="inline-flex items-center gap-2 rounded-lg border border-[#66568f] bg-[#1d1b2d] px-4 py-2 text-sm font-medium text-white transition hover:border-[#9596D6] hover:bg-[#302746]"
+                                    >
+                                        <Plus className="h-4 w-4" /> Add movies
+                                    </button>
+                                )}
+                            </div>
                         </header>
+
+                        {!shared && showAddForm && (
+                            <section className="mt-4 rounded-xl border border-white/10 bg-black/20 p-4">
+                                <label htmlFor="collection-show-search" className="mb-2 block text-sm font-medium text-neutral-200">
+                                    Search for a movie or show
+                                </label>
+                                <div className="relative">
+                                    <Search className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-neutral-500" />
+                                    <input
+                                        id="collection-show-search"
+                                        type="search"
+                                        value={addQuery}
+                                        onChange={(event) => {
+                                            setAddQuery(event.target.value);
+                                            setAddError("");
+                                        }}
+                                        placeholder="Type at least 2 characters..."
+                                        className="w-full rounded-lg border border-white/10 bg-neutral-900 py-2.5 pl-10 pr-3 text-sm text-white outline-none placeholder:text-neutral-500 focus:border-blue-400"
+                                    />
+                                </div>
+                                {addError && <p role="alert" className="mt-3 text-sm text-red-300">{addError}</p>}
+                                {searching && (
+                                    <p className="mt-3 flex items-center gap-2 text-sm text-neutral-400">
+                                        <LoaderCircle className="h-4 w-4 animate-spin" /> Searching...
+                                    </p>
+                                )}
+                                {!searching && addQuery.trim().length >= 2 && searchResults.length === 0 && !addError && (
+                                    <p className="mt-3 text-sm text-neutral-400">No matching titles found.</p>
+                                )}
+                                <div className="mt-3 space-y-2">
+                                    {searchResults.map((show) => {
+                                        const alreadyAdded = items.some((item) => Number(item.id) === Number(show.id));
+                                        return (
+                                            <div key={show.id} className="flex items-center gap-3 rounded-lg bg-white/5 p-2">
+                                                <div className="h-12 w-9 shrink-0 overflow-hidden rounded bg-neutral-800">
+                                                    {show.poster_url && <img src={show.poster_url} alt="" className="h-full w-full object-cover" />}
+                                                </div>
+                                                <div className="min-w-0 flex-1">
+                                                    <p className="truncate text-sm font-medium">{show.title}</p>
+                                                    <p className="text-xs capitalize text-neutral-400">{show.type?.replaceAll("_", " ")}</p>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => addShow(show)}
+                                                    disabled={alreadyAdded || addingId === show.id}
+                                                    className="inline-flex items-center gap-1 rounded-lg bg-white/10 px-3 py-2 text-sm text-white transition hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-50"
+                                                >
+                                                    {addingId === show.id ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+                                                    {alreadyAdded ? "Added" : "Add"}
+                                                </button>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </section>
+                        )}
 
                         {error && <p role="alert" className="mt-4 rounded-lg bg-red-950/50 p-3 text-sm text-red-200">{error}</p>}
 
                         {items.length === 0 ? (
                             <section className="mt-6 rounded-2xl border border-white/10 bg-black/20 px-6 py-16 text-center">
                                 <BookMarked className="mx-auto h-10 w-10 text-neutral-500" />
-                                <h2 className="mt-4 text-xl font-semibold">No shows in this collection yet</h2>
+                                <h2 className="mt-4 text-xl font-semibold">No movies in this collection yet</h2>
                             </section>
                         ) : (
                             <section className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">

@@ -1,8 +1,9 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import axios from "axios";
-import { HomePage, LoginPage, RegisterPage } from "./pages/PageIndex";
+import { HomePage, LoginPage, RegisterPage, CollectionsPage } from "./pages/PageIndex";
 import AdminPage from "./pages/Admin";
 import WatchlistPage from "./pages/Watchlist";
+import CollectionDetailPage from "./pages/CollectionDetail";
 import { useState, useEffect } from "react";
 import Navbar from "./components/Navbar";
 import ParallaxBackground from "./components/ParallaxBg";
@@ -22,6 +23,9 @@ function AppRoutes({ user, setUser, error }) {
       <Routes>
         <Route path="/" element={<HomePage user={user} error={error} />} />
         <Route path="/watchlist" element={<WatchlistPage user={user} />} />
+        <Route path="/collections" element={<CollectionsPage user={user} />} />
+        <Route path="/collections/share/:uuid" element={<CollectionDetailPage shared />} />
+        <Route path="/collections/:id" element={<CollectionDetailPage />} />
         <Route
           path="/login"
           element={user ? <Navigate to="/" /> : <LoginPage setUser={setUser} />}

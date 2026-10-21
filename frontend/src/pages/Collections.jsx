@@ -44,13 +44,13 @@ const CollectionCard = ({ col, onDelete, onEdit }) => {
     const itemCount = col.item_count ?? 0;
 
     return (
-        <div className="bg-white/10 hover:bg-white/15 backdrop-blur-sm rounded-2xl p-5 shadow-lg transition group flex flex-col gap-3">
+        <div className="group flex flex-col gap-3 rounded-2xl border border-[#66568f] bg-gradient-to-br from-[#211d35] via-[#211d35] to-[#30203f] p-5 shadow-lg shadow-black/20 transition hover:border-[#9596D6] hover:from-[#28213f] hover:to-[#382247]">
             {/* Header */}
             <div className="flex items-start justify-between gap-2">
                 <button
                     type="button"
                     onClick={() => navigate(`/collections/${col.id}`)}
-                    className="text-white font-bold text-base text-left hover:text-blue-300 transition line-clamp-2"
+                    className="line-clamp-2 text-left text-base font-bold text-[#f5f1ff] transition hover:text-[#EFAC61]"
                 >
                     {col.name}
                 </button>
@@ -58,30 +58,30 @@ const CollectionCard = ({ col, onDelete, onEdit }) => {
                     <button
                         type="button"
                         onClick={() => onEdit(col)}
-                        className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition"
+                        className="rounded-lg p-1.5 text-[#b7add1] transition hover:bg-white/10 hover:text-white"
                     >
                         <Pencil className="w-4 h-4" />
                     </button>
                     <button
                         type="button"
                         onClick={() => onDelete(col)}
-                        className="p-1.5 rounded-lg text-gray-400 hover:text-red-400 hover:bg-red-500/10 transition"
+                        className="rounded-lg p-1.5 text-[#b7add1] transition hover:bg-red-500/10 hover:text-red-300"
                     >
                         <Trash2 className="w-4 h-4" />
                     </button>
                 </div>
             </div>
 
-            <div className="flex items-center gap-3 text-sm text-gray-400">
+            <div className="flex items-center gap-3 text-sm text-[#c9c2d8]">
                 <span className="flex items-center gap-1">
                     <BookMarked className="w-4 h-4" />
-                    {itemCount} show{itemCount !== 1 ? "s" : ""}
+                    {itemCount} movie{itemCount !== 1 ? "s" : ""}
                 </span>
                 <span className="flex items-center gap-1">
                     {col.is_public ? (
                         <Globe className="w-4 h-4 text-green-400" />
                     ) : (
-                        <Lock className="w-4 h-4" />
+                        <Lock className="w-4 h-4 text-[#9596D6]" />
                     )}
                     {col.is_public ? "Public" : "Private"}
                 </span>
@@ -91,7 +91,7 @@ const CollectionCard = ({ col, onDelete, onEdit }) => {
                 <button
                     type="button"
                     onClick={() => navigate(`/collections/${col.id}`)}
-                    className="flex-1 flex items-center justify-center gap-1 bg-black hover:bg-neutral-800 text-white text-sm py-2 rounded-xl transition font-medium"
+                    className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-[#303969] py-2 text-sm font-medium text-white transition hover:bg-[#414b82]"
                 >
                     View <ChevronRight className="w-4 h-4" />
                 </button>
@@ -99,7 +99,7 @@ const CollectionCard = ({ col, onDelete, onEdit }) => {
                     <button
                         type="button"
                         onClick={handleCopy}
-                        className="flex items-center gap-1 bg-white/10 hover:bg-white/20 text-white text-sm px-3 py-2 rounded-xl transition"
+                        className="flex items-center gap-1 rounded-xl border border-[#66568f] bg-[#29243b] px-3 py-2 text-sm text-[#eee9fb] transition hover:border-[#9596D6] hover:bg-[#39304e]"
                         title="Copy share link"
                     >
                         {copied ? (
@@ -249,8 +249,18 @@ const CollectionsPage = ({ user }) => {
 
     if (!user) {
         return (
-            <div className="min-h-screen flex items-center justify-center">
-                <div className="text-center">
+            <div className="min-h-screen px-4 pt-24">
+                <div className="sticky top-20 z-40 mx-auto flex max-w-6xl items-center justify-between gap-4 border-b border-white/10 bg-[#141b39]/95 px-4 py-4 backdrop-blur-md">
+                    <h1 className="text-3xl font-bold text-white">My Collections</h1>
+                    <Link
+                        to="/login"
+                        className="mr-3 inline-flex shrink-0 items-center gap-2 rounded-xl bg-[#EFAC61] px-4 py-2.5 font-semibold text-[#17152a] shadow-lg shadow-black/20 transition hover:bg-[#f3bd7f]"
+                    >
+                        <Plus className="h-5 w-5" /> New Collection
+                    </Link>
+                </div>
+                <div className="mt-16 flex justify-center">
+                    <div className="text-center">
                     <p className="text-white text-xl mb-4">
                         Please log in to view your collections.
                     </p>
@@ -260,19 +270,20 @@ const CollectionsPage = ({ user }) => {
                     >
                         Login
                     </Link>
+                    </div>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen pt-6 pb-12 px-4 max-w-6xl mx-auto">
-            <div className="flex items-center justify-between mb-8">
+        <div className="min-h-screen pt-24 pb-12 px-4 max-w-6xl mx-auto">
+            <div className="sticky top-20 z-40 mb-8 flex items-center justify-between border-b border-white/10 bg-[#141b39]/95 px-4 py-4 backdrop-blur-md">
                 <h1 className="text-3xl font-bold text-white">My Collections</h1>
                 <button
                     type="button"
                     onClick={openCreateModal}
-                    className="flex items-center gap-2 bg-black hover:bg-neutral-800 text-white px-4 py-2.5 rounded-xl font-medium transition"
+                    className="mr-3 flex items-center gap-2 rounded-xl bg-[#EFAC61] px-4 py-2.5 font-semibold text-[#17152a] shadow-lg shadow-black/20 transition hover:bg-[#f3bd7f]"
                 >
                     <Plus className="w-5 h-5" /> New Collection
                 </button>

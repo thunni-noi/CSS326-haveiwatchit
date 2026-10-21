@@ -1,0 +1,20 @@
+import express from "express";
+import * as collections from "../controllers/collections.js";
+import { protect } from "../middleware/auth.js";
+
+const router = express.Router();
+
+// Public collections can be viewed without logging in.
+router.get("/share/:uuid", collections.getSharedCollection);
+
+// All remaining collection endpoints belong to the signed-in user.
+router.use(protect);
+router.get("/", collections.listCollections);
+router.post("/", collections.createCollection);
+router.get("/:id", collections.getCollectionDetails);
+router.post("/:id/items", collections.addCollectionItem);
+router.patch("/:id", collections.updateCollection);
+router.delete("/:id", collections.deleteCollection);
+router.delete("/:id/items/:showId", collections.removeCollectionItem);
+
+export default router;
