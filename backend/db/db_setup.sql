@@ -42,6 +42,7 @@ CREATE TABLE shows (
   type           ENUM('movie','series','tv_shows','anime') NOT NULL,
   synopsis       TEXT,
   photo_url      VARCHAR(500),
+  cover_url      VARCHAR(500),
   status         ENUM('airing','completed','upcoming') NOT NULL,
   release_date   DATE,
   episode_count  INT,
