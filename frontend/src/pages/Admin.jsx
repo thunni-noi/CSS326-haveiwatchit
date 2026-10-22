@@ -518,6 +518,8 @@ const Admin = ({ user }) => {
       <label key={field.name} className="block text-sm font-medium capitalize text-neutral-200">
         {field.name === "photo_url" && selectedEntity.name === "shows"
           ? "Poster image URL"
+          : field.name === "cover_url" && selectedEntity.name === "shows"
+          ? "Backdrop image URL"
           : field.name.replaceAll("_", " ")}
         {field.nullable && <span className="ml-1 text-xs font-normal text-neutral-400">(optional)</span>}
         {control}
@@ -527,6 +529,11 @@ const Admin = ({ user }) => {
             {value && /^https?:\/\//i.test(value) && (
               <img src={value} alt="Poster preview" className="mt-2 h-32 w-24 rounded object-cover" />
             )}
+          </span>
+        )}
+        {field.name === "cover_url" && selectedEntity.name === "shows" && (
+          <span className="mt-1 block text-xs font-normal text-neutral-400">
+            Paste a direct HTTP or HTTPS link to the movie or show backdrop.
           </span>
         )}
       </label>

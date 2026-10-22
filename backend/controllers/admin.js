@@ -29,6 +29,7 @@ const entities = {
             field("type", "enum", { required: true, options: ["movie", "series", "tv_shows", "anime"] }),
             field("synopsis", "longtext", { nullable: true }),
             field("photo_url", "url", { nullable: true }),
+            field("cover_url", "url", { nullable: true }),
             field("status", "enum", { required: true, options: ["airing", "completed", "upcoming"] }),
             field("release_date", "date", { nullable: true }),
             field("episode_count", "integer", { nullable: true }),
