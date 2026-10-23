@@ -13,12 +13,6 @@ npm install
 
 Set up database by running file in `db/seedeed_with_reviews.sql` in haveiwatchit schema (If sql show error, delete line 22)
 
-For a database that already exists, add the backdrop column without dropping existing data:
-```sql
-ALTER TABLE shows ADD COLUMN cover_url VARCHAR(500) NULL;
-```
-
-
 ## How to run
 Place an ".env" file into /backend/ with following format (Replace [] with your config)
 ```
