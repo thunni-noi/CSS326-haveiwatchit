@@ -65,6 +65,21 @@ const UserMenu = ({ user, setUser }) => {
                         </>
                     )
                 }
+                {/* <hr className="my-2 border-t-2 border-white/80" /> */}
+                {user && (
+                    <button
+                        type="button"
+                        role="menuitem"
+                        onClick={() => {
+                            navigate("/account");
+                            setOpen(false);
+                        }}
+                        className="w-full rounded-md bg-[#303969] mt-2 py-2 text-sm text-white transition font-semibold hover:bg-[#8D8AB5]"
+                    >
+                        My account
+                    </button>
+                )}
+
                 <hr className="my-2 border-t-2 border-white/80" />
                 {user ? (
                     <button
@@ -196,6 +211,22 @@ const Navbar = ({ user, setUser }) => {
     const { query, setQuery, results, loading } = useShowSearch();
     const [searchOpen, setSearchOpen] = useState(false);
     const [mobileOpen, setMobileOpen] = useState(false);
+    const [showHeader, setShowHeader] = useState(true);
+    const lastY = useRef(0);
+
+    useEffect(() => {
+        const onScroll = () => {
+            const y = window.scrollY;
+            if (y > lastY.current && y > 80) {
+                setShowHeader(false);   // เลื่อนลง: ซ่อน
+            } else if (y < lastY.current) {
+                setShowHeader(true);    // เลื่อนขึ้น: โชว์
+            }
+            lastY.current = y;
+        };
+        window.addEventListener("scroll", onScroll, { passive: true });
+        return () => window.removeEventListener("scroll", onScroll);
+    }, []);
 
     const handleSelect = (show) => {
         setSearchOpen(false);
@@ -216,7 +247,8 @@ const Navbar = ({ user, setUser }) => {
 
 
     return (
-        <header className="absolute inset-x-0 top-0 flex w-full z-50 transition-all duration-300 bg-gray-900/50 backdrop-blur-xl">
+        <header className={`fixed inset-x-0 top-0 flex w-full z-50 transition-all duration-300 bg-gray-900/50 backdrop-blur-xl ${
+            showHeader || mobileOpen || searchOpen ? "translate-y-0" : "-translate-y-full"}`}>
             <div className="container mx-auto px-4 py-4">
                 {/* ===== Top row ===== */}
                 <div className="flex items-center justify-between">

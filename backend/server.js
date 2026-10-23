@@ -6,6 +6,7 @@ import { adminRoute, authRoute, showsRoute } from "./routes/routes.js";
 import watchlistRoute from "./routes/watchlist.js";
 import collectionsRoute from "./routes/collections.js";
 import path from "path";
+import accountRoutes from "./middleware/account.js";
 
 dotenv.config();
 
@@ -28,6 +29,11 @@ app.use('/api/admin', adminRoute);
 app.use('/api/shows', showsRoute);
 app.use('/api/watchlist', watchlistRoute);
 app.use('/api/collections', collectionsRoute);
+
+app.use("/uploads", express.static(path.join(path.resolve(), "uploads"), {
+    setHeaders: (res) => res.set("X-Content-Type-Options", "nosniff"),
+}));
+app.use("/api/account", accountRoutes);
 
 // app.get("/", (req, res) => {
 //     res.send("This is home page!")
