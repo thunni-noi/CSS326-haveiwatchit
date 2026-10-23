@@ -86,7 +86,11 @@ function HeroUI( { shows =[], loading = false, error = false }) {
                                 <h1 className="text-4xl md:text-6xl font-bold text-white mb-4">{show.title}</h1>
                                 <p className="text-neutral-300 text-base md:text-lg mb-8 line-clamp-3 md:line-clamp-4 max-w-2xl">{show.synopsis}</p>
                                 <div className="flex flex-wrap gap-4">
-                                    <button className="bg-[#EFAC61] hover:bg-[#c27f33] text-white px-6 py-3 rounded-lg flex items-center gap-2 transition-all">
+                                    <button
+                                        type="button"
+                                        onClick={() => navigate(`/shows/${show.id}`)}
+                                        className="bg-[#EFAC61] hover:bg-[#c27f33] text-white px-6 py-3 rounded-lg flex items-center gap-2 transition-all"
+                                    >
                                         <ClapperBoardIcon/>
                                         View Info
                                     </button>
