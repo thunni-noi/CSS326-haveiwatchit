@@ -149,19 +149,19 @@ const useShowSearch = () => {
 };
 
 /* TODO: CONNECT THIS TO DATABASE */
-const SearchResults = ({ query, results, loading, onSelect, widthClass, imgBoxClass }) => {
+const SearchResults = ({ query, results, loading, onSelect }) => {
     if (!query.trim() || loading) return null;
 
     if (results.length === 0) {
         return (
-            <div className={`absolute mt-2 ${widthClass} bg-neutral-800 rounded-lg shadow-lg overflow-hidden z-50`}>
+            <div className={`absolute mt-2 w-98 bg-neutral-800 rounded-lg shadow-lg overflow-hidden z-50`}>
                 <div className="p-4 text-center text-neutral-400 text-sm">No matched search results</div>
             </div>
         );
     }
 
     return (
-        <div className={`absolute mt-2 ${widthClass} bg-neutral-800 rounded-lg shadow-lg overflow-hidden z-50`}>
+        <div className={`absolute mt-2 w-98 bg-neutral-800 rounded-lg shadow-lg overflow-hidden z-50`}>
             <ul className="divide-y divide-neutral-700">
                 {results.map((show) => (
                     <li key={show.id} className="hover:bg-neutral-700">
@@ -170,7 +170,7 @@ const SearchResults = ({ query, results, loading, onSelect, widthClass, imgBoxCl
                             onClick={() => onSelect(show)}
                             className="flex items-center p-3 w-full text-left"
                         >
-                            <div className={`${imgBoxClass} bg-neutral-700 overflow-hidden shrink-0`}>
+                            <div className={`w-10 h-10 object-cover rounded bg-neutral-700 overflow-hidden shrink-0`}>
                                 {show.poster_url ? (
                                     <img src={show.poster_url} alt="" className="w-full h-full object-cover" />
                                 ) : (
@@ -208,12 +208,12 @@ const Navbar = ({ user, setUser }) => {
         if (!e.currentTarget.contains(e.relatedTarget)) setSearchOpen(false);
     };
 
-     const handleLogout = async () => {
+    const handleLogout = async () => {
         await axios.post("/api/auth/logout");
         setUser(null);
         navigate("/");
     };
-  
+
 
     return (
         <header className="absolute inset-x-0 top-0 flex w-full z-50 transition-all duration-300 bg-gray-900/50 backdrop-blur-xl">
@@ -259,8 +259,6 @@ const Navbar = ({ user, setUser }) => {
                                     results={results}
                                     loading={loading}
                                     onSelect={handleSelect}
-                                    widthClass="w-72"
-                                    imgBoxClass="w-10 h-10 rounded"
                                 />
                             )}
                         </div>
@@ -285,7 +283,7 @@ const Navbar = ({ user, setUser }) => {
                         <nav className="flex flex-col">
                             {
                                 user? (
-                                      <div className="flex items-center w-full py-2 text-neutral-300 font-medium">
+                                    <div className="flex items-center w-full py-2 text-neutral-300 font-medium">
                                         <span>
                                             Logged in as <span className="text-[#EFAC61]">{user.username}</span>{" "}
                                             (
@@ -300,13 +298,13 @@ const Navbar = ({ user, setUser }) => {
                                         </span>
 
                                         {user?.role === "admin" && (
-                                              <Link to="/admin" className="ml-auto underline hover:text-[#ff9100] transition-colors">
+                                            <Link to="/admin" className="ml-auto underline hover:text-[#ff9100] transition-colors">
                                                 Admin Page
                                             </Link>
                                         )}
                                         </div>
                                     ): (
-                                     <>
+                                    <>
                                     <Link to="/login" onClick={() => setMobileOpen(false)} className="text-white hover:text-[#9596D6] hover:underline decoration-[#EFAC61] decoration-4 transition-all font-medium py-2">
                                         Login
                                     </Link>

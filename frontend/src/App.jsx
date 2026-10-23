@@ -6,9 +6,10 @@ import WatchlistPage from "./pages/Watchlist";
 import CollectionDetailPage from "./pages/CollectionDetail";
 import { useState, useEffect } from "react";
 import Navbar from "./components/Navbar";
-import ParallaxBackground from "./components/ParallaxBg";
+import PageBg from "./components/PageBg";
 import LoadingPlaceHolder from "./components/LoadingScreen";
 import NotFound from "./components/NotFound";
+import ShowDetails from "./pages/ShowDetails";
 
 axios.defaults.withCredentials = true;
 
@@ -19,7 +20,7 @@ function AppRoutes({ user, setUser, error }) {
   return (
     <>
       <Navbar user={user} setUser={setUser} />
-      <ParallaxBackground hideCharacter={isAdminPage} />
+      <PageBg hideCharacter={isAdminPage} />
       <Routes>
         <Route path="/" element={<HomePage user={user} error={error} />} />
         <Route path="/watchlist" element={<WatchlistPage user={user} />} />
@@ -33,6 +34,9 @@ function AppRoutes({ user, setUser, error }) {
         <Route
           path="/register"
           element={user ? <Navigate to="/" /> : <RegisterPage user={user} setUser={setUser} />}
+        />
+        <Route 
+          path="/shows/:showId" element={<ShowDetails />}
         />
         <Route
           path="/admin"
