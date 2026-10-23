@@ -14,7 +14,9 @@ const ParallaxBackground = ({ hideCharacter = false }) => {
             const y = window.scrollY;
             // different factors = parallax between layers
             if (gradientRef.current)
-                gradientRef.current.style.transform = `translate3d(0, ${y * 0.1}px, 0)`;
+                gradientRef.current.style.transform = hideCharacter
+                    ? "none"
+                    : `translate3d(0, ${y * 0.1}px, 0)`;
             if (imageRef.current)
                 imageRef.current.style.transform = `translate3d(0, ${y * 0.35}px, 0)`;
             ticking = false;
@@ -28,8 +30,9 @@ const ParallaxBackground = ({ hideCharacter = false }) => {
         };
 
         window.addEventListener("scroll", onScroll, { passive: true });
+        update();
         return () => window.removeEventListener("scroll", onScroll);
-    }, []);
+    }, [hideCharacter]);
 
 
     return (
