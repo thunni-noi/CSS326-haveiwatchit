@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, BookMarked, Globe, Lock, Trash2, Plus, Search, LoaderCircle } from "lucide-react";
 
 const CollectionDetailPage = ({ shared = false }) => {
     const { id, uuid } = useParams();
+    const navigate = useNavigate();
     const endpoint = shared ? `/api/collections/share/${uuid}` : `/api/collections/${id}`;
     const [result, setResult] = useState({ endpoint: null, collection: null, error: "" });
     const [removingId, setRemovingId] = useState(null);
@@ -239,15 +240,20 @@ const CollectionDetailPage = ({ shared = false }) => {
                             <section className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
                                 {items.map((show) => (
                                     <article key={show.id} className="overflow-hidden rounded-xl border border-white/10 bg-white/10">
-                                        <div className="aspect-[2/3] bg-neutral-800">
+                                        <button
+                                            type="button"
+                                            onClick={() => navigate(`/shows/${show.id}`)}
+                                            aria-label={`View reviews and details for ${show.name}`}
+                                            className="block aspect-[2/3] w-full bg-neutral-800 text-left"
+                                        >
                                             {show.photo_url ? (
                                                 <img src={show.photo_url} alt={show.name} className="h-full w-full object-cover" />
                                             ) : (
                                                 <div className="flex h-full items-center justify-center text-sm text-neutral-500">No poster</div>
                                             )}
-                                        </div>
+                                        </button>
                                         <div className="p-3">
-                                            <h2 className="line-clamp-2 font-semibold">{show.name}</h2>
+                                            <button type="button" onClick={() => navigate(`/shows/${show.id}`)} className="line-clamp-2 text-left font-semibold transition hover:text-[#EFAC61]">{show.name}</button>
                                             <p className="mt-1 text-sm capitalize text-neutral-400">{show.type?.replaceAll("_", " ")}</p>
                                             {!shared && (
                                                 <button

@@ -4,6 +4,7 @@ import { HomePage, LoginPage, RegisterPage, CollectionsPage } from "./pages/Page
 import AdminPage from "./pages/Admin";
 import WatchlistPage from "./pages/Watchlist";
 import CollectionDetailPage from "./pages/CollectionDetail";
+import ReviewPage from "./pages/ReviewPage";
 import { useState, useEffect } from "react";
 import Navbar from "./components/Navbar";
 import ParallaxBackground from "./components/ParallaxBg";
@@ -26,6 +27,7 @@ function AppRoutes({ user, setUser, error }) {
         <Route path="/collections" element={<CollectionsPage user={user} />} />
         <Route path="/collections/share/:uuid" element={<CollectionDetailPage shared />} />
         <Route path="/collections/:id" element={<CollectionDetailPage />} />
+        <Route path="/shows/:id" element={<ReviewPage key={`${location.pathname}:${user?.id ?? "guest"}`} user={user} />} />
         <Route
           path="/login"
           element={user ? <Navigate to="/" /> : <LoginPage setUser={setUser} />}

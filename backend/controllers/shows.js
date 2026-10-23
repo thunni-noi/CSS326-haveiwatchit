@@ -121,6 +121,35 @@ export const getShowReviews = wrapper("Unable to load reviews", async(req, res) 
     })
 })
 
+// POST /api/shows/:id/reviews (authenticated)
+export const saveShowReview = wrapper("Unable to save review", async(req, res) => {
+    const showId = Number(req.params.id);
+    const score = Number(req.body?.score);
+    const text = typeof req.body?.text === "string" ? req.body.text.trim() : "";
+
+    if (!Number.isInteger(showId) || showId <= 0) {
+        return res.status(400).json({ message: "Invalid show id." });
+    }
+    if (!Number.isInteger(score) || score < 1 || score > 10) {
+        return res.status(400).json({ message: "Score must be a whole number from 1 to 10." });
+    }
+    if (!text || text.length > 5000) {
+        return res.status(400).json({ message: "Comment must be between 1 and 5000 characters." });
+    }
+
+    const [shows] = await pool.execute("SELECT id FROM shows WHERE id = ?", [showId]);
+    if (shows.length === 0) return res.status(404).json({ message: "Show not found." });
+
+    await pool.execute(
+        `INSERT INTO reviews (user_id, show_id, review_txt, review_score)
+         VALUES (?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE review_txt = VALUES(review_txt), review_score = VALUES(review_score), created_at = CURRENT_TIMESTAMP`,
+        [req.user.id, showId, text, score]
+    );
+
+    return res.status(201).json({ message: "Review saved." });
+});
+
 // Search!
 // /api/shows/search?q=name&limit=num
 export const searchShows = wrapper("Search failed", async(req, res) => {
