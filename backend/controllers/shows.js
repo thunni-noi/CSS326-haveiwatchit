@@ -3,7 +3,7 @@ import pool from "../db/db.js"
 // Use to fetch shows information!
 const show_query = `
 SELECT  s.id, s.name AS title, s.synopsis, s.status, s.type,
-        DATE_FORMAT(s.release_date, '%d-%m-%Y') AS release_date,
+        DATE_FORMAT(s.release_date, '%Y-%m-%d') AS release_date,
         YEAR(s.release_date) AS release_year,
         s.episode_count, s.duration, s.content_rating, s.photo_url, s.cover_url,
         ROUND(r.avg_score, 1) AS avg_score,
@@ -14,7 +14,7 @@ FROM    shows s
             FROM reviews
             GROUP BY show_id
         )   r ON r.show_id = s.id
-           `
+        `
 
 // Map database into json
 const showToJson = (row) => ({
@@ -63,7 +63,7 @@ export const getShowById = wrapper("Unable to fetch shows/.", async (req, res) =
 
     const [credits] = await pool.execute(
         `
-        SELECT sr.role, sr.character_name, sr.character_photo, pe.id AS person_id, pe.name AS persona_name, pe.photo_url AS person_photo
+        SELECT sr.id AS role_id, sr.role, sr.character_name, sr.character_photo, pe.id AS person_id, pe.name AS person_name, pe.photo_url AS person_photo
         FROM show_roles sr
         JOIN people pe ON pe.id = sr.people_id
         WHERE sr.show_id = ?
@@ -72,12 +72,13 @@ export const getShowById = wrapper("Unable to fetch shows/.", async (req, res) =
     );
 
     const creditMapper = (credit) => ({
+        role_id: Number(credit.role_id),
         person_id: Number(credit.person_id),
-        name: credit.person_name,
-        photo_url: credit.person_photo || credit.character_photo || null,
+        person_name: credit.person_name,
+        person_image: credit.person_photo || null,
         role: credit.role,
         character_name: credit.character_name,
-        character_photo: credit.character_photo || credit.person_photo || null
+        character_image: credit.character_photo ||  null
     });
 
     return res.json({
@@ -104,7 +105,7 @@ export const getShowReviews = wrapper("Unable to load reviews", async(req, res) 
 
     const [rows] = await pool.execute(`
         SELECT  u.username, r.review_score AS score, r.review_txt AS text,
-                DATE_FORMAT(r.created_at, '%d-%m-%Y') AS created_at
+                DATE_FORMAT(r.created_at, '%Y-%m-%d') AS created_at
         FROM    reviews r
         JOIN users u ON u.id = r.user_id
         WHERE r.show_id = ?
@@ -120,6 +121,35 @@ export const getShowReviews = wrapper("Unable to load reviews", async(req, res) 
         still_more: stillMore
     })
 })
+
+// POST /api/shows/:id/reviews (authenticated)
+export const saveShowReview = wrapper("Unable to save review", async(req, res) => {
+    const showId = Number(req.params.id);
+    const score = Number(req.body?.score);
+    const text = typeof req.body?.text === "string" ? req.body.text.trim() : "";
+
+    if (!Number.isInteger(showId) || showId <= 0) {
+        return res.status(400).json({ message: "Invalid show id." });
+    }
+    if (!Number.isInteger(score) || score < 1 || score > 10) {
+        return res.status(400).json({ message: "Score must be a whole number from 1 to 10." });
+    }
+    if (!text || text.length > 5000) {
+        return res.status(400).json({ message: "Comment must be between 1 and 5000 characters." });
+    }
+
+    const [shows] = await pool.execute("SELECT id FROM shows WHERE id = ?", [showId]);
+    if (shows.length === 0) return res.status(404).json({ message: "Show not found." });
+
+    await pool.execute(
+        `INSERT INTO reviews (user_id, show_id, review_txt, review_score)
+        VALUES (?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE review_txt = VALUES(review_txt), review_score = VALUES(review_score), created_at = CURRENT_TIMESTAMP`,
+        [req.user.id, showId, text, score]
+    );
+
+    return res.status(201).json({ message: "Review saved." });
+});
 
 // Search!
 // /api/shows/search?q=name&limit=num
@@ -167,6 +197,7 @@ export const getRandomShows = wrapper("Unable to fetch random shows!", async(req
         ORDER BY RAND()
         LIMIT ?
         `, [count]);
+        
 
     return res.json(rows.map(showToJson));
 })
@@ -178,12 +209,13 @@ export const getRandomShows = wrapper("Unable to fetch random shows!", async(req
 export const getTopShows = wrapper("Unable to fetch top rated shows", async(req, res) => {
     let limit = Number(req.query.limit ?? 5);
     if (Number.isNaN(limit) || limit <= 0) return res.status(400).json({message: "Invalid limit!"});
-    limit = Math.min(limit, 10)
+    limit = Math.min(limit, 30)
+    //console.log(limit);
 
     // You ain't ready for this monstrosity trust me
     const weighted_query = `
     SELECT  s.id, s.name AS title, s.synopsis, s.status, s.type,
-            DATE_FORMAT(s.release_date, '%d-%m-%Y') AS release_date,
+            DATE_FORMAT(s.release_date, '%Y-%m-%d') AS release_date,
             YEAR(s.release_date) AS release_year,
             s.episode_count, s.duration, s.content_rating, s.photo_url, s.cover_url,
             ROUND(r.avg_score, 1) AS avg_score,

@@ -1,1 +1,10 @@
 @import "tailwindcss";
+
+@font-face {
+    font-family: Commissioner;
+    src: url(../src/assets/fonts/Commissioner.ttf);
+}
+
+@theme{
+    --font-sans: Commissioner, "sans-serif";
+}
