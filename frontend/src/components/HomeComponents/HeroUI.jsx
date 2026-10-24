@@ -27,7 +27,7 @@ function HeroUI( { shows =[], error = false, user = null }) {
     const [watchlistError, setWatchlistError] = useState("");
     const [savedStatus, setSavedStatus] = useState("");
 
-    const openWatchlistPicker = async (show) => {
+    const openWatchlistSelection = async (show) => {
         setWatchlistShow(show);
         setWatchlistError("");
         setSavedStatus("");
@@ -162,7 +162,7 @@ function HeroUI( { shows =[], error = false, user = null }) {
                                         <ClapperBoardIcon/>
                                         View Info
                                     </button>
-                                    <button type="button" onClick={() => openWatchlistPicker(show)} className="bg-neutral-800/80 hover:bg-neutral-700/80 text-white px-6 py-3 rounded-lg flex items-center gap-2 transition-all border border-neutral-600">
+                                    <button type="button" onClick={() => openWatchlistSelection(show)} className="bg-neutral-800/80 hover:bg-neutral-700/80 text-white px-6 py-3 rounded-lg flex items-center gap-2 transition-all border border-neutral-600">
                                         <AddWatchIcon/>
                                         Add to Watchlist
                                     </button>
@@ -198,67 +198,71 @@ function HeroUI( { shows =[], error = false, user = null }) {
                         role="dialog"
                         aria-modal="true"
                         aria-labelledby="home-watchlist-title"
-                        className="w-full max-w-md rounded-2xl border border-[#9596D6]/35 bg-[#1d1b2d] p-5 text-white shadow-2xl sm:p-6"
+                        className="flex max-h-[calc(100dvh-2rem)] w-full max-w-md flex-col overflow-hidden rounded-2xl border border-[#66568f] bg-[#1c1a2b] text-white shadow-2xl shadow-black/50"
                     >
-                        <div className="flex items-start justify-between gap-4">
-                            <div>
-                                <h2 id="home-watchlist-title" className="mt-1 text-xl font-bold">Add to Watchlist</h2>
-                                <p className="mt-1 line-clamp-2 text-sm text-neutral-300">{watchlistShow.title}</p>
+                        <header className="flex items-start justify-between gap-4 border-b border-white/10 bg-linear-to-r from-[#251329] via-[#30204a] to-[#4a214b] px-5 py-3">
+                            <div className="min-w-0 flex-1">
+                                <h2 id="home-watchlist-title" className="text-xl font-bold">Add to Watchlist</h2>
+                                <p className="mt-1 break-words text-sm text-[#c9c2d8]">{watchlistShow.title}</p>
+                                <p className="mt-2 text-sm text-neutral-300">Choose one status for this title:</p>
                             </div>
-                            <button type="button" onClick={() => setWatchlistShow(null)} aria-label="Close" className="rounded-lg p-2 text-neutral-300 transition hover:bg-white/10 hover:text-white">
+                            <button type="button" onClick={() => setWatchlistShow(null)} aria-label="Close" className="ml-3 shrink-0 rounded-lg p-2 text-neutral-300 transition hover:bg-white/10 hover:text-white">
                                 <X className="h-5 w-5" />
                             </button>
-                        </div>
+                        </header>
 
                         {!user ? (
-                            <div className="mt-5 rounded-xl border border-white/10 bg-black/20 p-4">
-                                <p className="text-sm text-neutral-300">Sign in to add titles to your Watchlist.</p>
-                                <button type="button" onClick={() => navigate("/login")} className="mt-4 rounded-lg bg-[#EFAC61] px-4 py-2 font-semibold text-[#171522] transition hover:bg-[#f4bd7c]">
-                                    Sign in
-                                </button>
+                            <div className="p-5">
+                                <div className="rounded-xl border border-white/10 bg-black/20 p-4">
+                                    <p className="text-sm text-neutral-300">Sign in to add titles to your Watchlist.</p>
+                                    <button type="button" onClick={() => navigate("/login")} className="mt-4 rounded-lg bg-[#EFAC61] px-4 py-2 font-semibold text-[#171522] transition hover:bg-[#f4bd7c]">
+                                        Sign in
+                                    </button>
+                                </div>
                             </div>
                         ) : (
                             <>
-                                <p className="mt-1 text-sm text-neutral-300">Choose one status for this title:</p>
-                                <div role="radiogroup" aria-label="Watchlist status" className="mt-3 grid gap-2">
-                                    {watchlistStatuses.map((status) => {
-                                        const isSelected = selectedStatus === status.value;
-                                        return (
-                                            <button
-                                                key={status.value}
-                                                type="button"
-                                                role="radio"
-                                                aria-checked={isSelected}
-                                                disabled={watchlistLoading || saving}
-                                                onClick={() => {
-                                                    setSelectedStatus(status.value);
-                                                    setSavedStatus("");
-                                                }}
-                                                className={`flex min-h-[62px] items-center gap-4 rounded-2xl border px-4 py-3 text-left text-sm font-medium transition ${isSelected ? "border-[#7770a8] bg-[#252333] text-white" : "border-white/10 bg-[#17161f] text-neutral-300 hover:border-[#7770a8] hover:bg-[#211f2b]"} disabled:cursor-wait disabled:opacity-60`}
-                                            >
-                                                <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-sm border ${isSelected ? "border-[#EFAC61] bg-[#EFAC61] text-[#171522]" : "border-white/50 bg-white"}`}>
-                                                    {isSelected && <Check className="h-4 w-4" />}
-                                                </span>
-                                                <span className="flex-1 text-base font-semibold">{status.label}</span>
-                                                {isSelected && <span className="text-xs font-medium text-[#c7c4dc]">Selected</span>}
-                                            </button>
-                                        );
-                                    })}
+                                <div className="min-h-0 flex-1 p-4">
+                                    <div role="radiogroup" aria-label="Watchlist status" className="grid gap-2">
+                                        {watchlistStatuses.map((status) => {
+                                            const isSelected = selectedStatus === status.value;
+                                            return (
+                                                <button
+                                                    key={status.value}
+                                                    type="button"
+                                                    role="radio"
+                                                    aria-checked={isSelected}
+                                                    disabled={watchlistLoading || saving}
+                                                    onClick={() => {
+                                                        setSelectedStatus(status.value);
+                                                        setSavedStatus("");
+                                                    }}
+                                                    className={`flex min-h-[52px] items-center gap-3 rounded-2xl border px-4 py-2 text-left text-sm font-medium transition ${isSelected ? "border-[#7770a8] bg-[#252333] text-white" : "border-white/10 bg-[#17161f] text-neutral-300 hover:border-[#7770a8] hover:bg-[#211f2b]"} disabled:cursor-wait disabled:opacity-60`}
+                                                >
+                                                    <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-sm border ${isSelected ? "border-[#EFAC61] bg-[#EFAC61] text-[#171522]" : "border-white/50 bg-white"}`}>
+                                                        {isSelected && <Check className="h-4 w-4" />}
+                                                    </span>
+                                                    <span className="flex-1 text-base font-semibold">{status.label}</span>
+                                                    {isSelected && <span className="text-xs font-medium text-[#c7c4dc]">Selected</span>}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+
+                                    {watchlistLoading && <p className="mt-3 text-sm text-neutral-400">Checking your Watchlist…</p>}
+                                    {watchlistError && <p role="alert" className="mt-3 text-sm text-red-300">{watchlistError}</p>}
+                                    {savedStatus && <p role="status" className="mt-3 text-sm text-emerald-300">Added to {watchlistStatuses.find((status) => status.value === savedStatus)?.label}.</p>}
                                 </div>
 
-                                {watchlistLoading && <p className="mt-3 text-sm text-neutral-400">Checking your Watchlist…</p>}
-                                {watchlistError && <p role="alert" className="mt-3 text-sm text-red-300">{watchlistError}</p>}
-                                {savedStatus && <p role="status" className="mt-3 text-sm text-emerald-300">Added to {watchlistStatuses.find((status) => status.value === savedStatus)?.label}.</p>}
-
-                                <div className="mt-5 flex justify-end gap-3">
-                                    <button type="button" onClick={() => setWatchlistShow(null)} className="rounded-lg border border-white/15 px-4 py-2.5 text-sm font-semibold text-neutral-200 transition hover:bg-white/5">
+                                <footer className="flex justify-end gap-2 border-t border-white/10 bg-black/10 px-5 py-3">
+                                    <button type="button" onClick={() => setWatchlistShow(null)} className="rounded-xl border border-white/15 px-4 py-2 text-sm text-neutral-200 transition hover:bg-white/5">
                                         Cancel
                                     </button>
-                                    <button type="button" onClick={saveWatchlistStatus} disabled={watchlistLoading || saving} className="inline-flex items-center gap-2 rounded-lg bg-[#EFAC61] px-4 py-2.5 text-sm font-semibold text-[#171522] transition hover:bg-[#f4bd7c] disabled:cursor-not-allowed disabled:opacity-60">
+                                    <button type="button" onClick={saveWatchlistStatus} disabled={watchlistLoading || saving} className="inline-flex items-center gap-2 rounded-xl bg-[#EFAC61] px-4 py-2 text-sm font-semibold text-[#171522] transition hover:bg-[#f3bd7f] disabled:cursor-not-allowed disabled:opacity-50">
                                         {saving && <LoaderCircle className="h-4 w-4 animate-spin" />}
                                         {currentWatchlistItem ? "Save status" : "Add to Watchlist"}
                                     </button>
-                                </div>
+                                </footer>
                             </>
                         )}
                     </section>
