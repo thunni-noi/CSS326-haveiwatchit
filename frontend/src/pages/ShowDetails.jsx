@@ -152,7 +152,7 @@ function ShowDetails( {user} ) {
                                 <button type="button"
                                 onClick={openCollectionPicker}
                                 className="flex w-full items-center justify-center gap-2 rounded-md bg-[#303969] py-2 text-sm font-semibold text-white transition-all hover:bg-[#414b82]">
-                                <Plus className="h-4 w-4" /> Add to collection
+                                <Plus className="h-4 w-4" /> Add to Collection
                                 </button>
                             </div>
 
@@ -271,7 +271,7 @@ function ShowDetails( {user} ) {
                 <section role="dialog" aria-modal="true" aria-labelledby="collection-picker-title" className="flex max-h-[85vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-[#66568f] bg-[#1c1a2b] shadow-2xl shadow-black/50">
                     <header className="flex items-center justify-between border-b border-white/10 bg-linear-to-r from-[#251329] via-[#30204a] to-[#4a214b] px-5 py-4">
                         <div>
-                            <h2 id="collection-picker-title" className="text-xl font-bold text-white">Add to collection</h2>
+                            <h2 id="collection-picker-title" className="text-xl font-bold text-white">Add to Collection</h2>
                             <p className="mt-1 text-sm text-[#c9c2d8]">Choose one or more collections for {showInfo.title}.</p>
                         </div>
                         <button type="button" onClick={() => setCollectionPickerOpen(false)} aria-label="Close" className="rounded-lg p-2 text-neutral-300 transition hover:bg-white/10 hover:text-white">
