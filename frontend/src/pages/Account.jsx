@@ -128,11 +128,15 @@ function Account({ user, setUser }) {
         <main className="relative min-h-screen overflow-hidden bg-gradient-to-b from-neutral-900 via-neutral-950 to-black px-4 pb-16 pt-24 text-white sm:px-6">
             {/* Background decoration */}
             <div
-                className="pointer-events-none absolute -left-40 top-32 h-80 w-80 rounded-full bg-red-500/10 blur-[120px]"
+                className="pointer-events-none absolute -left-40 top-32 h-80 w-80 rounded-full bg-[#30204a]/40 blur-[120px]"
                 aria-hidden="true"
             />
             <div
-                className="pointer-events-none absolute -right-40 top-96 h-80 w-80 rounded-full bg-orange-500/5 blur-[120px]"
+                className="pointer-events-none absolute -right-40 top-96 h-80 w-80 rounded-full bg-[#4a214b]/25 blur-[120px]"
+                aria-hidden="true"
+            />
+            <div
+                className="pointer-events-none absolute left-1/2 top-0 h-72 w-72 -translate-x-1/2 rounded-full bg-[#EFAC61]/[0.04] blur-[120px]"
                 aria-hidden="true"
             />
 
@@ -141,7 +145,7 @@ function Account({ user, setUser }) {
                 <button
                     type="button"
                     onClick={() => navigate(-1)}
-                    className="mb-8 inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-neutral-400 transition hover:bg-white/5 hover:text-white"
+                    className="mb-8 inline-flex items-center gap-2 rounded-xl border border-white/5 px-3 py-2 text-sm text-neutral-400 transition hover:border-[#9596D6]/20 hover:bg-[#9596D6]/[0.08] hover:text-white"
                 >
                     <ArrowLeft size={18} />
                     Back
@@ -149,7 +153,7 @@ function Account({ user, setUser }) {
 
                 {/* Page heading */}
                 <div className="mb-8">
-                    <p className="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-red-400">
+                    <p className="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-[#EFAC61]">
                         Your profile
                     </p>
 
@@ -166,18 +170,20 @@ function Account({ user, setUser }) {
                 <form onSubmit={handleSubmit}>
                     <div className="grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
                         {/* Profile card */}
-                        <section className="h-fit rounded-2xl border border-white/10 bg-neutral-900/80 p-6 shadow-xl shadow-black/20 backdrop-blur-xl">
-                            <h2 className="text-lg font-semibold">
-                                Profile photo
-                            </h2>
+                        <section className="h-fit overflow-hidden rounded-2xl border border-[#9596D6]/15 bg-gradient-to-br from-[#251329]/95 via-[#30204a]/95 to-[#4a214b]/90 p-6 shadow-xl shadow-black/30 backdrop-blur-xl">
+                            <div className="mb-6">
+                                <h2 className="text-lg font-semibold">
+                                    Profile photo
+                                </h2>
 
-                            <p className="mt-1 text-sm text-neutral-500">
-                                Make your profile recognizable.
-                            </p>
+                                <p className="mt-1 text-sm text-neutral-400">
+                                    Make your profile recognizable.
+                                </p>
+                            </div>
 
-                            <div className="mt-8 flex flex-col items-center">
+                            <div className="flex flex-col items-center">
                                 <div className="relative">
-                                    <div className="flex h-36 w-36 items-center justify-center overflow-hidden rounded-full border-4 border-neutral-800 bg-neutral-800 ring-1 ring-white/10">
+                                    <div className="flex h-36 w-36 items-center justify-center overflow-hidden rounded-full border-4 border-[#30204a] bg-[#1c1c20] ring-2 ring-[#9596D6]/40 shadow-lg shadow-black/30">
                                         {avatarSrc ? (
                                             <img
                                                 src={avatarSrc}
@@ -188,7 +194,7 @@ function Account({ user, setUser }) {
                                             <UserRound
                                                 size={64}
                                                 strokeWidth={1.2}
-                                                className="text-neutral-500"
+                                                className="text-[#9596D6]"
                                             />
                                         )}
                                     </div>
@@ -199,21 +205,21 @@ function Account({ user, setUser }) {
                                             fileRef.current?.click()
                                         }
                                         aria-label="Change profile photo"
-                                        className="absolute bottom-1 right-1 flex h-11 w-11 items-center justify-center rounded-full border-4 border-neutral-900 bg-red-500 text-white shadow-lg transition hover:scale-105 hover:bg-red-400"
+                                        className="absolute bottom-1 right-1 flex h-11 w-11 items-center justify-center rounded-full border-4 border-[#30204a] bg-[#EFAC61] text-[#251329] shadow-lg transition hover:scale-105 hover:bg-[#f5c184]"
                                     >
                                         <Camera size={18} />
                                     </button>
                                 </div>
 
-                                <p className="mt-5 text-base font-semibold">
+                                <p className="mt-5 max-w-full break-words text-center text-base font-semibold text-white">
                                     {username || "Your display name"}
                                 </p>
 
-                                <p className="mt-1 text-sm text-neutral-500">
+                                <p className="mt-1 text-sm text-[#b7add1]">
                                     JPG, PNG or WebP
                                 </p>
 
-                                <p className="mt-1 text-xs text-neutral-600">
+                                <p className="mt-1 text-xs text-neutral-500">
                                     Maximum file size: 2 MB
                                 </p>
 
@@ -228,7 +234,7 @@ function Account({ user, setUser }) {
                                 <button
                                     type="button"
                                     onClick={() => fileRef.current?.click()}
-                                    className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-neutral-200 transition hover:border-white/20 hover:bg-white/10"
+                                    className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-[#9596D6]/25 bg-[#303969]/60 px-4 py-3 text-sm font-medium text-[#eee9fb] transition hover:border-[#9596D6]/50 hover:bg-[#303969]"
                                 >
                                     <ImagePlus size={17} />
                                     Choose a photo
@@ -237,9 +243,9 @@ function Account({ user, setUser }) {
                         </section>
 
                         {/* Account information */}
-                        <section className="rounded-2xl border border-white/10 bg-neutral-900/80 p-6 shadow-xl shadow-black/20 backdrop-blur-xl sm:p-8">
+                        <section className="rounded-2xl border border-white/[0.08] bg-[#1c1c20]/90 p-6 shadow-xl shadow-black/20 backdrop-blur-xl sm:p-8">
                             <div className="mb-7 flex items-start gap-3">
-                                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-red-500/10 text-red-400">
+                                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-[#9596D6]/15 bg-[#9596D6]/10 text-[#9596D6]">
                                     <UserRound size={21} />
                                 </div>
 
@@ -267,7 +273,7 @@ function Account({ user, setUser }) {
                                     <div className="relative">
                                         <UserRound
                                             size={18}
-                                            className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-500"
+                                            className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9596D6]"
                                         />
 
                                         <input
@@ -284,11 +290,11 @@ function Account({ user, setUser }) {
                                             maxLength={50}
                                             required
                                             placeholder="Enter your display name"
-                                            className="w-full rounded-xl border border-white/10 bg-black/20 py-3.5 pl-11 pr-4 text-sm text-white outline-none transition placeholder:text-neutral-600 focus:border-red-400/70 focus:bg-black/30 focus:ring-2 focus:ring-red-400/10"
+                                            className="w-full rounded-xl border border-white/10 bg-black/25 py-3.5 pl-11 pr-4 text-sm text-white outline-none transition placeholder:text-neutral-600 focus:border-[#EFAC61]/70 focus:bg-black/35 focus:ring-2 focus:ring-[#EFAC61]/10"
                                         />
                                     </div>
 
-                                    <p className="mt-2 text-xs text-neutral-600">
+                                    <p className="mt-2 text-xs text-neutral-500">
                                         This is the name displayed on your
                                         profile.
                                     </p>
@@ -318,7 +324,7 @@ function Account({ user, setUser }) {
                                         />
                                     </div>
 
-                                    <p className="mt-2 text-xs text-neutral-600">
+                                    <p className="mt-2 text-xs text-neutral-500">
                                         Your email address cannot be changed
                                         here.
                                     </p>
@@ -326,10 +332,10 @@ function Account({ user, setUser }) {
                             </div>
 
                             {/* Account status */}
-                            <div className="mt-8 flex items-start gap-3 rounded-xl border border-white/5 bg-white/[0.025] p-4">
+                            <div className="mt-8 flex items-start gap-3 rounded-xl border border-[#9596D6]/10 bg-[#303969]/20 p-4">
                                 <ShieldCheck
                                     size={20}
-                                    className="mt-0.5 shrink-0 text-emerald-400"
+                                    className="mt-0.5 shrink-0 text-[#9596D6]"
                                 />
 
                                 <div>
@@ -337,7 +343,7 @@ function Account({ user, setUser }) {
                                         Account information
                                     </p>
 
-                                    <p className="mt-1 text-xs leading-5 text-neutral-500">
+                                    <p className="mt-1 text-xs leading-5 text-neutral-400">
                                         Your profile changes will be saved
                                         to your account when you select
                                         Save Changes.
@@ -351,8 +357,8 @@ function Account({ user, setUser }) {
                                     role="status"
                                     className={`mt-5 flex items-start gap-2 rounded-xl border p-3 text-sm ${
                                         message.type === "success"
-                                            ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-300"
-                                            : "border-red-500/20 bg-red-500/10 text-red-300"
+                                            ? "border-[#9596D6]/25 bg-[#9596D6]/10 text-[#c8c9ff]"
+                                            : "border-red-400/20 bg-red-400/10 text-red-300"
                                     }`}
                                 >
                                     {message.type === "success" ? (
@@ -373,7 +379,7 @@ function Account({ user, setUser }) {
 
                             {/* Save button */}
                             <div className="mt-7 flex flex-col-reverse gap-3 border-t border-white/10 pt-6 sm:flex-row sm:items-center sm:justify-between">
-                                <p className="text-xs text-neutral-600">
+                                <p className="text-xs text-neutral-500">
                                     {changed
                                         ? "You have unsaved changes."
                                         : "Your profile is up to date."}
@@ -382,7 +388,7 @@ function Account({ user, setUser }) {
                                 <button
                                     type="submit"
                                     disabled={!changed || saving}
-                                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-red-500 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-red-500/10 transition hover:bg-red-400 disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
+                                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#EFAC61] px-6 py-3 text-sm font-semibold text-[#251329] shadow-lg shadow-[#EFAC61]/10 transition hover:bg-[#f5c184] disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
                                 >
                                     {saving ? (
                                         <>
