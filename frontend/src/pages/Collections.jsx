@@ -3,7 +3,7 @@ import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 import {
     Plus, Trash2, Lock, Globe, Copy, Check,
-    BookMarked, Bookmark, ChevronRight, X, Pencil, Search, BookmarkCheck, BookmarkPlus
+    Bookmark, ChevronRight, X, Pencil, Search, BookmarkCheck, BookmarkPlus
 } from "lucide-react";
 
 const Modal = ({ title, onClose, children }) => (
@@ -115,7 +115,7 @@ const CollectionCard = ({ col, onDelete, onEdit, shared = false, currentUsername
                 </div>
             ) : (
                 <div className="flex min-h-[76px] items-center gap-3 rounded-xl border border-dashed border-white/15 bg-neutral-900/70 px-3 text-sm text-neutral-400">
-                    <BookMarked className="h-5 w-5 shrink-0 text-[#9596D6]" />
+                    <Bookmark className="h-5 w-5 shrink-0 text-[#9596D6]" />
                     No movies added yet
                 </div>
             )}
@@ -472,7 +472,7 @@ const CollectionsPage = ({ user }) => {
                 <p className="text-white text-center text-lg">Loading...</p>
             ) : (activeTab === "mine" ? collections : followedCollections).length === 0 ? (
                 <div className="text-center py-20">
-                    <BookMarked className="mx-auto mb-4 h-16 w-16 text-neutral-500" />
+                    <Bookmark className="mx-auto mb-4 h-16 w-16 text-neutral-500" />
                     <p className="mb-6 text-lg text-neutral-400">
                         {activeTab === "mine" ? "You have no collections yet." : "You are not following any collections yet. Search for a user or paste a public collection link above."}
                     </p>
