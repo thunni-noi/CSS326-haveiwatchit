@@ -3,7 +3,7 @@ import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 import {
     Plus, Trash2, Lock, Globe, Copy, Check,
-    BookMarked, ChevronRight, X, Pencil, Search, BookmarkCheck, BookmarkPlus
+    BookMarked, Bookmark, ChevronRight, X, Pencil, Search, BookmarkCheck, BookmarkPlus
 } from "lucide-react";
 
 const Modal = ({ title, onClose, children }) => (
@@ -122,7 +122,7 @@ const CollectionCard = ({ col, onDelete, onEdit, shared = false, currentUsername
 
             <div className="flex items-center gap-3 text-sm text-[#c9c2d8]">
                 <span className="flex items-center gap-1">
-                    <BookMarked className="w-4 h-4" />
+                    <Bookmark className="w-4 h-4" />
                     {itemCount} movie{itemCount !== 1 ? "s" : ""}
                 </span>
                 <span className="flex items-center gap-1">

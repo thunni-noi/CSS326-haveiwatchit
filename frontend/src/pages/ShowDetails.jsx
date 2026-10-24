@@ -279,12 +279,12 @@ function ShowDetails( {user} ) {
         {collectionPickerOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 py-6 backdrop-blur-sm">
                 <section role="dialog" aria-modal="true" aria-labelledby="collection-picker-title" className="flex max-h-[85vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-[#66568f] bg-[#1c1a2b] shadow-2xl shadow-black/50">
-                    <header className="flex items-center justify-between border-b border-white/10 bg-linear-to-r from-[#251329] via-[#30204a] to-[#4a214b] px-5 py-4">
-                        <div>
+                    <header className="flex items-start justify-between gap-4 border-b border-white/10 bg-linear-to-r from-[#251329] via-[#30204a] to-[#4a214b] px-5 py-4">
+                        <div className="min-w-0 flex-1">
                             <h2 id="collection-picker-title" className="text-xl font-bold text-white">Add to Collection</h2>
-                            <p className="mt-1 text-sm text-[#c9c2d8]">Choose one or more collections for {showInfo.title}.</p>
+                            <p className="mt-1 break-words text-sm text-[#c9c2d8]">Choose one or more collections for {showInfo.title}.</p>
                         </div>
-                        <button type="button" onClick={() => setCollectionPickerOpen(false)} aria-label="Close" className="rounded-lg p-2 text-neutral-300 transition hover:bg-white/10 hover:text-white">
+                        <button type="button" onClick={() => setCollectionPickerOpen(false)} aria-label="Close" className="mt-0.5 ml-3 shrink-0 rounded-lg p-2 text-neutral-300 transition hover:bg-white/10 hover:text-white">
                             <X className="h-5 w-5" />
                         </button>
                     </header>

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, BookMarked, Globe, Lock, Trash2, Plus, Search, LoaderCircle } from "lucide-react";
+import { ArrowLeft, BookMarked, Bookmark, Globe, Lock, Trash2, Plus, Search, LoaderCircle } from "lucide-react";
 
 const CollectionDetailPage = ({ shared = false }) => {
     const { id, uuid } = useParams();
@@ -155,7 +155,7 @@ const CollectionDetailPage = ({ shared = false }) => {
                             </div>
                             <div className="mt-5 flex flex-wrap items-center gap-4">
                                 <p className="inline-flex items-center gap-2 text-sm text-neutral-300">
-                                    <BookMarked className="h-4 w-4" /> {items.length} {items.length === 1 ? "movie" : "movies"}
+                                    <Bookmark className="h-4 w-4" /> {items.length} {items.length === 1 ? "movie" : "movies"}
                                 </p>
                                 {!shared && (
                                     <button
@@ -238,7 +238,7 @@ const CollectionDetailPage = ({ shared = false }) => {
                         ) : (
                             <section className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
                                 {items.map((show) => (
-                                    <article key={show.id} className="overflow-hidden rounded-xl border border-white/10 bg-neutral-950/75 transition hover:border-[#66568f] hover:bg-[#1c1c20]">
+                                    <article key={show.id} className="flex h-full flex-col overflow-hidden rounded-xl border border-white/10 bg-neutral-950/75 transition hover:border-[#66568f] hover:bg-[#1c1c20]">
                                         <Link to={`/shows/${show.id}`} className="block aspect-[2/3] bg-neutral-800" aria-label={`View details for ${show.name}`}>
                                             {show.photo_url ? (
                                                 <img src={show.photo_url} alt={show.name} className="h-full w-full object-cover transition-opacity hover:opacity-80" />
@@ -246,7 +246,7 @@ const CollectionDetailPage = ({ shared = false }) => {
                                                 <div className="flex h-full items-center justify-center text-sm text-neutral-500">No poster</div>
                                             )}
                                         </Link>
-                                        <div className="p-3">
+                                        <div className="flex flex-1 flex-col p-3">
                                             <h2 className="line-clamp-2 font-semibold"><Link to={`/shows/${show.id}`} className="transition hover:text-[#EFAC61]">{show.name}</Link></h2>
                                             <p className="mt-1 text-sm capitalize text-neutral-400">{show.type?.replaceAll("_", " ")}</p>
                                             {!shared && (
@@ -254,7 +254,7 @@ const CollectionDetailPage = ({ shared = false }) => {
                                                     type="button"
                                                     onClick={() => removeShow(show.id)}
                                                     disabled={removingId === show.id}
-                                                    className="mt-3 inline-flex items-center gap-2 text-sm text-neutral-400 transition hover:text-red-300 disabled:opacity-50"
+                                                    className="mt-auto inline-flex items-center gap-2 pt-3 text-sm text-neutral-400 transition hover:text-red-300 disabled:opacity-50"
                                                     aria-label={`Remove ${show.name} from collection`}
                                                 >
                                                     <Trash2 className="h-4 w-4" /> Remove
