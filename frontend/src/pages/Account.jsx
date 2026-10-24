@@ -51,6 +51,10 @@ function Account({ user, setUser }) {
     console.log("account user:", user);
     if (!user) return null;
 
+    useEffect(() => {
+        setAvatarError(false);
+    }, [user?.avatar_url]);
+
     const avatarSrc = preview || user.avatar_url || null;
 
     const changed =
@@ -108,13 +112,21 @@ function Account({ user, setUser }) {
             }
 
             const res = await axios.put("/api/account", data);
+            const saved = res.data.user;
 
-            setUser((prev) => ({
-                ...prev,
-                ...res.data.user,
-                avatar_url:
-                    res.data.user.avatar_url ?? prev?.avatar_url
-            }));
+            // เลือกรูปไว้ แต่ URL ที่เซิร์ฟเวอร์ส่งกลับไม่เปลี่ยน = เซิร์ฟเวอร์ไม่ได้บันทึกรูป
+            if (file && saved.avatar_url === user.avatar_url) {
+                setMessage({
+                    type: "error",
+                    text: "The server did not save the photo. Check the backend terminal.",
+                });
+                return;
+            }
+
+            setUser((prev) => ({ ...prev, ...saved }));
+            setFile(null);
+            if (fileRef.current) fileRef.current.value = "";
+            setMessage({ type: "success", text: "Profile updated." });
         } catch (err) {
             setMessage({
                 type: "error",

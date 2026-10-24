@@ -1,16 +1,21 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
 import {
+    Bookmark,
+    Bot,
     Check,
-    CircleHelp,
-    Eye,
+    ChevronLeft,
+    ChevronRight,
+    Clapperboard,
+    Film,
     ListFilter,
     LoaderCircle,
     Plus,
     Search,
     Star,
     Trash2,
+    Tv,
     X,
 } from "lucide-react";
 
@@ -35,6 +40,110 @@ const formatDuration = (show) => {
     if (show.episode_count) return `${show.episode_count} episodes`;
     return null;
 };
+
+const shelfDefs = [
+    { key: "movie", label: "Movie", icon: Clapperboard, match: (t) => t === "movie" },
+    { key: "anime", label: "Anime", icon: Bot, match: (t) => t === "anime" },
+    { key: "series", label: "Series", icon: Tv, match: (t) => t === "series" || t === "tv_shows" },
+    { key: "other", label: "Other", icon: Film, match: (t) => !["movie", "anime", "series", "tv_shows"].includes(t) },
+];
+
+function Shelf({ icon: Icon, label, items, onSelect }) {
+    const scrollRef = useRef(null);
+    const [canLeft, setCanLeft] = useState(false);
+    const [canRight, setCanRight] = useState(false);
+
+    const updateArrows = () => {
+        const el = scrollRef.current;
+        if (!el) return;
+        setCanLeft(el.scrollLeft > 4);
+        setCanRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
+    };
+
+    useEffect(() => {
+        updateArrows();
+        const el = scrollRef.current;
+        if (!el) return undefined;
+        const observer = new ResizeObserver(updateArrows);
+        observer.observe(el);
+        return () => observer.disconnect();
+    }, [items]);
+
+    const scrollByPage = (direction) => {
+        const el = scrollRef.current;
+        el?.scrollBy({ left: direction * el.clientWidth * 0.8, behavior: "smooth" });
+    };
+
+    return (
+        <div className="grid gap-4 border-b border-white/10 py-6 last:border-b-0 sm:grid-cols-[11rem_minmax(0,1fr)] sm:gap-6">
+            <div className="flex items-start gap-3">
+                <Icon className="h-9 w-9 shrink-0 text-[#EFAC61]" />
+                <div>
+                    <h3 className="text-2xl font-semibold leading-tight">{label}</h3>
+                    <p className="mt-1 text-xs text-neutral-500">
+                        {items.length} {items.length === 1 ? "title" : "titles"}
+                    </p>
+                </div>
+            </div>
+
+            <div className="relative min-w-0">
+                <div
+                    ref={scrollRef}
+                    onScroll={updateArrows}
+                    className="flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth px-1 py-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                >
+                    {items.map((item) => (
+                        <button
+                            key={item.show_id}
+                            type="button"
+                            onClick={() => onSelect(item)}
+                            title={item.title}
+                            aria-label={`View details for ${item.title}`}
+                            className="group relative h-48 w-32 shrink-0 snap-start overflow-hidden rounded-3xl bg-neutral-800 ring-1 ring-white/10 transition hover:-translate-y-1 hover:ring-[#EFAC61]/60 focus-visible:ring-2 focus-visible:ring-[#EFAC61] sm:h-60 sm:w-40"
+                        >
+                            {item.poster_url ? (
+                                <img src={item.poster_url} alt="" className="h-full w-full object-cover" />
+                            ) : (
+                                <span className="flex h-full items-center justify-center px-3 text-center text-sm text-neutral-400">
+                                    {item.title}
+                                </span>
+                            )}
+                            {item.status === "watched" && (
+                                <span className="absolute left-3 top-3 rounded-full bg-[#EFAC61] p-1 text-neutral-950 shadow">
+                                    <Check className="h-3.5 w-3.5" />
+                                </span>
+                            )}
+                            <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent px-3 pb-3 pt-10 text-left text-xs font-medium opacity-0 transition group-hover:opacity-100 group-focus-visible:opacity-100">
+                                {item.title}
+                            </span>
+                        </button>
+                    ))}
+                </div>
+
+                {canLeft && (
+                    <button
+                        type="button"
+                        onClick={() => scrollByPage(-1)}
+                        aria-label={`Scroll ${label} left`}
+                        className="absolute left-0 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/70 text-white shadow-lg transition hover:bg-[#EFAC61] hover:text-neutral-950"
+                    >
+                        <ChevronLeft className="h-5 w-5" />
+                    </button>
+                )}
+                {canRight && (
+                    <button
+                        type="button"
+                        onClick={() => scrollByPage(1)}
+                        aria-label={`Scroll ${label} right`}
+                        className="absolute right-0 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/70 text-white shadow-lg transition hover:bg-[#EFAC61] hover:text-neutral-950"
+                    >
+                        <ChevronRight className="h-5 w-5" />
+                    </button>
+                )}
+            </div>
+        </div>
+    );
+}
 
 function WatchlistPage({ user }) {
     const [items, setItems] = useState([]);
@@ -284,88 +393,21 @@ function WatchlistPage({ user }) {
                         ) : filteredItems.length === 0 ? (
                             <p className="py-12 text-center text-sm text-neutral-400">No titles match this filter.</p>
                         ) : (
-                            <section className="mt-5 overflow-hidden rounded-xl border border-white/10 bg-neutral-950/65">
-                                {filteredItems.map((item, index) => (
-                                    <article key={item.show_id} className={`p-4 sm:p-5 ${index ? "border-t border-white/10" : ""}`}>
-                                        <div className="flex gap-4">
-                                            <button
-                                                type="button"
-                                                onClick={() => setSelectedShow(item)}
-                                                className="relative h-28 w-[4.5rem] shrink-0 overflow-hidden rounded-lg bg-neutral-800 text-left sm:h-32 sm:w-[5.25rem]"
-                                                aria-label={`View details for ${item.title}`}
-                                            >
-                                                {item.poster_url ? (
-                                                    <img src={item.poster_url} alt="" className="h-full w-full object-cover" />
-                                                ) : (
-                                                    <span className="flex h-full items-center justify-center px-1 text-center text-xs text-neutral-500">No poster</span>
-                                                )}
-                                                {item.status === "watched" && (
-                                                    <span className="absolute left-0 top-0 rounded-br-lg bg-[#EFAC61] p-1.5 text-neutral-950"><Check className="h-4 w-4" /></span>
-                                                )}
-                                            </button>
-                                            <div className="min-w-0 flex-1">
-                                                <div className="flex flex-wrap items-start justify-between gap-3">
-                                                    <div className="min-w-0">
-                                                        <button type="button" onClick={() => setSelectedShow(item)} className="text-left text-base font-semibold hover:text-[#EFAC61] sm:text-lg">
-                                                            {index + 1}. {item.title}
-                                                        </button>
-                                                        <p className="mt-1 text-sm text-neutral-400">
-                                                            {item.release_year || "Year unknown"} <span className="px-1">·</span> {formatType(item.type)}
-                                                            {formatDuration(item) && <> <span className="px-1">·</span> {formatDuration(item)}</>}
-                                                            {item.content_rating && <> <span className="px-1">·</span> {item.content_rating}</>}
-                                                        </p>
-                                                    </div>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setSelectedShow(item)}
-                                                        aria-label={`More information about ${item.title}`}
-                                                        className="rounded-full p-1.5 text-[#9596D6] transition hover:bg-white/10 hover:text-white"
-                                                    >
-                                                        <CircleHelp className="h-5 w-5" />
-                                                    </button>
-                                                </div>
-                                                <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
-                                                    <span className="inline-flex items-center gap-1 text-neutral-300">
-                                                        <Star className="h-4 w-4 fill-[#EFAC61] text-[#EFAC61]" />
-                                                        {item.avg_score ? `${Number(item.avg_score).toFixed(1)}${item.review_count ? ` (${item.review_count})` : ""}` : "Not rated"}
-                                                    </span>
-                                                    <label className="flex items-center gap-1.5 text-[#9596D6]">
-                                                        <span className="sr-only">Status for {item.title}</span>
-                                                        <select
-                                                            value={item.status}
-                                                            disabled={busyId === item.show_id}
-                                                            onChange={(event) => updateStatus(item, event.target.value)}
-                                                            className="max-w-40 rounded bg-transparent py-1 text-sm outline-none focus:ring-1 focus:ring-[#9596D6]"
-                                                        >
-                                                            {statuses.map((status) => <option key={status.value} value={status.value} className="bg-neutral-900">{status.label}</option>)}
-                                                        </select>
-                                                    </label>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => updateStatus(item, item.status === "watched" ? "wishlist" : "watched")}
-                                                        disabled={busyId === item.show_id}
-                                                        className="inline-flex items-center gap-1.5 text-[#9596D6] transition hover:text-white disabled:opacity-50"
-                                                    >
-                                                        <Eye className="h-4 w-4" />
-                                                        {item.status === "watched" ? "Mark as unwatched" : "Mark as watched"}
-                                                    </button>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => removeShow(item)}
-                                                        disabled={busyId === item.show_id}
-                                                        aria-label={`Remove ${item.title} from watchlist`}
-                                                        className="inline-flex items-center gap-1 text-neutral-500 transition hover:text-red-300 disabled:opacity-50"
-                                                    >
-                                                        <Trash2 className="h-4 w-4" />
-                                                        <span className="sr-only sm:not-sr-only">Remove</span>
-                                                    </button>
-                                                </div>
-                                                {item.synopsis && <p className="mt-3 line-clamp-2 text-sm leading-6 text-neutral-300">{item.synopsis}</p>}
-                                            </div>
-                                        </div>
-                                    </article>
+                            <section className="mt-6">
+                                <div className="flex items-center gap-4 border-b border-white/15 pb-4">
+                                    <Bookmark className="h-9 w-9 text-[#EFAC61]" />
+                                    <h2 className="text-2xl font-semibold sm:text-3xl">My Watchlist</h2>
+                                </div>
+                                {shelves.map((shelf) => (
+                                    <Shelf
+                                        key={shelf.key}
+                                        icon={shelf.icon}
+                                        label={shelf.label}
+                                        items={shelf.items}
+                                        onSelect={setSelectedShow}
+                                    />
                                 ))}
-                            </section>
+                            </section>                 
                         )}
                     </>
                 )}
