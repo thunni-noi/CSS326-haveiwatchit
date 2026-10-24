@@ -24,6 +24,7 @@ function Account({ user, setUser }) {
     const [username, setUsername] = useState(user?.username ?? "");
     const [file, setFile] = useState(null);
     const [preview, setPreview] = useState(null);
+    const [avatarError, setAvatarError] = useState(false);
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState({
         type: "",
@@ -35,6 +36,8 @@ function Account({ user, setUser }) {
     }, [user]);
 
     useEffect(() => {
+        setAvatarError(false);
+
         if (!file) {
             setPreview(null);
             return;
@@ -45,7 +48,7 @@ function Account({ user, setUser }) {
 
         return () => URL.revokeObjectURL(url);
     }, [file]);
-
+    console.log("account user:", user);
     if (!user) return null;
 
     const avatarSrc = preview || user.avatar_url || null;
@@ -106,12 +109,12 @@ function Account({ user, setUser }) {
 
             const res = await axios.put("/api/account", data);
 
-            setUser(res.data.user);
-            setFile(null);
-            setMessage({
-                type: "success",
-                text: "Your profile has been updated successfully.",
-            });
+            setUser((prev) => ({
+                ...prev,
+                ...res.data.user,
+                avatar_url:
+                    res.data.user.avatar_url ?? prev?.avatar_url
+            }));
         } catch (err) {
             setMessage({
                 type: "error",
@@ -184,18 +187,17 @@ function Account({ user, setUser }) {
                             <div className="flex flex-col items-center">
                                 <div className="relative">
                                     <div className="flex h-36 w-36 items-center justify-center overflow-hidden rounded-full border-4 border-[#30204a] bg-[#1c1c20] ring-2 ring-[#9596D6]/40 shadow-lg shadow-black/30">
-                                        {avatarSrc ? (
+                                        {avatarSrc && !avatarError ? (
                                             <img
                                                 src={avatarSrc}
                                                 alt="Profile"
-                                                className="h-full w-full object-cover"
+                                                className="h-full w-full rounded-full object-cover"
+                                                onError={() => setAvatarError(true)}
                                             />
                                         ) : (
-                                            <UserRound
-                                                size={64}
-                                                strokeWidth={1.2}
-                                                className="text-[#9596D6]"
-                                            />
+                                            <div className="flex h-full w-full items-center justify-center rounded-full bg-gradient-to-br from-[#9596D6] to-[#4a214b] text-4xl font-bold text-white">
+                                                {(user?.username || "U").trim().charAt(0)}
+                                            </div>
                                         )}
                                     </div>
 
@@ -212,7 +214,7 @@ function Account({ user, setUser }) {
                                 </div>
 
                                 <p className="mt-5 max-w-full break-words text-center text-base font-semibold text-white">
-                                    {username || "Your display name"}
+                                    {user.username || "Your display name"}
                                 </p>
 
                                 <p className="mt-1 text-sm text-[#b7add1]">
