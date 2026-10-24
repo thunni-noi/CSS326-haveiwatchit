@@ -202,7 +202,6 @@ function HeroUI( { shows =[], error = false, user = null }) {
                     >
                         <div className="flex items-start justify-between gap-4">
                             <div>
-                                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#EFAC61]">Your library</p>
                                 <h2 id="home-watchlist-title" className="mt-1 text-xl font-bold">Add to Watchlist</h2>
                                 <p className="mt-1 line-clamp-2 text-sm text-neutral-300">{watchlistShow.title}</p>
                             </div>
@@ -220,7 +219,7 @@ function HeroUI( { shows =[], error = false, user = null }) {
                             </div>
                         ) : (
                             <>
-                                <p className="mt-5 text-sm text-neutral-300">Choose one status for this title:</p>
+                                <p className="mt-1 text-sm text-neutral-300">Choose one status for this title:</p>
                                 <div role="radiogroup" aria-label="Watchlist status" className="mt-3 grid gap-2">
                                     {watchlistStatuses.map((status) => {
                                         const isSelected = selectedStatus === status.value;
