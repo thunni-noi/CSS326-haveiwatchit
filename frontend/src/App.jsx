@@ -9,7 +9,7 @@ import Navbar from "./components/Navbar";
 import PageBg from "./components/PageBg";
 import LoadingPlaceHolder from "./components/LoadingScreen";
 import NotFound from "./components/NotFound";
-// import ShowDetails from "./pages/ShowDetails";
+import ShowDetails from "./pages/ShowDetails";
 import Account from "./pages/Account";
 
 axios.defaults.withCredentials = true;
@@ -44,9 +44,7 @@ function AppRoutes({ user, setUser, error }) {
                     : <Navigate to="/login" replace />
             }
         />
-        {/* <Route 
-          path="/shows/:showId" element={<ShowDetails />}
-        /> */}
+        <Route path="/shows/:showId" element={<ShowDetails user={user} />} />
         <Route
           path="/admin"
           element={user?.role === "admin" ? <AdminPage user={user} /> : <Navigate to="/" />}
