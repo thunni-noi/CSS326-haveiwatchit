@@ -93,9 +93,10 @@ export const getShowById = wrapper("Unable to fetch shows/.", async (req, res) =
 // query : {limit: 5 (max50)}
 export const getShowReviews = wrapper("Unable to load reviews", async(req, res) => {
     const id = Number(req.params.id)
-
     let limit = Number(req.query.limit ?? 10);
     let offset = Number(req.query.offset ?? 0);
+
+    if (Number.isNaN(id) || id < 0) return res.status(400).json({message: "Invalid id!"});
     if (Number.isNaN(limit) || limit <= 0) return res.status(400).json({message: "Invalid limit!"});
     if (Number.isNaN(offset) || offset < 0) return res.status(400).json({message: "Invalid offset!"});
     limit = Math.min(limit, 20);
@@ -122,11 +123,43 @@ export const getShowReviews = wrapper("Unable to load reviews", async(req, res) 
     })
 })
 
+// /api/shows/:showId/reviews/:userId
+export const getUserShowReviews = wrapper("Unable to load review", async(req, res) => {
+    const showId = Number(req.params.showId)
+    const userId = Number(req.params.userId)
+
+    if (Number.isNaN(showId) || showId < 0) return res.status(400).json({message: "Invalid showId!"});
+    if (Number.isNaN(userId) || userId < 0) return res.status(400).json({message: "Invalid userId!"});
+
+    const [rows] = await pool.execute(`
+        SELECT  u.username, r.user_id, r.review_score AS score, r.review_txt AS text,
+                DATE_FORMAT(r.created_at, '%Y-%m-%d') AS created_at
+        FROM    reviews r
+        JOIN users u ON u.id = r.user_id
+        WHERE r.show_id = ? AND r.user_id = ?
+
+        `, [showId, userId]
+    )
+
+    if (rows.length === 0){
+        return res.status(404).json({message: "No review found!"})
+    }
+
+    return res.json({
+        reviews: rows,
+    })
+})
+
 // POST /api/shows/:id/reviews (authenticated)
 export const saveShowReview = wrapper("Unable to save review", async(req, res) => {
+    console.log(req.body)
     const showId = Number(req.params.id);
     const score = Number(req.body?.score);
     const text = typeof req.body?.text === "string" ? req.body.text.trim() : "";
+
+    if (req.user.is_suspended) {
+        return res.staus(403).json({ message: "Your account is suspended. "})
+    }
 
     if (!Number.isInteger(showId) || showId <= 0) {
         return res.status(400).json({ message: "Invalid show id." });
@@ -150,6 +183,30 @@ export const saveShowReview = wrapper("Unable to save review", async(req, res) =
 
     return res.status(201).json({ message: "Review saved." });
 });
+
+// remove reviews
+// DELETE /:showId/reviews/:userId
+export const removeReview = wrapper("Unable to remove review", async(req, res) => {
+
+    const showId = Number(req.params.showId)
+    const userId = Number(req.params.userId);
+
+    if (!Number.isInteger(userId) || userId <= 0) {
+        return res.status(400).json({ message: "Invalid user id." })}
+    if (!Number.isInteger(showId) || showId <= 0) {
+        return res.status(400).json({ message: "Invalid show id." })}
+
+    const[r] = await pool.execute(`
+        DELTE FROM reviews WHERE user_id = ? AND show_id = ?
+        `, [userId, showId]
+    );
+
+    if (r.affectedRows === 0){
+        return res.status(404).json({message: "No reviews found!"})
+    }
+
+    return res.json({ message: "Review deleted!"})
+})
 
 // Search!
 // /api/shows/search?q=name&limit=num

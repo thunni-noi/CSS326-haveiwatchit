@@ -24,7 +24,7 @@ const UserAvatar = ({ username, avatarUrl, iconClass, textClass, imgClass }) => 
     if (username) {
         return (
             <div
-                className={`flex items-center justify-center rounded-full bg-gradient-to-br from-[#9596D6] to-[#4a214b] font-bold text-white ${imgClass} ${textClass}`}
+                className={`flex items-center justify-center rounded-full bg-neutral-900 font-bold text-white ${imgClass} ${textClass}`}
             >
                 {username.trim().charAt(0)}
             </div>

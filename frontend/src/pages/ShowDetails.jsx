@@ -5,6 +5,9 @@ import { Link, useParams } from "react-router-dom";
 import PlaceholderCover from "../assets/placeholder_image.jpg"
 import RoleCard from "../components/DetailComponents/RoleCard";
 import { BookMarked, Check, Globe, Lock, LoaderCircle, Plus, X } from "lucide-react";
+import ReviewSection from "../components/DetailComponents/ReviewSection";
+
+
 
 function captitalizeText(text){
     if(!text || typeof text !== "string")  return "N/A";
@@ -209,7 +212,7 @@ function ShowDetails( {user} ) {
                         </aside>
                         {/* Main */}
                         <div className="min-w-0 space-y-8">
-                            <section className="relative overflow-hidden min-h-50 flex flex-wrap items-center gap-x-8 gap-y-3 rounded-md bg-neutral-800 p-4">
+                            <section className="relative overflow-hidden min-h-100 flex flex-wrap items-center gap-x-8 gap-y-3 rounded-md bg-neutral-800 p-4">
                             {showInfo.backdrop_url && (
                                 <div className="absolute inset-y-0 right-0 w-3/4 overflow-hidden">
                                     <img src={showInfo.backdrop_url} className="h-full w-full object-cover object-center" />
@@ -260,6 +263,13 @@ function ShowDetails( {user} ) {
                                         </div>
                                     )}
                                 </div>
+                            </section>
+                                <div className="flex items-end justify-between border-b border-neutral-700 pb-1 mb-3 text-white">
+                                    Reviews
+                                </div>
+                                <ReviewSection showId={showId} user={user} />
+                            <section>
+
                             </section>
                         </div>
                     </div>
