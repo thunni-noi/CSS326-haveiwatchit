@@ -26,7 +26,7 @@ const upload = multer({
 // ถ้าโปรเจกต์มี middleware เช็คล็อกอินอยู่แล้ว ใช้ตัวเดิมแทนได้เลย
 function requireAuth(req, res, next) {
     try {
-        const payload = jwt.verify(req.cookies.token, process.env.JWT_SECRET);
+        const payload = jwt.verify(req.cookies.auth_token, process.env.JWT_SECRET);
         req.userId = payload.id;
         next();
     } catch {

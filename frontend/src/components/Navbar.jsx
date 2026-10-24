@@ -3,8 +3,14 @@ import { Search as SearchIcon, User as UserIcon, X as XIcon, Menu as MenuIcon } 
 import axios from "axios";
 import { useRef, useState, useEffect } from "react";
 
-const UserAvatar = ({ username, iconClass, textClass }) =>
-    username ? (
+const UserAvatar = ({ username, avatarUrl, iconClass, textClass }) =>
+    avatarUrl ? (
+        <img
+            src={avatarUrl}
+            alt="Profile"
+            className="h-9 w-9 rounded-full object-cover"
+        />
+    ) : username ? (
         <span className={`font-semibold leading-none ${textClass} pb-1`}>
             {username.trim().charAt(0).toLowerCase()}
         </span>
@@ -35,7 +41,7 @@ const UserMenu = ({ user, setUser }) => {
                     border border-white/10 bg-[#1b1b20] text-white transition
                     hover:bg-[#25252c]"
             >
-                <UserAvatar username={user?.username} iconClass="h-5 w-5" textClass="text-3xl" />
+                <UserAvatar username={user?.username} avatarUrl={user?.avatar_url} iconClass="h-5 w-5" textClass="text-3xl" />
             </button>
 
             <div
@@ -45,7 +51,7 @@ const UserMenu = ({ user, setUser }) => {
                 }`}
             >
                 <div className="flex flex-col items-center gap-0 pb-3 pt-3 text-white">
-                    <UserAvatar username={user?.username} iconClass="h-10 w-10" textClass="text-4xl" />
+                    <UserAvatar username={user?.username} avatarUrl={user?.avatar_url} iconClass="h-10 w-10" textClass="text-4xl" />
                     <span className="font-semibold mt-2"> {user ? user.username : "Guests"} </span>
                     <span className="font-light mt-1">{user ? user.role : "Not logged in"}</span>
                 </div>
