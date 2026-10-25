@@ -13,7 +13,7 @@ dotenv.config();
 const app = express();
 
 // Use for testing loading screen or if you want app to be slow for some reason ig?
-app.use((req, res, next) => setTimeout(next, 500));
+// app.use((req, res, next) => setTimeout(next, 500));
 
 app.use(cors({
     origin: process.env.CLIENT_URL || "http://localhost:5000",
