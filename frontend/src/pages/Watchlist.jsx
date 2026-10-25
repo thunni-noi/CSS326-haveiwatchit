@@ -250,17 +250,17 @@ function WatchlistPage({ user }) {
                                     <ListFilter className="h-4 w-4" />
                                     <span className="sr-only">Filter watchlist</span>
                                     <select value={filter} onChange={(event) => setFilter(event.target.value)} className="bg-transparent text-sm text-white outline-none">
-                                        <option value="all">All titles</option>
-                                        {statuses.map((status) => <option key={status.value} value={status.value}>{status.label}</option>)}
+                                        <option value="all" className="bg-neutral-900 text-white">All titles</option>
+                                        {statuses.map((status) => <option key={status.value} value={status.value} className="bg-neutral-900 text-white">{status.label}</option>)}
                                     </select>
                                 </label>
                                 <label className="flex h-10 items-center gap-2 rounded-lg border border-white/10 bg-neutral-900/80 px-3 text-sm text-neutral-400">
                                     <span>Sort</span>
                                     <select value={sort} onChange={(event) => setSort(event.target.value)} className="bg-transparent text-sm text-white outline-none">
-                                        <option value="updated">Recently updated</option>
-                                        <option value="title">Title</option>
-                                        <option value="rating">Rating</option>
-                                        <option value="year">Release year</option>
+                                        <option value="updated" className="bg-neutral-900 text-white">Recently updated</option>
+                                        <option value="title" className="bg-neutral-900 text-white">Title</option>
+                                        <option value="rating" className="bg-neutral-900 text-white">Rating</option>
+                                        <option value="year" className="bg-neutral-900 text-white">Release year</option>
                                     </select>
                                 </label>
                             </div>
