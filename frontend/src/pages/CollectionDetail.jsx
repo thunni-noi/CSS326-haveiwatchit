@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import UserProfile from "../components/UserProfile";
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, BookMarked, Bookmark, Globe, Lock, Trash2, Plus, Search, LoaderCircle } from "lucide-react";
 
@@ -146,7 +147,14 @@ const CollectionDetailPage = ({ shared = false }) => {
                                 <div>
                                     <p className="text-sm uppercase tracking-[0.18em] text-[#EFAC61]">{shared ? "Shared collection" : "My collection"}</p>
                                     <h1 className="mt-2 text-3xl font-bold sm:text-4xl">{collection.name}</h1>
-                                    {collection.owner && <p className="mt-2 text-neutral-300">Created by {collection.owner}</p>}
+                                    {collection.owner && (
+                                        <>
+                                            <span className="flex items-center mt-5 gap-2">
+                                            <UserProfile user={{username: collection.owner, avatar_url: collection.owner_avatar_url}} className="flex h-8 w-8 items-center justify-center rounded-full text-white overflow-hidden"/>
+                                            <span>Created by <span className="font-medium text-[#EFAC61]">{collection.owner}</span></span>
+                                            </span>
+                                        </>
+                                    )}
                                 </div>
                                 <span className="inline-flex items-center gap-2 rounded-full bg-black/20 px-3 py-2 text-sm text-neutral-200">
                                     {collection.is_public ? <Globe className="h-4 w-4 text-green-300" /> : <Lock className="h-4 w-4" />}

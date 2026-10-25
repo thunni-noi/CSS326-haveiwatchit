@@ -5,10 +5,10 @@ const asBoolean = (value) => value === true || value === 1 || value === "1" || v
 
 const getCollection = async (collectionId, userId) => {
     const [rows] = await pool.execute(
-        `SELECT c.id, c.name, c.is_public, c.share_uuid, u.username AS owner
-         FROM collections c
-         JOIN users u ON u.id = c.user_id
-         WHERE c.id = ? AND c.user_id = ?`,
+        `SELECT c.id, c.name, c.is_public, c.share_uuid, u.username AS owner, u.avatar_url AS owner_avatar_url
+        FROM collections c
+        JOIN users u ON u.id = c.user_id
+        WHERE c.id = ? AND c.user_id = ?`,
         [collectionId, userId]
     );
     return rows[0] ?? null;
@@ -17,10 +17,10 @@ const getCollection = async (collectionId, userId) => {
 const getItems = async (collectionId) => {
     const [items] = await pool.execute(
         `SELECT s.id, s.name, s.type, s.photo_url
-         FROM collection_items ci
-         JOIN shows s ON s.id = ci.show_id
-         WHERE ci.collection_id = ?
-         ORDER BY s.name`,
+        FROM collection_items ci
+        JOIN shows s ON s.id = ci.show_id
+        WHERE ci.collection_id = ?
+        ORDER BY s.name`,
         [collectionId]
     );
     return items;
@@ -34,18 +34,18 @@ const attachPreviewItems = async (collections) => {
     const [previewRows] = await pool.execute(
         `SELECT previews.collection_id, previews.id, previews.name,
                 previews.type, previews.photo_url
-         FROM (
-             SELECT ci.collection_id, s.id, s.name, s.type, s.photo_url,
+        FROM (
+            SELECT ci.collection_id, s.id, s.name, s.type, s.photo_url,
                     ROW_NUMBER() OVER (
                         PARTITION BY ci.collection_id
                         ORDER BY ci.show_id DESC
                     ) AS preview_order
-             FROM collection_items ci
-             JOIN shows s ON s.id = ci.show_id
-             WHERE ci.collection_id IN (${placeholders})
-         ) AS previews
-         WHERE previews.preview_order <= 5
-         ORDER BY previews.collection_id, previews.preview_order`,
+            FROM collection_items ci
+            JOIN shows s ON s.id = ci.show_id
+            WHERE ci.collection_id IN (${placeholders})
+        ) AS previews
+        WHERE previews.preview_order <= 5
+        ORDER BY previews.collection_id, previews.preview_order`,
         ids
     );
     const previewsByCollection = new Map();
@@ -66,12 +66,12 @@ export const listCollections = async (req, res) => {
         const [collections] = await pool.execute(
             `SELECT c.id, c.name, c.is_public, c.share_uuid, u.username AS owner,
                     COUNT(ci.show_id) AS item_count
-             FROM collections c
-             JOIN users u ON u.id = c.user_id
-             LEFT JOIN collection_items ci ON ci.collection_id = c.id
-             WHERE c.user_id = ?
-             GROUP BY c.id
-             ORDER BY c.id DESC`,
+            FROM collections c
+            JOIN users u ON u.id = c.user_id
+            LEFT JOIN collection_items ci ON ci.collection_id = c.id
+            WHERE c.user_id = ?
+            GROUP BY c.id
+            ORDER BY c.id DESC`,
             [req.user.id]
         );
 
@@ -79,19 +79,19 @@ export const listCollections = async (req, res) => {
             const [previewRows] = await pool.execute(
                 `SELECT previews.collection_id, previews.id, previews.name,
                         previews.type, previews.photo_url
-                 FROM (
-                     SELECT ci.collection_id, s.id, s.name, s.type, s.photo_url,
+                FROM (
+                    SELECT ci.collection_id, s.id, s.name, s.type, s.photo_url,
                             ROW_NUMBER() OVER (
                                 PARTITION BY ci.collection_id
                                 ORDER BY ci.show_id DESC
                             ) AS preview_order
-                     FROM collection_items ci
-                     JOIN collections c ON c.id = ci.collection_id
-                     JOIN shows s ON s.id = ci.show_id
-                     WHERE c.user_id = ?
-                 ) AS previews
-                 WHERE previews.preview_order <= 5
-                 ORDER BY previews.collection_id, previews.preview_order`,
+                    FROM collection_items ci
+                    JOIN collections c ON c.id = ci.collection_id
+                    JOIN shows s ON s.id = ci.show_id
+                    WHERE c.user_id = ?
+                ) AS previews
+                WHERE previews.preview_order <= 5
+                ORDER BY previews.collection_id, previews.preview_order`,
                 [req.user.id]
             );
             const previewsByCollection = new Map();
@@ -118,12 +118,12 @@ export const listPublicCollections = async (req, res) => {
         const [collections] = await pool.execute(
             `SELECT c.id, c.name, c.is_public, c.share_uuid, u.username AS owner,
                     COUNT(ci.show_id) AS item_count
-             FROM collections c
-             JOIN users u ON u.id = c.user_id
-             LEFT JOIN collection_items ci ON ci.collection_id = c.id
-             WHERE c.is_public = TRUE AND c.user_id <> ?
-             GROUP BY c.id
-             ORDER BY c.id DESC`,
+            FROM collections c
+            JOIN users u ON u.id = c.user_id
+            LEFT JOIN collection_items ci ON ci.collection_id = c.id
+            WHERE c.is_public = TRUE AND c.user_id <> ?
+            GROUP BY c.id
+            ORDER BY c.id DESC`,
             [req.user.id]
         );
 
@@ -131,19 +131,19 @@ export const listPublicCollections = async (req, res) => {
             const [previewRows] = await pool.execute(
                 `SELECT previews.collection_id, previews.id, previews.name,
                         previews.type, previews.photo_url
-                 FROM (
-                     SELECT ci.collection_id, s.id, s.name, s.type, s.photo_url,
+                FROM (
+                    SELECT ci.collection_id, s.id, s.name, s.type, s.photo_url,
                             ROW_NUMBER() OVER (
                                 PARTITION BY ci.collection_id
                                 ORDER BY ci.show_id DESC
                             ) AS preview_order
-                     FROM collection_items ci
-                     JOIN collections c ON c.id = ci.collection_id
-                     JOIN shows s ON s.id = ci.show_id
-                     WHERE c.is_public = TRUE AND c.user_id <> ?
-                 ) AS previews
-                 WHERE previews.preview_order <= 5
-                 ORDER BY previews.collection_id, previews.preview_order`,
+                    FROM collection_items ci
+                    JOIN collections c ON c.id = ci.collection_id
+                    JOIN shows s ON s.id = ci.show_id
+                    WHERE c.is_public = TRUE AND c.user_id <> ?
+                ) AS previews
+                WHERE previews.preview_order <= 5
+                ORDER BY previews.collection_id, previews.preview_order`,
                 [req.user.id]
             );
             const previewsByCollection = new Map();
@@ -170,13 +170,13 @@ export const listFollowedCollections = async (req, res) => {
         const [collections] = await pool.execute(
             `SELECT c.id, c.name, c.is_public, c.share_uuid, u.username AS owner,
                     COUNT(ci.show_id) AS item_count
-             FROM collection_follows cf
-             JOIN collections c ON c.id = cf.collection_id AND c.is_public = TRUE
-             JOIN users u ON u.id = c.user_id
-             LEFT JOIN collection_items ci ON ci.collection_id = c.id
-             WHERE cf.user_id = ?
-             GROUP BY c.id, cf.created_at
-             ORDER BY cf.created_at DESC`,
+            FROM collection_follows cf
+            JOIN collections c ON c.id = cf.collection_id AND c.is_public = TRUE
+            JOIN users u ON u.id = c.user_id
+            LEFT JOIN collection_items ci ON ci.collection_id = c.id
+            WHERE cf.user_id = ?
+            GROUP BY c.id, cf.created_at
+            ORDER BY cf.created_at DESC`,
             [req.user.id]
         );
         await attachPreviewItems(collections);
@@ -198,24 +198,24 @@ export const searchPublicCollections = async (req, res) => {
             ?? query.match(/^([\da-f-]{36})$/i);
         const sql = uuidMatch
             ? `SELECT c.id, c.name, c.is_public, c.share_uuid, u.username AS owner,
-                      COUNT(ci.show_id) AS item_count,
-                      EXISTS(SELECT 1 FROM collection_follows cf WHERE cf.user_id = ? AND cf.collection_id = c.id) AS is_followed
-               FROM collections c
-               JOIN users u ON u.id = c.user_id
-               LEFT JOIN collection_items ci ON ci.collection_id = c.id
-               WHERE c.is_public = TRUE AND c.user_id <> ? AND c.share_uuid = ?
-               GROUP BY c.id
-               ORDER BY c.id DESC`
+                COUNT(ci.show_id) AS item_count,
+                EXISTS(SELECT 1 FROM collection_follows cf WHERE cf.user_id = ? AND cf.collection_id = c.id) AS is_followed
+            FROM collections c
+            JOIN users u ON u.id = c.user_id
+            LEFT JOIN collection_items ci ON ci.collection_id = c.id
+            WHERE c.is_public = TRUE AND c.user_id <> ? AND c.share_uuid = ?
+            GROUP BY c.id
+            ORDER BY c.id DESC`
             : `SELECT c.id, c.name, c.is_public, c.share_uuid, u.username AS owner,
-                      COUNT(ci.show_id) AS item_count,
-                      EXISTS(SELECT 1 FROM collection_follows cf WHERE cf.user_id = ? AND cf.collection_id = c.id) AS is_followed
-               FROM collections c
-               JOIN users u ON u.id = c.user_id
-               LEFT JOIN collection_items ci ON ci.collection_id = c.id
-               WHERE c.is_public = TRUE AND c.user_id <> ? AND u.username LIKE ?
-               GROUP BY c.id
-               ORDER BY c.id DESC
-               LIMIT 30`;
+                COUNT(ci.show_id) AS item_count,
+                EXISTS(SELECT 1 FROM collection_follows cf WHERE cf.user_id = ? AND cf.collection_id = c.id) AS is_followed
+            FROM collections c
+            JOIN users u ON u.id = c.user_id
+            LEFT JOIN collection_items ci ON ci.collection_id = c.id
+            WHERE c.is_public = TRUE AND c.user_id <> ? AND u.username LIKE ?
+            GROUP BY c.id
+            ORDER BY c.id DESC
+            LIMIT 30`;
         const params = uuidMatch
             ? [req.user.id, req.user.id, uuidMatch[1]]
             : [req.user.id, req.user.id, `%${query}%`];
@@ -307,7 +307,7 @@ export const updateCollection = async (req, res) => {
         const [rows] = await pool.execute(
             `SELECT c.id, c.name, c.is_public, c.share_uuid,
                     (SELECT COUNT(*) FROM collection_items ci WHERE ci.collection_id = c.id) AS item_count
-             FROM collections c WHERE c.id = ? AND c.user_id = ?`,
+            FROM collections c WHERE c.id = ? AND c.user_id = ?`,
             [req.params.id, req.user.id]
         );
         return res.json({ collection: rows[0] });
@@ -350,7 +350,7 @@ export const getCollectionDetails = async (req, res) => {
 export const getSharedCollection = async (req, res) => {
     try {
         const [rows] = await pool.execute(
-            `SELECT c.id, c.name, c.is_public, c.share_uuid, u.username AS owner
+            `SELECT c.id, c.name, c.is_public, c.share_uuid, u.username AS owner, u.avatar_url AS owner_avatar_url
              FROM collections c
              JOIN users u ON u.id = c.user_id
              WHERE c.share_uuid = ? AND c.is_public = TRUE`,

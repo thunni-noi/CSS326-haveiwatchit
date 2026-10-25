@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import {
     Check,
@@ -13,7 +13,9 @@ import {
     Trash2,
     X,
 } from "lucide-react";
-import UserProfile from "../components/UserProfile";
+import { Navigate } from "react-router-dom";
+import LoadingPlaceHolder from "../components/LoadingScreen";
+import ErrorDisplay from "../components/ErrorDisplay";
 
 const statuses = [
     { value: "wishlist", label: "Want to watch" },
@@ -50,6 +52,8 @@ function WatchlistPage({ user }) {
     const [addingId, setAddingId] = useState(null);
     const [selectedShow, setSelectedShow] = useState(null);
     const [busyId, setBusyId] = useState(null);
+
+    const navigate = useNavigate();
 
     useEffect(() => {
         if (!user) {
@@ -171,27 +175,20 @@ function WatchlistPage({ user }) {
     };
 
     return (
-        <main className="min-h-screen pt-24 pb-16 text-white">
-            <section className="border-y border-white/10 bg-linear-to-r from-[#251329]/95 via-[#30204a]/95 to-[#4a214b]/90">
+        <main className="container mx-auto px-4 py-6">
+            <div className="py-24 mx-auto min-h-screen bg-black/50 backdrop-blur-lg text-white">
+            <section className= "border-b border-white/10">
                 <div className="mx-auto max-w-5xl px-5 py-9 sm:px-8">
-                    <p className="mb-2 text-sm font-semibold uppercase tracking-[0.2em] text-[#EFAC61]">Your library</p>
-                    <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Your Watchlist</h1>
-                    <p className="mt-2 text-sm text-neutral-300">Movies and TV shows you want to watch.</p>
+                    <h1 className="text-3xl font-semibold tracking-tight sm:text-5xl">Your Watchlist</h1>
+                    <p className="pl-2 mt-2 text-sm text-neutral-300 font-semibold">Movies and TV shows you want to watch.</p>
                     <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-neutral-300">
-                        <span className="flex items-center gap-2">
-                            <UserProfile user={user} className="flex h-8 w-8 items-center justify-center rounded-full text-white overflow-hidden"/>
-                            {/* <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#303969] text-sm font-bold text-white">
-                                {user?.username?.charAt(0)?.toUpperCase() || "?"}
-                            </span> */}
-                            <span>Created by <span className="font-medium text-[#EFAC61]">{user?.username || "Guest"}</span></span>
-                        </span>
-                        <span>{items.length} {items.length === 1 ? "title" : "titles"}</span>
+                        <span>Contains {items.length} {items.length === 1 ? "title" : "titles"}</span>
                         <span>You've watched {watchedPercent}%</span>
                     </div>
                 </div>
             </section>
 
-            <div className="mx-auto max-w-5xl px-5 sm:px-8">
+            <div className="mx-auto max-w-5xl sm:px-8">
                 {!user ? (
                     <section className="mt-8 rounded-xl border border-white/10 bg-neutral-900/80 p-8 text-center">
                         <h2 className="text-xl font-semibold">Sign in to see your watchlist</h2>
@@ -269,14 +266,17 @@ function WatchlistPage({ user }) {
                         </section>
 
                         {error && (
-                            <div role="alert" className="mt-4 flex items-center justify-between gap-3 rounded-lg border border-red-400/30 bg-red-950/50 px-4 py-3 text-sm text-red-200">
-                                <span>{error}</span>
-                                <button type="button" onClick={() => setError("")} aria-label="Dismiss error"><X className="h-4 w-4" /></button>
-                            </div>
+                            <ErrorDisplay text="There is an error, Please try again later." className="py-3" />
+                            // <div role="alert" className="mt-4 flex items-center justify-between gap-3 rounded-lg border border-red-400/30 bg-red-950/50 px-4 py-3 text-sm text-red-200">
+                            //     <span>{error}</span>
+                            //     <button type="button" onClick={() => setError("")} aria-label="Dismiss error"><X className="h-4 w-4" /></button>
+                            // </div>
                         )}
 
                         {loading ? (
-                            <div className="flex justify-center py-20 text-[#EFAC61]"><LoaderCircle className="h-8 w-8 animate-spin" /></div>
+                            <div className="flex justify-center py-20 text-[#EFAC61]">
+                                <LoadingPlaceHolder/>
+                            </div>
                         ) : items.length === 0 ? (
                             <section className="mt-6 rounded-xl border border-white/10 bg-neutral-900/70 px-6 py-16 text-center">
                                 <ListFilter className="mx-auto h-9 w-9 text-neutral-500" />
@@ -308,7 +308,7 @@ function WatchlistPage({ user }) {
                                             <div className="min-w-0 flex-1">
                                                 <div className="flex flex-wrap items-start justify-between gap-3">
                                                     <div className="min-w-0">
-                                                        <button type="button" onClick={() => setSelectedShow(item)} className="text-left text-base font-semibold hover:text-[#EFAC61] sm:text-lg">
+                                                        <button type="button" onClick={() =>  navigate(`/shows/${item.show_id}`)} className="text-left text-base font-semibold hover:text-[#EFAC61] sm:text-lg">
                                                             {index + 1}. {item.title}
                                                         </button>
                                                         <p className="mt-1 text-sm text-neutral-400">
@@ -425,6 +425,7 @@ function WatchlistPage({ user }) {
                     </section>
                 </div>
             )}
+            </div>
         </main>
     );
 }
