@@ -323,6 +323,7 @@ LOCK TABLES `users` WRITE;
 INSERT INTO `users` VALUES (1,'admin','admin@example.com','$2a$12$0JBkcIiTucd27sH0qLl/UeJ8qQn5jm9vX6ACuRCuiphZpbYiDkGWy','admin',1,0,0,'2026-10-09 08:43:17'),(2,'mod_0','mod@example.com','$2b$10$qlNOJui/5c/3Vzzo5sKFDu8XCZS4B0onW7U3/lY0/uGxoEZN/8CPu','moderator',1,0,0,'2026-10-09 08:43:17'),(3,'user_0','user0@example.com','$2b$10$qlNOJui/5c/3Vzzo5sKFDu8XCZS4B0onW7U3/lY0/uGxoEZN/8CPu','user',0,0,0,'2026-10-09 08:43:17'),(4,'user_1','user1@example.com','$2b$10$qlNOJui/5c/3Vzzo5sKFDu8XCZS4B0onW7U3/lY0/uGxoEZN/8CPu','user',0,0,0,'2026-10-09 08:43:17'),(5,'thunninoi','thunninoi@gmail.com','$2b$10$LRdarIBYdlCF7v8h2VjsF.s5V9XZGtzrGLhF2hbMfhAoqnvkL3lG.','user',0,0,0,'2026-10-09 10:46:11'),(6,'jonwick','reeve@gmail.com','$2b$10$22eyKBkmhWCvUZbcZJCshuFTY5CH4DfJDZRufH/RfJLBZ2zvqAiZO','user',0,0,0,'2026-10-09 15:41:49'),(7,'Amiyii','amiyii@rhodes.com','$2b$10$NeA4lR2381h.PUTP/OAd7e4qjRiwo5EgVMMQQIek08nJzN34QgCYK','user',0,0,0,'2026-10-10 06:19:11');
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
+ALTER TABLE `users` ADD COLUMN `avatar_url` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL;
 
 --
 -- Table structure for table `watchlist_items`

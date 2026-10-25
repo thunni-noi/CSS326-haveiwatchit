@@ -36,6 +36,8 @@ INSERT INTO `users` VALUES (1,'admin','admin@example.com','$2a$12$0JBkcIiTucd27s
 -- shows
 -- ---------------------------------------------
 
+ALTER TABLE `users` ADD COLUMN `avatar_url` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL;
+
 DROP TABLE IF EXISTS `shows`;
 CREATE TABLE `shows` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT,

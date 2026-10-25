@@ -32,6 +32,7 @@ CREATE TABLE users (
   is_suspended BOOLEAN         NOT NULL DEFAULT FALSE,
   reputation   INT             NOT NULL DEFAULT 0,
   created_at   TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  avatar_url   VARCHAR(500)    NULL,
   PRIMARY KEY (id),
   UNIQUE KEY uq_users_username (username),
   UNIQUE KEY uq_users_email (email)
