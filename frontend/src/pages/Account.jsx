@@ -1,17 +1,83 @@
 import axios from "axios";
-import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Camera } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import {
+    ArrowLeft,
+    Camera,
+    Mail,
+    Pencil,
+    Plus,
+    UserRound,
+    CheckCircle2,
+    AlertCircle,
+    LoaderCircle,
+} from "lucide-react";
 
 const ALLOWED = ["image/jpeg", "image/png", "image/webp"];
+const MAX_SIZE = 2 * 1024 * 1024;
 
-const Account = ({ user, setUser }) => {
+const statusLabel = {
+    wishlist: "Want to watch",
+    watching: "Watching",
+    watched: "Watched",
+    rewatching: "Rewatching",
+    on_hold: "On hold",
+    dropped: "Dropped",
+};
+
+const tabs = [
+    { key: "board", label: "Board" },
+    { key: "activity", label: "Activity" },
+    { key: "edit", label: "Edit" },
+];
+
+function Widget({ title, items }) {
+    const shown = items.slice(0, 3);
+
+    return (
+        <Link
+            to="/watchlist"
+            className="flex min-h-40 flex-col items-center justify-center gap-3 rounded-2xl border border-white/[0.06] bg-white/[0.03] p-4 text-center transition hover:border-[#EFAC61]/30 hover:bg-white/[0.06]"
+        >
+            {shown.length > 0 ? (
+                <div className="flex -space-x-4">
+                    {shown.map((item) => (
+                        <div
+                            key={item.show_id}
+                            className="h-24 w-16 overflow-hidden rounded-lg border-2 border-[#232327] bg-neutral-800 shadow-lg"
+                        >
+                            {item.poster_url && (
+                                <img src={item.poster_url} alt="" className="h-full w-full object-cover" />
+                            )}
+                        </div>
+                    ))}
+                </div>
+            ) : (
+                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white">
+                    <Plus size={18} />
+                </span>
+            )}
+            <span className="text-sm font-semibold">{title}</span>
+            {shown.length > 0 && (
+                <span className="-mt-2 text-xs text-neutral-500">
+                    {items.length} {items.length === 1 ? "title" : "titles"}
+                </span>
+            )}
+        </Link>
+    );
+}
+
+function Account({ user, setUser }) {
     const navigate = useNavigate();
     const fileRef = useRef(null);
+    const userId = user?.id;
 
+    const [tab, setTab] = useState("board");
+    const [items, setItems] = useState([]);
     const [username, setUsername] = useState(user?.username ?? "");
     const [file, setFile] = useState(null);
     const [preview, setPreview] = useState(null);
+    const [avatarError, setAvatarError] = useState(false);
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState({ type: "", text: "" });
 
@@ -19,37 +85,94 @@ const Account = ({ user, setUser }) => {
         setUsername(user?.username ?? "");
     }, [user]);
 
-    // สร้างรูปตัวอย่างจากไฟล์ที่เลือก และคืนหน่วยความจำเมื่อเปลี่ยนไฟล์
     useEffect(() => {
-        if (!file) return;
+        setAvatarError(false);
+    }, [user?.avatar_url]);
+
+    useEffect(() => {
+        setAvatarError(false);
+
+        if (!file) {
+            setPreview(null);
+            return undefined;
+        }
+
         const url = URL.createObjectURL(file);
         setPreview(url);
         return () => URL.revokeObjectURL(url);
     }, [file]);
 
-    if (!user) return null; // ยังไม่ล็อกอิน (ควรมี route guard พาไปหน้า login)
+    useEffect(() => {
+        if (!userId) return undefined;
+        const controller = new AbortController();
+        axios.get("/api/watchlist", { signal: controller.signal })
+            .then(({ data }) => setItems(data.items))
+            .catch(() => setItems([]));
+        return () => controller.abort();
+    }, [userId]);
+
+    const groups = useMemo(() => ({
+        watching: items.filter((i) => i.status === "watching" || i.status === "rewatching"),
+        wishlist: items.filter((i) => i.status === "wishlist"),
+        watched: items.filter((i) => i.status === "watched"),
+        topRated: [...items]
+            .filter((i) => Number(i.avg_score) > 0)
+            .sort((a, b) => Number(b.avg_score) - Number(a.avg_score)),
+    }), [items]);
+
+    const activity = useMemo(
+        () => [...items].sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at)).slice(0, 10),
+        [items]
+    );
+
+    if (!user) return null;
+
+    const avatarSrc = preview || user.avatar_url || null;
+    const changed = username.trim() !== (user.username ?? "") || file !== null;
+    const memberSince = user.created_at
+        ? new Date(user.created_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })
+        : null;
 
     const onPick = (e) => {
-        const f = e.target.files?.[0];
-        if (!f) return;
-        if (!ALLOWED.includes(f.type)) {
-            setMessage({ type: "error", text: "Please choose a JPG, PNG or WebP image" });
+        const selected = e.target.files?.[0];
+        if (!selected) return;
+
+        if (!ALLOWED.includes(selected.type)) {
+            setMessage({ type: "error", text: "Please choose a JPG, PNG or WebP image." });
+            e.target.value = "";
             return;
         }
-        if (f.size > 2 * 1024 * 1024) {
-            setMessage({ type: "error", text: "Image must be under 2 MB" });
+
+        if (selected.size > MAX_SIZE) {
+            setMessage({ type: "error", text: "Image must be smaller than 2 MB." });
+            e.target.value = "";
             return;
         }
+
+        setFile(selected);
         setMessage({ type: "", text: "" });
-        setFile(f);
     };
 
-    const changed = username.trim() !== user.username || file !== null;
+    const handleReset = () => {
+        setUsername(user.username ?? "");
+        setFile(null);
+        if (fileRef.current) fileRef.current.value = "";
+        setMessage({ type: "", text: "" });
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setMessage({ type: "", text: "" });
+
+        if (!username.trim()) {
+            setMessage({ type: "error", text: "Display name cannot be empty." });
+            setTab("edit");
+            return;
+        }
+
+        if (!changed || saving) return;
+
         setSaving(true);
+        setMessage({ type: "", text: "" });
 
         try {
             const data = new FormData();
@@ -57,111 +180,291 @@ const Account = ({ user, setUser }) => {
             if (file) data.append("avatar", file);
 
             const res = await axios.put("/api/account", data);
-            setUser(res.data.user);
+            const saved = res.data.user;
+
+            if (file && saved.avatar_url === user.avatar_url) {
+                setMessage({
+                    type: "error",
+                    text: "The server did not save the photo. Check the backend terminal.",
+                });
+                return;
+            }
+
+            setUser((prev) => ({ ...prev, ...saved }));
             setFile(null);
-            setPreview(null);
-            setMessage({ type: "success", text: "Profile updated" });
+            if (fileRef.current) fileRef.current.value = "";
+            setMessage({ type: "success", text: "Profile updated." });
         } catch (err) {
             setMessage({
                 type: "error",
-                text: err.response?.data?.message || "Something went wrong",
+                text: err.response?.data?.message || "Unable to update your profile. Please try again.",
             });
         } finally {
             setSaving(false);
         }
     };
 
-    const avatarSrc = preview || user.avatar_url;
-
     return (
-        <div className="min-h-[80vh] flex items-center justify-center p-4 pt-20 bg-gradient-to-b from-[#1A1A1A] to-[#0D0D0D]">
-            <form
-                className="relative bg-white p-8 rounded-xl shadow-xl shadow-blue-500/20 w-full max-w-md text-center"
-                onSubmit={handleSubmit}
-            >
+        <main className="min-h-screen bg-gradient-to-b from-neutral-900 via-neutral-950 to-black px-4 pb-32 pt-24 text-white sm:px-6">
+            <div className="mx-auto max-w-5xl">
                 <button
                     type="button"
                     onClick={() => navigate(-1)}
-                    aria-label="Go back"
-                    className="absolute left-4 top-4 rounded-full p-2 text-gray-500 transition hover:bg-gray-100 hover:text-gray-800"
+                    className="mb-6 inline-flex items-center gap-2 rounded-xl border border-white/5 px-3 py-2 text-sm text-neutral-400 transition hover:border-[#9596D6]/20 hover:bg-[#9596D6]/[0.08] hover:text-white"
                 >
-                    <ArrowLeft className="h-5 w-5" />
+                    <ArrowLeft size={18} />
+                    Back
                 </button>
 
-                <h2 className="text-3xl mb-2 font-bold text-gray-800">Manage Account</h2>
-                <p className="text-gray-500 mb-6">Update your photo and display name.</p>
+                <form onSubmit={handleSubmit}>
+                    <div className="grid gap-4 rounded-3xl border border-white/10 bg-[#232327] p-3 shadow-2xl shadow-black/40 lg:grid-cols-[380px_minmax(0,1fr)]">
+                        {/* Left: profile card (Centering contents) */}
+                        <aside className="h-fit overflow-hidden rounded-2xl bg-[#2b2b31]">
+                            <div className="h-28 bg-gradient-to-r from-[#251329] via-[#30204a] to-[#4a214b]" />
 
-                {/* Avatar */}
-                <div className="relative mx-auto mb-6 h-28 w-28">
-                    {avatarSrc ? (
-                        <img
-                            src={avatarSrc}
-                            alt="Your avatar"
-                            className="h-28 w-28 rounded-full object-cover border-4 border-white shadow-md"
-                        />
-                    ) : (
-                        <div className="h-28 w-28 rounded-full bg-[#9596D6] text-white text-4xl font-bold flex items-center justify-center shadow-md">
-                            {user.username?.[0]?.toUpperCase()}
+                            <div className="px-5 pb-6 text-center">
+                                <div className="relative -mt-14 mx-auto w-fit">
+                                    <div className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-full border-[6px] border-[#2b2b31] bg-[#1c1c20]">
+                                        {avatarSrc && !avatarError ? (
+                                            <img
+                                                src={avatarSrc}
+                                                alt="Profile"
+                                                onError={() => setAvatarError(true)}
+                                                className="h-full w-full object-cover"
+                                            />
+                                        ) : (
+                                            <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#9596D6] to-[#4a214b] text-4xl font-bold">
+                                                {(user.username || "U").trim().charAt(0)}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <button
+                                        type="button"
+                                        onClick={() => fileRef.current?.click()}
+                                        aria-label="Change profile photo"
+                                        className="absolute bottom-0 right-0 flex h-9 w-9 items-center justify-center rounded-full border-4 border-[#2b2b31] bg-[#EFAC61] text-[#251329] shadow-lg transition hover:scale-105 hover:bg-[#f5c184]"
+                                    >
+                                        <Camera size={15} />
+                                    </button>
+
+                                    <input
+                                        ref={fileRef}
+                                        type="file"
+                                        accept="image/jpeg,image/png,image/webp"
+                                        onChange={onPick}
+                                        className="hidden"
+                                    />
+                                </div>
+
+                                <h1 className="mt-4 break-all text-2xl font-bold">{user.username}</h1>
+                                <p className="text-sm capitalize text-neutral-400">{user.role}</p>
+
+                                <button
+                                    type="button"
+                                    onClick={() => setTab("edit")}
+                                    className="mt-4 inline-flex items-center gap-2 rounded-lg bg-[#303969] px-4 py-2 text-sm font-semibold transition hover:bg-[#414b82] mx-auto"
+                                >
+                                    <Pencil size={15} />
+                                    Edit Profile
+                                </button>
+
+                                <p className="mt-5 text-sm leading-6 text-neutral-300">
+                                    {user.bio || "No bio yet."}
+                                </p>
+
+                                {memberSince && (
+                                    <div className="mt-5">
+                                        <p className="text-xs font-bold text-neutral-300">Member Since</p>
+                                        <p className="mt-1 text-sm text-neutral-400">{memberSince}</p>
+                                    </div>
+                                )}
+                            </div>
+                        </aside>
+
+                        {/* Right: tabs */}
+                        <section className="min-w-0 p-3 sm:p-5">
+                            <div className="flex gap-6 border-b border-white/10">
+                                {tabs.map((t) => (
+                                    <button
+                                        key={t.key}
+                                        type="button"
+                                        onClick={() => setTab(t.key)}
+                                        className={`-mb-px border-b-2 pb-2 text-sm font-semibold transition ${
+                                            tab === t.key
+                                                ? "border-white text-white"
+                                                : "border-transparent text-neutral-400 hover:text-white"
+                                        }`}
+                                    >
+                                        {t.label}
+                                    </button>
+                                ))}
+                            </div>
+
+                            {message.text && (
+                                <div
+                                    role="status"
+                                    className={`mt-4 flex items-start gap-2 rounded-xl border p-3 text-sm ${
+                                        message.type === "success"
+                                            ? "border-[#9596D6]/25 bg-[#9596D6]/10 text-[#c8c9ff]"
+                                            : "border-red-400/20 bg-red-400/10 text-red-300"
+                                    }`}
+                                >
+                                    {message.type === "success" ? (
+                                        <CheckCircle2 size={18} className="mt-0.5 shrink-0" />
+                                    ) : (
+                                        <AlertCircle size={18} className="mt-0.5 shrink-0" />
+                                    )}
+                                    <span>{message.text}</span>
+                                </div>
+                            )}
+
+                            {tab === "board" && (
+                                <>
+                                    <div className="mt-8 text-center">
+                                        <h2 className="text-base font-semibold">Your movie board</h2>
+                                        <p className="mx-auto mt-1 max-w-xs text-sm text-neutral-400">
+                                            A quick look at what you're watching and what's next.
+                                        </p>
+                                    </div>
+
+                                    <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                                        <Widget title="Currently watching" items={groups.watching} />
+                                        <Widget title="Want to watch" items={groups.wishlist} />
+                                        <Widget title="Watched" items={groups.watched} />
+                                        <Widget title="Top rated" items={groups.topRated} />
+                                    </div>
+                                </>
+                            )}
+
+                            {tab === "activity" && (
+                                <div className="mt-5 space-y-2">
+                                    {activity.length === 0 ? (
+                                        <p className="py-12 text-center text-sm text-neutral-500">No activity yet.</p>
+                                    ) : (
+                                        activity.map((item) => (
+                                            <div
+                                                key={item.show_id}
+                                                className="flex items-center gap-3 rounded-xl bg-white/[0.03] p-3"
+                                            >
+                                                <div className="h-14 w-10 shrink-0 overflow-hidden rounded bg-neutral-800">
+                                                    {item.poster_url && (
+                                                        <img src={item.poster_url} alt="" className="h-full w-full object-cover" />
+                                                    )}
+                                                </div>
+                                                <div className="min-w-0 flex-1">
+                                                    <p className="truncate text-sm font-medium">{item.title}</p>
+                                                    <p className="text-xs text-[#9596D6]">
+                                                        {statusLabel[item.status] || item.status}
+                                                    </p>
+                                                </div>
+                                                <span className="shrink-0 text-xs text-neutral-500">
+                                                    {new Date(item.updated_at).toLocaleDateString()}
+                                                </span>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            )}
+
+                            {tab === "edit" && (
+                                <div className="mt-6 space-y-6">
+                                    <div>
+                                        <div className="mb-2 flex items-center justify-between">
+                                            <label htmlFor="username" className="text-sm font-medium text-neutral-300">
+                                                Display name
+                                            </label>
+                                            <span className="text-xs text-neutral-500">{username.length}/50</span>
+                                        </div>
+                                        <div className="relative">
+                                            <UserRound size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9596D6]" />
+                                            <input
+                                                id="username"
+                                                type="text"
+                                                value={username}
+                                                onChange={(e) => {
+                                                    setUsername(e.target.value);
+                                                    setMessage({ type: "", text: "" });
+                                                }}
+                                                maxLength={50}
+                                                required
+                                                placeholder="Enter your display name"
+                                                className="w-full rounded-xl border border-white/10 bg-black/25 py-3.5 pl-11 pr-4 text-sm text-white outline-none transition placeholder:text-neutral-600 focus:border-[#EFAC61]/70 focus:bg-black/35 focus:ring-2 focus:ring-[#EFAC61]/10"
+                                            />
+                                        </div>
+                                        <p className="mt-2 text-xs text-neutral-500">This is the name displayed on your profile.</p>
+                                    </div>
+
+                                    <div>
+                                        <label htmlFor="email" className="mb-2 block text-sm font-medium text-neutral-300">
+                                            Email address
+                                        </label>
+                                        <div className="relative">
+                                            <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-500" />
+                                            <input
+                                                id="email"
+                                                type="email"
+                                                value={user.email ?? ""}
+                                                disabled
+                                                className="w-full cursor-not-allowed rounded-xl border border-white/5 bg-white/[0.03] py-3.5 pl-11 pr-4 text-sm text-neutral-500 outline-none"
+                                            />
+                                        </div>
+                                        <p className="mt-2 text-xs text-neutral-500">Your email address cannot be changed here.</p>
+                                    </div>
+
+                                    <div>
+                                        <p className="mb-2 text-sm font-medium text-neutral-300">Profile photo</p>
+                                        <button
+                                            type="button"
+                                            onClick={() => fileRef.current?.click()}
+                                            className="inline-flex items-center gap-2 rounded-xl border border-[#9596D6]/25 bg-[#303969]/60 px-4 py-2.5 text-sm font-medium text-[#eee9fb] transition hover:bg-[#303969]"
+                                        >
+                                            <Camera size={16} />
+                                            Choose a photo
+                                        </button>
+                                        <p className="mt-2 text-xs text-neutral-500">JPG, PNG or WebP · max 2 MB</p>
+                                    </div>
+                                </div>
+                            )}
+                        </section>
+                    </div>
+
+                    {/* Unsaved changes bar */}
+                    {changed && (
+                        <div className="fixed inset-x-0 bottom-4 z-40 px-4">
+                            <div className="mx-auto flex max-w-2xl items-center justify-between gap-3 rounded-2xl border border-white/10 bg-[#1c1c20]/95 px-4 py-3 shadow-2xl shadow-black/50 backdrop-blur-xl">
+                                <p className="text-sm text-neutral-200">Careful — you have unsaved changes!</p>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={handleReset}
+                                        disabled={saving}
+                                        className="rounded-lg px-3 py-2 text-sm font-medium text-neutral-300 transition hover:underline disabled:opacity-50"
+                                    >
+                                        Reset
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={saving}
+                                        className="inline-flex items-center gap-2 rounded-lg bg-[#EFAC61] px-4 py-2 text-sm font-semibold text-[#251329] transition hover:bg-[#f5c184] disabled:opacity-50"
+                                    >
+                                        {saving ? (
+                                            <>
+                                                <LoaderCircle size={16} className="animate-spin" />
+                                                Saving...
+                                            </>
+                                        ) : (
+                                            "Save Changes"
+                                        )}
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     )}
-                    <button
-                        type="button"
-                        onClick={() => fileRef.current?.click()}
-                        aria-label="Change photo"
-                        className="absolute bottom-0 right-0 rounded-full bg-blue-500 p-2 text-white shadow hover:bg-blue-600 transition"
-                    >
-                        <Camera className="h-4 w-4" />
-                    </button>
-                    <input
-                        ref={fileRef}
-                        type="file"
-                        accept="image/jpeg,image/png,image/webp"
-                        className="hidden"
-                        onChange={onPick}
-                    />
-                </div>
-
-                {message.text && (
-                    <p className={`text-sm mb-4 ${message.type === "error" ? "text-red-500" : "text-green-600"}`}>
-                        {message.text}
-                    </p>
-                )}
-
-                <label className="block text-left text-sm text-gray-500 mb-1" htmlFor="username">
-                    Display name
-                </label>
-                <input
-                    id="username"
-                    type="text"
-                    required
-                    minLength={3}
-                    maxLength={30}
-                    className="border border-gray-300 rounded-lg p-3 w-full mb-3 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                />
-
-                <label className="block text-left text-sm text-gray-500 mb-1" htmlFor="email">
-                    Email
-                </label>
-                <input
-                    id="email"
-                    type="email"
-                    disabled
-                    className="border border-gray-200 bg-gray-100 rounded-lg p-3 w-full mb-5 text-gray-500"
-                    value={user.email ?? ""}
-                />
-
-                <button
-                    type="submit"
-                    disabled={!changed || saving}
-                    className="bg-blue-500 text-white font-semibold p-3 w-full rounded-lg hover:bg-blue-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                    {saving ? "Saving..." : "Save changes"}
-                </button>
-            </form>
-        </div>
+                </form>
+            </div>
+        </main>
     );
-};
+}
 
 export default Account;

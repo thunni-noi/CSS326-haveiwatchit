@@ -1,21 +1,89 @@
-import React , { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { Star as StarIcon, Clapperboard as ClapperBoardIcon, SquarePlus as AddWatchIcon } from "lucide-react";
+import { Check, Clapperboard as ClapperBoardIcon, LoaderCircle, Plus as AddWatchIcon, Star as StarIcon, X } from "lucide-react";
 import ErrorDisplay from "../ErrorDisplay";
 
 const AUTOMOVE_MS = 10000; // 10 sec
 
-function HeroUI( { shows =[], loading = false, error = false }) {
+const watchlistStatuses = [
+    { value: "wishlist", label: "Want to watch" },
+    { value: "watching", label: "Watching" },
+    { value: "watched", label: "Watched" },
+    { value: "rewatching", label: "Rewatching" },
+    { value: "on_hold", label: "On hold" },
+    { value: "dropped", label: "Dropped" },
+];
+
+function HeroUI( { shows =[], error = false, user = null }) {
     const navigate = useNavigate()
     const [showIndex, setShowIndex] = useState(0);
+    const showCount = shows.length;
+    const [watchlistShow, setWatchlistShow] = useState(null);
+    const [selectedStatus, setSelectedStatus] = useState("wishlist");
+    const [currentWatchlistItem, setCurrentWatchlistItem] = useState(null);
+    const [watchlistLoading, setWatchlistLoading] = useState(false);
+    const [saving, setSaving] = useState(false);
+    const [watchlistError, setWatchlistError] = useState("");
+    const [savedStatus, setSavedStatus] = useState("");
+
+    const openWatchlistSelection = async (show) => {
+        setWatchlistShow(show);
+        setWatchlistError("");
+        setSavedStatus("");
+        setCurrentWatchlistItem(null);
+        setSelectedStatus("wishlist");
+
+        if (!user) return;
+
+        setWatchlistLoading(true);
+        try {
+            const { data } = await axios.get("/api/watchlist");
+            const existingItem = data.items.find((item) => Number(item.show_id) === Number(show.id));
+            setCurrentWatchlistItem(existingItem || null);
+            if (existingItem) setSelectedStatus(existingItem.status);
+        } catch (requestError) {
+            setWatchlistError(requestError.response?.data?.message || "Unable to load your watchlist.");
+        } finally {
+            setWatchlistLoading(false);
+        }
+    };
+
+    const saveWatchlistStatus = async () => {
+        if (!watchlistShow || !user) return;
+
+        setSaving(true);
+        setWatchlistError("");
+        try {
+            if (currentWatchlistItem) {
+                await axios.put(`/api/watchlist/${watchlistShow.id}`, { status: selectedStatus });
+            } else {
+                await axios.post("/api/watchlist", { show_id: watchlistShow.id, status: selectedStatus });
+            }
+            setCurrentWatchlistItem({ show_id: watchlistShow.id, status: selectedStatus });
+            setSavedStatus(selectedStatus);
+        } catch (requestError) {
+            setWatchlistError(requestError.response?.data?.message || "Unable to update your watchlist.");
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    useEffect(() => {
+        if (!watchlistShow) return undefined;
+        const handleKeyDown = (event) => {
+            if (event.key === "Escape") setWatchlistShow(null);
+        };
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [watchlistShow]);
 
     // auto rotate shows
     useEffect(() => {
-        if (shows.length < 2) return;
-        const timer = setTimeout(() => setShowIndex((i) => (i + 1) % shows.length), AUTOMOVE_MS);
-        console.log(shows[showIndex]);
+        if (showCount < 2) return;
+        const timer = setTimeout(() => setShowIndex((i) => (i + 1) % showCount), AUTOMOVE_MS);
         return () => clearTimeout(timer);
-    }, [showIndex, shows.length]);
+    }, [showIndex, showCount]);
 
     const heroShow = shows[showIndex];
     if (error || shows.length === 0) {
@@ -94,9 +162,9 @@ function HeroUI( { shows =[], loading = false, error = false }) {
                                         <ClapperBoardIcon/>
                                         View Info
                                     </button>
-                                    <button className="bg-neutral-800/80 hover:bg-neutral-700/80 text-white px-6 py-3 rounded-lg flex items-center gap-2 transition-all border border-neutral-600">
+                                    <button type="button" onClick={() => openWatchlistSelection(show)} className="bg-neutral-800/80 hover:bg-neutral-700/80 text-white px-6 py-3 rounded-lg flex items-center gap-2 transition-all border border-neutral-600">
                                         <AddWatchIcon/>
-                                        Add to Watch List
+                                        Add to Watchlist
                                     </button>
                                 </div>
                             </div>
@@ -118,6 +186,88 @@ function HeroUI( { shows =[], loading = false, error = false }) {
                 ))}
                 
             </div>
+
+            {watchlistShow && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+                    onMouseDown={(event) => {
+                        if (event.target === event.currentTarget) setWatchlistShow(null);
+                    }}
+                >
+                    <section
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="home-watchlist-title"
+                        className="flex max-h-[calc(100dvh-2rem)] w-full max-w-md flex-col overflow-hidden rounded-2xl border border-[#66568f] bg-[#1c1a2b] text-white shadow-2xl shadow-black/50"
+                    >
+                        <header className="flex items-start justify-between gap-4 border-b border-white/10 bg-linear-to-r from-[#251329] via-[#30204a] to-[#4a214b] px-5 py-3">
+                            <div className="min-w-0 flex-1">
+                                <h2 id="home-watchlist-title" className="text-xl font-bold">Add to Watchlist</h2>
+                                <p className="mt-1 break-words text-sm text-[#c9c2d8]">{watchlistShow.title}</p>
+                                <p className="mt-2 text-sm text-neutral-300">Choose one status for this title:</p>
+                            </div>
+                            <button type="button" onClick={() => setWatchlistShow(null)} aria-label="Close" className="ml-3 shrink-0 rounded-lg p-2 text-neutral-300 transition hover:bg-white/10 hover:text-white">
+                                <X className="h-5 w-5" />
+                            </button>
+                        </header>
+
+                        {!user ? (
+                            <div className="p-5">
+                                <div className="rounded-xl border border-white/10 bg-black/20 p-4">
+                                    <p className="text-sm text-neutral-300">Sign in to add titles to your Watchlist.</p>
+                                    <button type="button" onClick={() => navigate("/login")} className="mt-4 rounded-lg bg-[#EFAC61] px-4 py-2 font-semibold text-[#171522] transition hover:bg-[#f4bd7c]">
+                                        Sign in
+                                    </button>
+                                </div>
+                            </div>
+                        ) : (
+                            <>
+                                <div className="min-h-0 flex-1 p-4">
+                                    <div role="radiogroup" aria-label="Watchlist status" className="grid gap-2">
+                                        {watchlistStatuses.map((status) => {
+                                            const isSelected = selectedStatus === status.value;
+                                            return (
+                                                <button
+                                                    key={status.value}
+                                                    type="button"
+                                                    role="radio"
+                                                    aria-checked={isSelected}
+                                                    disabled={watchlistLoading || saving}
+                                                    onClick={() => {
+                                                        setSelectedStatus(status.value);
+                                                        setSavedStatus("");
+                                                    }}
+                                                    className={`flex min-h-[52px] items-center gap-3 rounded-2xl border px-4 py-2 text-left text-sm font-medium transition ${isSelected ? "border-[#7770a8] bg-[#252333] text-white" : "border-white/10 bg-[#17161f] text-neutral-300 hover:border-[#7770a8] hover:bg-[#211f2b]"} disabled:cursor-wait disabled:opacity-60`}
+                                                >
+                                                    <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-sm border ${isSelected ? "border-[#EFAC61] bg-[#EFAC61] text-[#171522]" : "border-white/50 bg-white"}`}>
+                                                        {isSelected && <Check className="h-4 w-4" />}
+                                                    </span>
+                                                    <span className="flex-1 text-base font-semibold">{status.label}</span>
+                                                    {isSelected && <span className="text-xs font-medium text-[#c7c4dc]">Selected</span>}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+
+                                    {watchlistLoading && <p className="mt-3 text-sm text-neutral-400">Checking your Watchlist…</p>}
+                                    {watchlistError && <p role="alert" className="mt-3 text-sm text-red-300">{watchlistError}</p>}
+                                    {savedStatus && <p role="status" className="mt-3 text-sm text-emerald-300">Added to {watchlistStatuses.find((status) => status.value === savedStatus)?.label}.</p>}
+                                </div>
+
+                                <footer className="flex justify-end gap-2 border-t border-white/10 bg-black/10 px-5 py-3">
+                                    <button type="button" onClick={() => setWatchlistShow(null)} className="rounded-xl border border-white/15 px-4 py-2 text-sm text-neutral-200 transition hover:bg-white/5">
+                                        Cancel
+                                    </button>
+                                    <button type="button" onClick={saveWatchlistStatus} disabled={watchlistLoading || saving} className="inline-flex items-center gap-2 rounded-xl bg-[#EFAC61] px-4 py-2 text-sm font-semibold text-[#171522] transition hover:bg-[#f3bd7f] disabled:cursor-not-allowed disabled:opacity-50">
+                                        {saving && <LoaderCircle className="h-4 w-4 animate-spin" />}
+                                        {currentWatchlistItem ? "Save status" : "Add to Watchlist"}
+                                    </button>
+                                </footer>
+                            </>
+                        )}
+                    </section>
+                </div>
+            )}
 
     </div>
     )}

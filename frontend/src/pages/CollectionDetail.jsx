@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, BookMarked, Globe, Lock, Trash2, Plus, Search, LoaderCircle } from "lucide-react";
+import { ArrowLeft, BookMarked, Bookmark, Globe, Lock, Trash2, Plus, Search, LoaderCircle } from "lucide-react";
 
 const CollectionDetailPage = ({ shared = false }) => {
     const { id, uuid } = useParams();
@@ -141,10 +141,10 @@ const CollectionDetailPage = ({ shared = false }) => {
                     </section>
                 ) : (
                     <>
-                        <header className="mt-6 rounded-2xl border border-white/10 bg-white/10 p-6 sm:p-8">
+                        <header className="mt-6 rounded-2xl border border-white/10 bg-linear-to-r from-[#251329]/95 via-[#30204a]/95 to-[#4a214b]/90 p-6 sm:p-8">
                             <div className="flex flex-wrap items-start justify-between gap-4">
                                 <div>
-                                    <p className="text-sm uppercase tracking-[0.18em] text-blue-200">{shared ? "Shared collection" : "My collection"}</p>
+                                    <p className="text-sm uppercase tracking-[0.18em] text-[#EFAC61]">{shared ? "Shared collection" : "My collection"}</p>
                                     <h1 className="mt-2 text-3xl font-bold sm:text-4xl">{collection.name}</h1>
                                     {collection.owner && <p className="mt-2 text-neutral-300">Created by {collection.owner}</p>}
                                 </div>
@@ -155,7 +155,7 @@ const CollectionDetailPage = ({ shared = false }) => {
                             </div>
                             <div className="mt-5 flex flex-wrap items-center gap-4">
                                 <p className="inline-flex items-center gap-2 text-sm text-neutral-300">
-                                    <BookMarked className="h-4 w-4" /> {items.length} {items.length === 1 ? "movie" : "movies"}
+                                    <Bookmark className="h-4 w-4" /> {items.length} {items.length === 1 ? "movie" : "movies"}
                                 </p>
                                 {!shared && (
                                     <button
@@ -188,7 +188,7 @@ const CollectionDetailPage = ({ shared = false }) => {
                                             setAddError("");
                                         }}
                                         placeholder="Type at least 2 characters..."
-                                        className="w-full rounded-lg border border-white/10 bg-neutral-900 py-2.5 pl-10 pr-3 text-sm text-white outline-none placeholder:text-neutral-500 focus:border-blue-400"
+                                        className="w-full rounded-lg border border-white/10 bg-neutral-900/80 py-2.5 pl-10 pr-3 text-sm text-white outline-none placeholder:text-neutral-500 focus:border-[#9596D6]"
                                     />
                                 </div>
                                 {addError && <p role="alert" className="mt-3 text-sm text-red-300">{addError}</p>}
@@ -238,23 +238,23 @@ const CollectionDetailPage = ({ shared = false }) => {
                         ) : (
                             <section className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
                                 {items.map((show) => (
-                                    <article key={show.id} className="overflow-hidden rounded-xl border border-white/10 bg-white/10">
-                                        <div className="aspect-[2/3] bg-neutral-800">
+                                    <article key={show.id} className="flex h-full flex-col overflow-hidden rounded-xl border border-white/10 bg-neutral-950/75 transition hover:border-[#66568f] hover:bg-[#1c1c20]">
+                                        <Link to={`/shows/${show.id}`} className="block aspect-[2/3] bg-neutral-800" aria-label={`View details for ${show.name}`}>
                                             {show.photo_url ? (
-                                                <img src={show.photo_url} alt={show.name} className="h-full w-full object-cover" />
+                                                <img src={show.photo_url} alt={show.name} className="h-full w-full object-cover transition-opacity hover:opacity-80" />
                                             ) : (
                                                 <div className="flex h-full items-center justify-center text-sm text-neutral-500">No poster</div>
                                             )}
-                                        </div>
-                                        <div className="p-3">
-                                            <h2 className="line-clamp-2 font-semibold">{show.name}</h2>
+                                        </Link>
+                                        <div className="flex flex-1 flex-col p-3">
+                                            <h2 className="line-clamp-2 font-semibold"><Link to={`/shows/${show.id}`} className="transition hover:text-[#EFAC61]">{show.name}</Link></h2>
                                             <p className="mt-1 text-sm capitalize text-neutral-400">{show.type?.replaceAll("_", " ")}</p>
                                             {!shared && (
                                                 <button
                                                     type="button"
                                                     onClick={() => removeShow(show.id)}
                                                     disabled={removingId === show.id}
-                                                    className="mt-3 inline-flex items-center gap-2 text-sm text-neutral-400 transition hover:text-red-300 disabled:opacity-50"
+                                                    className="mt-auto inline-flex items-center gap-2 pt-3 text-sm text-neutral-400 transition hover:text-red-300 disabled:opacity-50"
                                                     aria-label={`Remove ${show.name} from collection`}
                                                 >
                                                     <Trash2 className="h-4 w-4" /> Remove

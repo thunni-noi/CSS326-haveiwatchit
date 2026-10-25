@@ -1,0 +1,77 @@
+import { useState } from "react";
+import { Trash } from "lucide-react";
+
+function formatDate(dateVal){
+    if (!dateVal) return "N/A";
+    return new Date(dateVal).toLocaleDateString("en-GB", {day: "2-digit", month: "2-digit", year: "numeric"});
+}
+
+function ReviewCard( {review, isMine, canRemove, onEdit, onRemove }) {
+
+    const [removeConfirm, setRemoveConfirm] = useState(false);
+    const [removing, setRemoving] = useState(false);
+    const [error, setError] = useState("");
+
+    const handleRemove = async(e) => {
+        e.preventDefault()
+        setRemoving(true);
+        setError("");
+
+        try {
+            await onRemove(review)
+        } catch (err) {
+            setError("Cannot remove this review, Please try again");
+            setRemoving(false);
+            setRemoveConfirm(false);
+        }
+    };
+
+    return(
+        <article className={`p-4 bg-neutral-700 ${isMine && "border-2 border-[#EFAC61] shadow-md"}`}>
+            <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center justify-left gap-5">
+                    <div className="flex size-9 justify-center pt-1 rounded-full bg-neutral-950 font-semibold lowercase text-white">
+                        {review.username[0]}
+                    </div>
+                    <span className="flex gap-1 align-bottom text-sm font-medium text-white">{review.username}
+                        {isMine && <span className="text-gray-300">(you)</span>}
+                    </span>
+                </div>
+                    {/* Button for edit / remove */}
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="flex items-center gap-1">
+                            {canRemove && (
+                                removeConfirm ? (
+                                    <div className="flex items-center gap-2 text-xs">
+                                        <span className="text-neutral-400">Confirm removal?</span>
+                                        <button type="button" onClick={handleRemove} disabled={removing}
+                                        className="rounded-mg bg-red-800 px-2 py-1 font-semibold text-white transition-all hover:bg-red-950 disabled:opacity-60">
+                                            {removing ? "Removing..." : "Confirm"}
+                                        </button>
+                                        <button onClick={() => setRemoveConfirm(false)} disabled={removing}
+                                        className="rounded-md bg-neutral-700 px-2 py-1 text-white transition-all hover:bg-neutral-600 disabled:opacity-60">
+                                            Cancel
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <button type="button" onClick={() => setRemoveConfirm(true)}
+                                    className="flex items-center gap-1 rounded-full px-1 py-1 text-xs text-red-400 transition-all hover:bg-red-600/20">
+                                        <Trash color="#ff5757" className="size-5"/>
+                                    </button>
+                                ))}
+                        </div>
+                    </div>
+
+            </div>
+            <span className="inline-flex items-center gap-3 font-semibold text-yellow-400">
+                {review.score}/10
+                <p className="text-xs text-neutral-500">{formatDate(review.created_at)}</p>
+            </span>
+            {review.text && (
+                <p className="mt-1 whitespace-pre-line wrap-break-word text-sm leading-relaxed text-neutral-300">{review.text}</p>
+            )}
+        </article>
+    )
+}
+
+export default ReviewCard;

@@ -8,6 +8,7 @@ USE haveiwatchit;
 
 SET FOREIGN_KEY_CHECKS = 0;
 DROP TABLE IF EXISTS show_submission;
+DROP TABLE IF EXISTS collection_follows;
 DROP TABLE IF EXISTS collection_items;
 DROP TABLE IF EXISTS collections;
 DROP TABLE IF EXISTS reviews;
@@ -128,6 +129,16 @@ CREATE TABLE collection_items (
   PRIMARY KEY (collection_id, show_id),
   CONSTRAINT fk_citems_collection FOREIGN KEY (collection_id) REFERENCES collections (id) ON DELETE CASCADE,
   CONSTRAINT fk_citems_show       FOREIGN KEY (show_id)       REFERENCES shows (id)       ON DELETE CASCADE
+) ENGINE = InnoDB;
+
+CREATE TABLE collection_follows (
+  user_id       BIGINT UNSIGNED NOT NULL,
+  collection_id BIGINT UNSIGNED NOT NULL,
+  created_at    TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (user_id, collection_id),
+  KEY idx_collection_follows_collection (collection_id),
+  CONSTRAINT fk_collection_follows_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+  CONSTRAINT fk_collection_follows_collection FOREIGN KEY (collection_id) REFERENCES collections (id) ON DELETE CASCADE
 ) ENGINE = InnoDB;
 
 CREATE TABLE show_submission (

@@ -3,14 +3,36 @@ import { Search as SearchIcon, User as UserIcon, X as XIcon, Menu as MenuIcon } 
 import axios from "axios";
 import { useRef, useState, useEffect } from "react";
 
-const UserAvatar = ({ username, iconClass, textClass }) =>
-    username ? (
-        <span className={`font-semibold leading-none ${textClass} pb-1`}>
-            {username.trim().charAt(0).toLowerCase()}
-        </span>
-    ) : (
-        <UserIcon className={iconClass} />
-    );
+const UserAvatar = ({ username, avatarUrl, iconClass, textClass, imgClass }) => {
+    const [failed, setFailed] = useState(false);
+
+    useEffect(() => {
+        setFailed(false);
+    }, [avatarUrl]);
+
+    if (avatarUrl && !failed) {
+        return (
+            <img
+                src={avatarUrl}
+                alt="Profile"
+                onError={() => setFailed(true)}
+                className={`rounded-full object-cover ${imgClass}`}
+            />
+        );
+    }
+
+    if (username) {
+        return (
+            <div
+                className={`flex items-center justify-center rounded-full bg-neutral-900 font-bold text-white ${imgClass} ${textClass}`}
+            >
+                {username.trim().charAt(0)}
+            </div>
+        );
+    }
+
+    return <UserIcon className={iconClass} />;
+};
 
 
 const UserMenu = ({ user, setUser }) => {
@@ -35,7 +57,7 @@ const UserMenu = ({ user, setUser }) => {
                     border border-white/10 bg-[#1b1b20] text-white transition
                     hover:bg-[#25252c]"
             >
-                <UserAvatar username={user?.username} iconClass="h-5 w-5" textClass="text-3xl" />
+            <UserAvatar username={user?.username} avatarUrl={user?.avatar_url} iconClass="h-5 w-5" textClass="text-lg" imgClass="h-full w-full"/>
             </button>
 
             <div
@@ -45,7 +67,7 @@ const UserMenu = ({ user, setUser }) => {
                 }`}
             >
                 <div className="flex flex-col items-center gap-0 pb-3 pt-3 text-white">
-                    <UserAvatar username={user?.username} iconClass="h-10 w-10" textClass="text-4xl" />
+                    <UserAvatar username={user?.username} avatarUrl={user?.avatar_url} iconClass="h-8 w-8" textClass="text-2xl" imgClass="h-16 w-16 shrink-0"/>
                     <span className="font-semibold mt-2"> {user ? user.username : "Guests"} </span>
                     <span className="font-light mt-1">{user ? user.role : "Not logged in"}</span>
                 </div>

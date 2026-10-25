@@ -5,7 +5,7 @@ import ShowSlider from "../components/HomeComponents/ShowSlider";
 import ShowTypeSelect from "../components/HomeComponents/ShowTypeBrowse";
 import LoadingPlaceHolder from "../components/LoadingScreen";
 
-function HomeContent(){
+function HomeContent({ user }){
     const [featured, setFeatured] = useState([]);
     const [topRated, setTopRated] = useState([]);
     const [isLoading, setLoading] = useState(true);
@@ -57,7 +57,7 @@ function HomeContent(){
             <main>
                 <img src="https://puppiizsunniiz.github.io/Arknight-Images/characters/char_124_kroos_sale%2314_sp.png" alt="" aria-hidden="true"
                 className="fixed -bottom-75 -left-64 z-0 w-4xl md:w-5xl pointer-events-none select-none opacity-10" />
-                <HeroUI shows={featured} loading = {isLoading} error={featuredError} />
+                <HeroUI shows={featured} error={featuredError} user={user} />
                 <div className="bg-linear-to-b from-neutral-900 to-neutral-950">
                     <ShowSlider 
                         title="Top Rated"
