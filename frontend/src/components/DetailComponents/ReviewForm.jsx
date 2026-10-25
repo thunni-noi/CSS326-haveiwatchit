@@ -2,7 +2,7 @@ import { useState } from "react";
 
 function ReviewForm( {current, onSubmit, onCancel} ){
     const[score, setScore] = useState(current?.score ?? 0);
-    // const[text, setText] = useState(current?.text ?? "");
+    //const[text, setText] = useState(current?.text ?? "");
     const[posting, setPosting] = useState(false);
     const[error, setError] = useState("");
 
@@ -21,14 +21,15 @@ function ReviewForm( {current, onSubmit, onCancel} ){
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        const text = document.getElementById("review_text").value;
+        const formText = document.getElementById("review_text").value.trim();
+        //setText(formText);
 
         if (score < 1 || score > 10) return setError("Score must be in range 0 to 10");
 
         setPosting(true);
         setError("");
         try{
-            await onSubmit({score: score, text: text.trim()});
+            await onSubmit({score: score, text: formText});
         } catch (err) {
             setError("Could not save your review, Please try again later.")
             setPosting(false);
@@ -43,7 +44,7 @@ function ReviewForm( {current, onSubmit, onCancel} ){
 
             <div className="flex flex-col justify justify-left gap-y-1">
                 <span className="text-white inline-block">Review Text <span className="text-red-400 text-xs"> (required) </span></span>
-                <textarea id="review_text" defaultValue="Your review goes here..."
+                <textarea id="review_text" defaultValue={current?.text?? ""} placeholder="Write your review..."
                 className="field-sizing-fixed text-sm w-full h-30 bg-neutral-900 text-white px-3 py-3 mb-3">
                 </textarea>
 

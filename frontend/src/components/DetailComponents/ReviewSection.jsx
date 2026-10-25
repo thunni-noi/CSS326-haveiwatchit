@@ -5,10 +5,12 @@ import axios from "axios";
 import ReviewCard from "./ReviewCard";
 import ReviewForm from "./ReviewForm";
 
+
+// API CALLS
 const fetchAllReview = async (showId, signal) => {
     const res = await axios.get(`/api/shows/${showId}/reviews`, {
                 params: {
-                    limit: 20,
+                    limit: 5,
                     offset: 0
                 }, signal: signal});
     return res.data;
@@ -17,10 +19,7 @@ const fetchAllReview = async (showId, signal) => {
 const fetchUserReview = async (showId, userId, signal) => {
     try {
         const res = await axios.get(`/api/shows/${showId}/reviews/${userId}`, {
-                    params: {
-                        limit: 20,
-                        offset: 0
-                    }, signal: signal})
+            signal: signal})
         return res.data;
     } catch (err) {
         if (err.response?.status === 404) return null;
@@ -36,12 +35,12 @@ const postReview = async (showId, score, text) => {
     return res.data;
 }
 
-const removeReview = async (showId, userId, signal) => {
-    const res = await axios.delete(`api/shows/${showId}/reviews/${userId}`);
+const removeReview = async (showId, userId) => {
+    const res = await axios.delete(`/api/shows/${showId}/reviews/${userId}`);
     return res.data;
 }
 
-function ReviewSection( {showId, user, onSaved, onRemoved }) {
+function ReviewSection( {showId, user, onUpdated }) {
     
     const [reviews, setReviews] = useState([]);
     const [myReview, setMyReview] = useState(null);
@@ -49,12 +48,14 @@ function ReviewSection( {showId, user, onSaved, onRemoved }) {
     const [loading, setLoading] = useState(true);
     const [reviewFormOpen, setReviewFormOpen] = useState(false);
     const [loadingMore, setLoadingMore] = useState(false);
-    const [error, setError] = useState(false);
+    const [loadError, setLoadError] = useState(false);
+    const [moreError, setMoreError] = useState(false);
 
-    const isStaff = (user?.role === "admin" || user?.role === "moderator")
 
     useEffect(() => {
         const controller = new AbortController();
+        //setLoading(true);
+        //setLoadError(false);
 
         Promise.all([
             fetchAllReview(showId, controller.signal),
@@ -62,8 +63,6 @@ function ReviewSection( {showId, user, onSaved, onRemoved }) {
         ])
         .then(([fullReview, myReview]) => {
             if (controller.signal.aborted) return;
-            
-            console.log(myReview)
             setReviews(fullReview.reviews);
             setHasMore(fullReview.still_more);
             setMyReview(myReview?.reviews?.[0] ?? null);
@@ -72,9 +71,11 @@ function ReviewSection( {showId, user, onSaved, onRemoved }) {
         })
         .catch((err) => {
             if (axios.isCancel(err)) return;
-            console.log(err);
-            setError(true);
-        });
+            setLoadError(true);
+        })
+        .finally(() => {
+            if (!controller.signal.aborted) setLoading(false)
+        })
 
         return () =>
             controller.abort();
@@ -82,11 +83,10 @@ function ReviewSection( {showId, user, onSaved, onRemoved }) {
     }, [showId, user]);
 
     const fetchMore = async () => {
+        const controller = new AbortController();
         if (loadingMore || !hasMore) return;
         setLoadingMore(true);
-        setError(false);
-
-        const controller = new AbortController();
+        setMoreError(false);
 
         axios.get(`/api/shows/${showId}/reviews`, {
             params: {
@@ -96,6 +96,7 @@ function ReviewSection( {showId, user, onSaved, onRemoved }) {
             signal: controller.signal
         })
         .then((res) => {
+            if (controller.signal.aborted) return;
             setReviews((prev) => {
                 const oldReview = new Set(prev.map((r) => r.username));
                 return [...prev, ...res.data.reviews.filter((r) => !oldReview.has(r.username))]
@@ -104,7 +105,7 @@ function ReviewSection( {showId, user, onSaved, onRemoved }) {
         })
         .catch((err) => {
             if (axios.isCancel(err)) return;
-            setError(true);
+            setMoreError(true);
         })
         .finally(() => {
             if(!controller.signal.aborted) setLoadingMore(false);
@@ -112,8 +113,6 @@ function ReviewSection( {showId, user, onSaved, onRemoved }) {
     };
 
     const handlePost = async ( {score, text} ) => {
-        console.log(score);
-        console.log(text);
         await postReview(showId, score, text);
         setMyReview({
             user_id: user.id,
@@ -123,7 +122,23 @@ function ReviewSection( {showId, user, onSaved, onRemoved }) {
             created_at: new Date().toISOString().slice(0, 10)
             });
             setReviewFormOpen(false);
+        onUpdated?.();
         }
+        
+
+    const handleRemove = async (review) => {
+        console.log(review)
+        const isMine = Boolean(user) && review.user_id === user.id
+        await removeReview(showId, review.user_id);
+
+        setReviews((prev) => prev.filter((r) => r.user_id !== review.user_id))
+        if (isMine) setMyReview(null);
+        onUpdated?.();
+    }
+
+    // Not included user's review
+    const reviewList = reviews.filter((r) => !user || (r.username !== user.username));
+    const isMod = user?.role === "moderator" || user?.role === "admin";
 
     return(
         <div>
@@ -142,28 +157,46 @@ function ReviewSection( {showId, user, onSaved, onRemoved }) {
                     <ReviewForm current={myReview} onSubmit={handlePost} onCancel={() => setReviewFormOpen(false)} />
                 </div>
             )}
-            {!loading && error && <ErrorDisplay text="Couldn't load reviews, Please try again" className="relative w-full h-40 bg-neutral-800/60" />}
-            {!loading && !error && (
+            {!loading && loadError && <ErrorDisplay text="Couldn't load reviews, Please try again" className="relative w-full h-40 bg-neutral-800/60" />}
+            {!loading && !loadError && reviews.length === 0 && (
+                <p className="text-sm text-neutral-500">No reviews yet.</p>
+            )}
+            {!loading && !loadError && reviews.length !== 0 && (
                 <>
                     <div className="space-y-3">
-                        {myReview && (
+                        {myReview && !reviewFormOpen && (
                             <ReviewCard 
                                 review={myReview}
                                 isMine={true}
-                                canRemove={isStaff}
+                                canRemove={true}
+                                onRemove={() => handleRemove(myReview)}
+                                onEdit={() => setReviewFormOpen(true)}
                             />
                         )}
-                        {reviews.map((r) => (
+                        {reviewList.map((r) => (
                             <ReviewCard 
                                 key={r.username}
                                 review={r}
                                 isMine={false}
-                                canRemove={isStaff}
+                                canRemove={isMod}
+                                onRemove={() => handleRemove(r)}
+                                onEdit={() => setReviewFormOpen(true)}
                                 />
                         ))}
                     </div>
                 </>
             )}
+            {!loading && !loadError && hasMore && (
+                <div className="mt-5 flex flex-col items-center gap-2">
+                    <button type="button" onClick={fetchMore} disabled={loadingMore}
+                    className="rounded-md bg-neutral-800 px-6 py-2 text-sm font-semibold text-white transition-all hover:bg-neutral-700 disabled:cursor-not-allowed disabled:opacity-60"> 
+                        {loadingMore? "Loading..." : "Load more"}
+                    </button>
+                    {moreError && <ErrorDisplay text="Couldn't fetch more reviews. Try again later" className="relative w-full h-40 bg-neutral-800/60"/>}
+                </div>
+            )
+
+            }
         </div>
     );
 

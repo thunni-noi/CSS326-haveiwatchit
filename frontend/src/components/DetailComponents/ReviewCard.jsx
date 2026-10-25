@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Trash } from "lucide-react";
+import { Trash as RemoveIcon, Pencil as EditIcon } from "lucide-react";
 
 function formatDate(dateVal){
     if (!dateVal) return "N/A";
@@ -13,6 +13,7 @@ function ReviewCard( {review, isMine, canRemove, onEdit, onRemove }) {
     const [error, setError] = useState("");
 
     const handleRemove = async(e) => {
+        console.log("removing");
         e.preventDefault()
         setRemoving(true);
         setError("");
@@ -39,7 +40,14 @@ function ReviewCard( {review, isMine, canRemove, onEdit, onRemove }) {
                 </div>
                     {/* Button for edit / remove */}
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-3">
+                            {isMine && (
+                                <button type="button" onClick={onEdit} className="rounded-full px-2 py-2 hover:bg-neutral-800">
+                                    <EditIcon color="#ffffff" className="size-5"/>
+                                </button>
+                            )
+
+                            }
                             {canRemove && (
                                 removeConfirm ? (
                                     <div className="flex items-center gap-2 text-xs">
@@ -55,8 +63,8 @@ function ReviewCard( {review, isMine, canRemove, onEdit, onRemove }) {
                                     </div>
                                 ) : (
                                     <button type="button" onClick={() => setRemoveConfirm(true)}
-                                    className="flex items-center gap-1 rounded-full px-1 py-1 text-xs text-red-400 transition-all hover:bg-red-600/20">
-                                        <Trash color="#ff5757" className="size-5"/>
+                                    className="flex items-center gap-1 rounded-full px-2 py-2 text-xs text-red-400 transition-all hover:bg-red-600/20">
+                                        <RemoveIcon color="#ff5757" className="size-5"/>
                                     </button>
                                 ))}
                         </div>

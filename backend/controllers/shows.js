@@ -105,7 +105,7 @@ export const getShowReviews = wrapper("Unable to load reviews", async(req, res) 
     if (shows.length === 0) return res.status(404).json({message: "Show not found!"});
 
     const [rows] = await pool.execute(`
-        SELECT  u.username, r.review_score AS score, r.review_txt AS text,
+        SELECT  u.username, r.user_id, r.review_score AS score, r.review_txt AS text,
                 DATE_FORMAT(r.created_at, '%Y-%m-%d') AS created_at
         FROM    reviews r
         JOIN users u ON u.id = r.user_id
@@ -197,7 +197,7 @@ export const removeReview = wrapper("Unable to remove review", async(req, res) =
         return res.status(400).json({ message: "Invalid show id." })}
 
     const[r] = await pool.execute(`
-        DELTE FROM reviews WHERE user_id = ? AND show_id = ?
+        DELETE FROM reviews WHERE user_id = ? AND show_id = ?
         `, [userId, showId]
     );
 

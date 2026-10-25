@@ -39,6 +39,7 @@ function ShowDetails( {user} ) {
     const [showInfo, setShowInfo ] = useState({});
     const [isLoading, setLoading] = useState(true);
     const [error, setError] = useState(false);
+    const [refresh, setRefresh] = useState(false);
     const [collectionPickerOpen, setCollectionPickerOpen] = useState(false);
     const [userCollections, setUserCollections] = useState([]);
     const [selectedCollectionIds, setSelectedCollectionIds] = useState([]);
@@ -158,6 +159,8 @@ function ShowDetails( {user} ) {
         setSavingToCollections(false);
     };
 
+    const refreshPage = () => setRefresh((refresh) => !refresh);
+
     useEffect(() => {
         let active = true;
         const controller = new AbortController();
@@ -176,7 +179,7 @@ function ShowDetails( {user} ) {
             active = false;
             controller.abort();
         };
-    }, [showId]);
+    }, [showId, refresh]);
 
     useEffect(() => {
         if (!watchlistPickerOpen) return undefined;
@@ -340,7 +343,7 @@ function ShowDetails( {user} ) {
                                 <div className="flex items-end justify-between border-b border-neutral-700 pb-1 mb-3 text-white">
                                     Reviews
                                 </div>
-                                <ReviewSection showId={showId} user={user} />
+                                <ReviewSection showId={showId} user={user} onUpdated={refreshPage} />
                             <section>
 
                             </section>
