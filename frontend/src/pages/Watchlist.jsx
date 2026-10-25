@@ -13,6 +13,7 @@ import {
     Trash2,
     X,
 } from "lucide-react";
+import UserProfile from "../components/UserProfile";
 
 const statuses = [
     { value: "wishlist", label: "Want to watch" },
@@ -178,9 +179,10 @@ function WatchlistPage({ user }) {
                     <p className="mt-2 text-sm text-neutral-300">Movies and TV shows you want to watch.</p>
                     <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-neutral-300">
                         <span className="flex items-center gap-2">
-                            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#303969] text-sm font-bold text-white">
+                            <UserProfile user={user} className="flex h-8 w-8 items-center justify-center rounded-full text-white overflow-hidden"/>
+                            {/* <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#303969] text-sm font-bold text-white">
                                 {user?.username?.charAt(0)?.toUpperCase() || "?"}
-                            </span>
+                            </span> */}
                             <span>Created by <span className="font-medium text-[#EFAC61]">{user?.username || "Guest"}</span></span>
                         </span>
                         <span>{items.length} {items.length === 1 ? "title" : "titles"}</span>

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Trash as RemoveIcon, Pencil as EditIcon } from "lucide-react";
+import UserProfile from "../UserProfile";
 
 function formatDate(dateVal){
     if (!dateVal) return "N/A";
@@ -31,9 +32,9 @@ function ReviewCard( {review, isMine, canRemove, onEdit, onRemove }) {
         <article className={`p-4 bg-neutral-700 ${isMine && "border-2 border-[#EFAC61] shadow-md"}`}>
             <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center justify-left gap-5">
-                    <div className="flex size-9 justify-center pt-1 rounded-full bg-neutral-950 font-semibold lowercase text-white">
-                        {review.username[0]}
-                    </div>
+                    <UserProfile user={ {username: review.username, avatar_url: review.avatar_url}}
+                    className="flex size-9 items-center justify-center rounded-full bg-neutral-950 text-white object-cover overflow-hidden" />
+
                     <span className="flex gap-1 align-bottom text-sm font-medium text-white">{review.username}
                         {isMine && <span className="text-gray-300">(you)</span>}
                     </span>

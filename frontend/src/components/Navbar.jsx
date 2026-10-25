@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Search as SearchIcon, User as UserIcon, X as XIcon, Menu as MenuIcon } from "lucide-react";
 import axios from "axios";
+import UserProfile from "./UserProfile";
 import { useRef, useState, useEffect } from "react";
 
 const UserAvatar = ({ username, avatarUrl, iconClass, textClass, imgClass }) => {
@@ -55,9 +56,10 @@ const UserMenu = ({ user, setUser }) => {
                 aria-label="userMenu"
                 className="flex h-10 w-10 items-center justify-center rounded-full
                     border border-white/10 bg-[#1b1b20] text-white transition
-                    hover:bg-[#25252c]"
+                    hover:bg-[#25252c] overflow-hidden"
             >
-            <UserAvatar username={user?.username} avatarUrl={user?.avatar_url} iconClass="h-5 w-5" textClass="text-lg" imgClass="h-full w-full"/>
+            <UserProfile user={user}/>
+            {/* <UserAvatar username={user?.username} avatarUrl={user?.avatar_url} iconClass="h-5 w-5" textClass="text-lg" imgClass="h-full w-full"/> */}
             </button>
 
             <div
@@ -67,7 +69,8 @@ const UserMenu = ({ user, setUser }) => {
                 }`}
             >
                 <div className="flex flex-col items-center gap-0 pb-3 pt-3 text-white">
-                    <UserAvatar username={user?.username} avatarUrl={user?.avatar_url} iconClass="h-8 w-8" textClass="text-2xl" imgClass="h-16 w-16 shrink-0"/>
+                    {/* <UserAvatar username={user?.username} avatarUrl={user?.avatar_url} iconClass="h-8 w-8" textClass="text-2xl" imgClass="h-16 w-16 shrink-0"/> */}
+                    <UserProfile user={user} className="flex h-10 w-10 justify-center items-center rounded-full bg-neutral-900 overflow-hidden"/>
                     <span className="font-semibold mt-2"> {user ? user.username : "Guests"} </span>
                     <span className="font-light mt-1">{user ? user.role : "Not logged in"}</span>
                 </div>
