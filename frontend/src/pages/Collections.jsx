@@ -5,6 +5,7 @@ import {
     Plus, Trash2, Lock, Globe, Share, Check,
     Bookmark, ChevronRight, X, Pencil, Search, BookmarkCheck, BookmarkPlus
 } from "lucide-react";
+import LoadingPlaceholder from "../components/LoadingScreen"
 
 const Modal = ({ title, onClose, children }) => (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
@@ -478,7 +479,8 @@ const CollectionsPage = ({ user }) => {
                     )}
 
                     {(activeTab === "mine" ? loading : followedLoading) ? (
-                        <p className="text-white text-center text-lg">Loading...</p>
+                        // <p className="text-white text-center text-lg">Loading...</p>
+                        <LoadingPlaceholder />
                     ) : (activeTab === "mine" ? collections : followedCollections).length === 0 ? (
                         <div className="text-center py-20">
                             <Bookmark className="mx-auto mb-4 h-16 w-16 text-neutral-500" />

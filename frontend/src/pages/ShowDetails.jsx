@@ -4,19 +4,44 @@ import LoadingPlaceHolder from "../components/LoadingScreen";
 import { Link, useParams } from "react-router-dom";
 import PlaceholderCover from "../assets/placeholder_image.jpg"
 import RoleCard from "../components/DetailComponents/RoleCard";
-import { BookMarked, Check, Globe, Lock, LoaderCircle, Plus, X } from "lucide-react";
+import { BookMarked, Check, Globe, Lock, LoaderCircle, Plus, X, 
+    Scroll as WantIcon, Eye as WatchIcon,  CircleCheck as CompletedIcon,
+    Repeat2 as RewatchIcon, Loader as OnHoldIcon, CircleOff as DropIcon
+ } from "lucide-react";
 import ReviewSection from "../components/DetailComponents/ReviewSection";
+import AddWatchlistModal from "../components/AddWatchlistModal";
+import ErrorDisplay from "../components/ErrorDisplay";
 
 
 
-const watchlistStatuses = [
-    { value: "wishlist", label: "Want to watch" },
-    { value: "watching", label: "Watching" },
-    { value: "watched", label: "Watched" },
-    { value: "rewatching", label: "Rewatching" },
-    { value: "on_hold", label: "On hold" },
-    { value: "dropped", label: "Dropped" },
-];
+const watchStatusLabel = {
+    "wishlist"  : {label: "Want to watch", icon: WantIcon} ,
+    "watching"  : "Watching" ,
+    "watched"   : "Completed" ,
+    "rewatching": "Rewatching" ,
+    "on_hold"   : "On hold" ,
+    "dropped"   : "Dropped" ,
+};
+
+function watchlistButton(status) {
+    console.log(status)
+    switch(status){
+        case 'wishlist':
+            return <> <WantIcon className="h-4 w-4" /> Want To Watch</>;
+        case 'watching':
+            return <> <WatchIcon className="h-4 w-4" /> Watching</>;
+        case 'watched':
+            return <> <CompletedIcon className="h-4 w-4" /> Completed</>;
+        case 'rewatching':
+            return <> <RewatchIcon className="h-4 w-4" /> Re-watching</>;
+        case 'on_hold':
+            return <> <OnHoldIcon className="h-4 w-4" /> On Hold</>;
+        case 'dropped':
+            return <> <DropIcon className="h-4 w-4" /> Dropped</>;
+        default:
+            return <> <Plus className="h-4 w-4" /> Add To Watchlist</>
+    }
+}
 
 function captitalizeText(text){
     if(!text || typeof text !== "string")  return "N/A";
@@ -33,6 +58,16 @@ function formatDuration( duration, episodeCount ){
     return episodeCount > 1 ? `${duration} minute per ep. (Total ${duration * episodeCount} minutes)` : `${duration} minutes`;
 }
 
+const fetchWatchStatus = async (showId, signal) => {
+    try{ 
+        const res = await axios.get(`/api/watchlist/${showId}`, {signal: signal})
+        return res.data;
+    } catch (err) {
+        if (err.response?.status === 404) return null;
+        throw err
+    }
+}
+
 function ShowDetails( {user} ) {
 
     const { showId } = useParams();
@@ -47,56 +82,9 @@ function ShowDetails( {user} ) {
     const [savingToCollections, setSavingToCollections] = useState(false);
     const [collectionError, setCollectionError] = useState("");
     const [collectionSuccess, setCollectionSuccess] = useState("");
-    const [watchlistPickerOpen, setWatchlistPickerOpen] = useState(false);
-    const [selectedStatus, setSelectedStatus] = useState("wishlist");
-    const [currentWatchlistItem, setCurrentWatchlistItem] = useState(null);
-    const [watchlistLoading, setWatchlistLoading] = useState(false);
-    const [savingWatchlist, setSavingWatchlist] = useState(false);
-    const [watchlistError, setWatchlistError] = useState("");
-    const [savedWatchlistStatus, setSavedWatchlistStatus] = useState("");
+    const [openWatchlist, setOpenWatchlist] = useState(null);
+    const [watchlistStatus, setWatchlistStatus] = useState(null);
 
-    const openWatchlistSelection = async () => {
-        setWatchlistPickerOpen(true);
-        setWatchlistError("");
-        setSavedWatchlistStatus("");
-        setCurrentWatchlistItem(null);
-        setSelectedStatus("wishlist");
-
-        if (!user) return;
-
-        setWatchlistLoading(true);
-        try {
-            const { data } = await axios.get("/api/watchlist");
-            const items = Array.isArray(data?.items) ? data.items : [];
-            const existingItem = items.find((item) => Number(item.show_id) === Number(showId));
-            setCurrentWatchlistItem(existingItem || null);
-            if (existingItem) setSelectedStatus(existingItem.status);
-        } catch (requestError) {
-            setWatchlistError(requestError.response?.data?.message || "Unable to load your watchlist.");
-        } finally {
-            setWatchlistLoading(false);
-        }
-    };
-
-    const saveWatchlistStatus = async () => {
-        if (!user) return;
-
-        setSavingWatchlist(true);
-        setWatchlistError("");
-        try {
-            if (currentWatchlistItem) {
-                await axios.put(`/api/watchlist/${showId}`, { status: selectedStatus });
-            } else {
-                await axios.post("/api/watchlist", { show_id: Number(showId), status: selectedStatus });
-            }
-            setCurrentWatchlistItem({ show_id: Number(showId), status: selectedStatus });
-            setSavedWatchlistStatus(selectedStatus);
-        } catch (requestError) {
-            setWatchlistError(requestError.response?.data?.message || "Unable to update your watchlist.");
-        } finally {
-            setSavingWatchlist(false);
-        }
-    };
 
     const openCollectionSelection = async () => {
         setCollectionPickerOpen(true);
@@ -162,33 +150,28 @@ function ShowDetails( {user} ) {
     const refreshPage = () => setRefresh((refresh) => !refresh);
 
     useEffect(() => {
-        let active = true;
         const controller = new AbortController();
-        axios.get(`/api/shows/${showId}`, { signal: controller.signal })
-            .then((res) => {
-                if (active) setShowInfo(res.data);
-            })
-            .catch((requestError) => {
-                if (!axios.isCancel(requestError) && active) setError(true);
-            })
-            .finally(() => {
-                if (active) setLoading(false);
-            });
+
+        Promise.all([
+            axios.get(`/api/shows/${showId}`, {signal: controller.signal}),
+            user ? fetchWatchStatus(showId, controller.signal) : Promise.resolve(null)
+        ])
+        .then(([showInfo, watchStatus]) => {
+            console.log(showInfo);
+            setShowInfo(showInfo.data);
+            setWatchlistStatus(watchStatus? watchStatus[0] : null);
+        })
+        .catch((err) => {
+            if (!axios.isCancel(err)) setError(true);
+        })
+        .finally(() => {
+            if (!controller.signal.aborted) setLoading(false);
+        })
 
         return () => {
-            active = false;
             controller.abort();
         };
     }, [showId, refresh]);
-
-    useEffect(() => {
-        if (!watchlistPickerOpen) return undefined;
-        const handleKeyDown = (event) => {
-            if (event.key === "Escape") setWatchlistPickerOpen(false);
-        };
-        window.addEventListener("keydown", handleKeyDown);
-        return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [watchlistPickerOpen]);
 
     if (isLoading) {
         return (
@@ -199,8 +182,9 @@ function ShowDetails( {user} ) {
     if (error) {
         return (
             <main className="container mx-auto flex min-h-screen flex-col items-center justify-center gap-4 px-4 text-center text-white">
-                <p className="text-xl font-semibold">Unable to load this title.</p>
-                <Link to="/" className="font-medium text-[#EFAC61] hover:underline">Return home</Link>
+                {/* <p className="text-xl font-semibold">Unable to load this title.</p>
+                <Link to="/" className="font-medium text-[#EFAC61] hover:underline">Return home</Link> */}
+                <ErrorDisplay text="Unable to load shows info" />
             </main>
         );
     }
@@ -224,9 +208,9 @@ function ShowDetails( {user} ) {
                                 <img src={showInfo.poster_url ?? PlaceholderCover} alt={showInfo.title} loading="lazy"
                                 className="object-cover w-full aspect-2/3"/>
                                 <button type="button"
-                                onClick={openWatchlistSelection}
+                                onClick={() => setOpenWatchlist(showInfo)}
                                 className="flex w-full items-center justify-center gap-2 rounded-md bg-[#303969] py-2 text-sm font-semibold text-white transition-all hover:bg-[#414b82]">
-                                <Plus className="h-4 w-4" /> Add to Watchlist
+                                {watchlistButton(watchlistStatus.status)}
                                 </button>
                                 <button type="button"
                                 onClick={openCollectionSelection}
@@ -412,87 +396,7 @@ function ShowDetails( {user} ) {
                 </section>
             </div>
         )}
-        {watchlistPickerOpen && (
-            <div
-                className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
-                onMouseDown={(event) => {
-                    if (event.target === event.currentTarget) setWatchlistPickerOpen(false);
-                }}
-            >
-                <section
-                    role="dialog"
-                    aria-modal="true"
-                    aria-labelledby="details-watchlist-title"
-                    className="flex max-h-[calc(100dvh-2rem)] w-full max-w-md flex-col overflow-hidden rounded-2xl border border-[#66568f] bg-[#1c1a2b] text-white shadow-2xl shadow-black/50"
-                >
-                    <header className="flex items-start justify-between gap-4 border-b border-white/10 bg-linear-to-r from-[#251329] via-[#30204a] to-[#4a214b] px-5 py-3">
-                        <div className="min-w-0 flex-1">
-                            <h2 id="details-watchlist-title" className="text-xl font-bold">Add to Watchlist</h2>
-                            <p className="mt-1 break-words text-sm text-[#c9c2d8]">{showInfo.title}</p>
-                            <p className="mt-2 text-sm text-neutral-300">Choose one status for this title:</p>
-                        </div>
-                        <button type="button" onClick={() => setWatchlistPickerOpen(false)} aria-label="Close" className="ml-3 shrink-0 rounded-lg p-2 text-neutral-300 transition hover:bg-white/10 hover:text-white">
-                            <X className="h-5 w-5" />
-                        </button>
-                    </header>
-
-                    {!user ? (
-                        <div className="p-5">
-                            <div className="rounded-xl border border-white/10 bg-black/20 p-4">
-                                <p className="text-sm text-neutral-300">Sign in to add titles to your Watchlist.</p>
-                                <Link to="/login" onClick={() => setWatchlistPickerOpen(false)} className="mt-4 inline-block rounded-lg bg-[#EFAC61] px-4 py-2 font-semibold text-[#171522] transition hover:bg-[#f4bd7c]">
-                                    Sign in
-                                </Link>
-                            </div>
-                        </div>
-                    ) : (
-                        <>
-                            <div className="min-h-0 flex-1 p-4">
-                                <div role="radiogroup" aria-label="Watchlist status" className="grid gap-2">
-                                    {watchlistStatuses.map((status) => {
-                                        const isSelected = selectedStatus === status.value;
-                                        return (
-                                            <button
-                                                key={status.value}
-                                                type="button"
-                                                role="radio"
-                                                aria-checked={isSelected}
-                                                disabled={watchlistLoading || savingWatchlist}
-                                                onClick={() => {
-                                                    setSelectedStatus(status.value);
-                                                    setSavedWatchlistStatus("");
-                                                }}
-                                                className={`flex min-h-[52px] items-center gap-3 rounded-2xl border px-4 py-2 text-left text-sm font-medium transition ${isSelected ? "border-[#7770a8] bg-[#252333] text-white" : "border-white/10 bg-[#17161f] text-neutral-300 hover:border-[#7770a8] hover:bg-[#211f2b]"} disabled:cursor-wait disabled:opacity-60`}
-                                            >
-                                                <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-sm border ${isSelected ? "border-[#EFAC61] bg-[#EFAC61] text-[#171522]" : "border-white/50 bg-white"}`}>
-                                                    {isSelected && <Check className="h-4 w-4" />}
-                                                </span>
-                                                <span className="flex-1 text-base font-semibold">{status.label}</span>
-                                                {isSelected && <span className="text-xs font-medium text-[#c7c4dc]">Selected</span>}
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-
-                                {watchlistLoading && <p className="mt-3 text-sm text-neutral-400">Checking your Watchlist…</p>}
-                                {watchlistError && <p role="alert" className="mt-3 text-sm text-red-300">{watchlistError}</p>}
-                                {savedWatchlistStatus && <p role="status" className="mt-3 text-sm text-emerald-300">Added to {watchlistStatuses.find((status) => status.value === savedWatchlistStatus)?.label}.</p>}
-                            </div>
-
-                            <footer className="flex justify-end gap-2 border-t border-white/10 bg-black/10 px-5 py-3">
-                                <button type="button" onClick={() => setWatchlistPickerOpen(false)} className="rounded-xl border border-white/15 px-4 py-2 text-sm text-neutral-200 transition hover:bg-white/5">
-                                    Cancel
-                                </button>
-                                <button type="button" onClick={saveWatchlistStatus} disabled={watchlistLoading || savingWatchlist} className="inline-flex items-center gap-2 rounded-xl bg-[#EFAC61] px-4 py-2 text-sm font-semibold text-[#171522] transition hover:bg-[#f3bd7f] disabled:cursor-not-allowed disabled:opacity-50">
-                                    {savingWatchlist && <LoaderCircle className="h-4 w-4 animate-spin" />}
-                                    {currentWatchlistItem ? "Save status" : "Add to Watchlist"}
-                                </button>
-                            </footer>
-                        </>
-                    )}
-                </section>
-            </div>
-        )}
+        {openWatchlist && <AddWatchlistModal user={user} show={openWatchlist} onCancel={() => setOpenWatchlist(null)} onSubmit={() => setOpenWatchlist(null)}/>}
         </>
     )
 }

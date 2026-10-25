@@ -3,6 +3,8 @@ import axios from "axios";
 import UserProfile from "../components/UserProfile";
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, BookMarked, Bookmark, Globe, Lock, Trash2, Plus, Search, LoaderCircle } from "lucide-react";
+import LoadingPlaceHolder from "../components/LoadingScreen";
+import ErrorDisplay from "../components/ErrorDisplay";
 
 const CollectionDetailPage = ({ shared = false }) => {
     const { id, uuid } = useParams();
@@ -127,40 +129,43 @@ const CollectionDetailPage = ({ shared = false }) => {
     const items = collection?.items ?? [];
 
     return (
-        <main className="min-h-screen px-4 pb-16 pt-8 text-white">
-            <div className="mx-auto max-w-6xl">
+        <main className="container mx-auto px-4 py-6">
+            <div className={`min-h-screen pt-24 pb-12 bg-black/50 backdrop-blur-lg text-white px-4`}>
                 <Link to={shared ? "/" : "/collections"} className="inline-flex items-center gap-2 text-sm text-neutral-300 transition hover:text-white">
                     <ArrowLeft className="h-4 w-4" /> {shared ? "Home" : "My collections"}
                 </Link>
 
                 {loading ? (
-                    <p className="py-20 text-center text-neutral-300">Loading collection...</p>
+                    <LoadingPlaceHolder className="py-20"/>
                 ) : error && !collection ? (
-                    <section role="alert" className="mt-8 rounded-2xl border border-red-400/20 bg-red-950/40 p-8 text-center">
-                        <h1 className="text-2xl font-bold">Collection unavailable</h1>
-                        <p className="mt-2 text-neutral-300">{error}</p>
-                    </section>
+                    // <section role="alert" className="mt-8 rounded-2xl border border-red-400/20 bg-red-950/40 p-8 text-center">
+                    //     <h1 className="text-2xl font-bold">Collection unavailable</h1>
+                    //     <p className="mt-2 text-neutral-300">{error}</p>
+                    // </section>
+                    <ErrorDisplay text={`Cannot get collection items : ${error}`} className="mt-2" />
                 ) : (
                     <>
-                        <header className="mt-6 rounded-2xl border border-white/10 bg-linear-to-r from-[#251329]/95 via-[#30204a]/95 to-[#4a214b]/90 p-6 sm:p-8">
-                            <div className="flex flex-wrap items-start justify-between gap-4">
-                                <div>
-                                    <p className="text-sm uppercase tracking-[0.18em] text-[#EFAC61]">{shared ? "Shared collection" : "My collection"}</p>
-                                    <h1 className="mt-2 text-3xl font-bold sm:text-4xl">{collection.name}</h1>
-                                    {collection.owner && (
+                        <section className= "border-b border-white/10 pb-0">
+                        <div className="mx-auto flex-col items-center justify-between px-10 py-9 gap-4">
+                            <div>
+                                <div className="flex flex-row gap-5 items-center">
+                                    <h1 className="text-3xl font-semibold tracking-tight sm:text-5xl">{collection.name}</h1>
+                                    <span className="inline-flex items-center gap-2 rounded-full bg-neutral-200/20 mt-1.5 px-3 py-2 text-sm text-neutral-200">
+                                    {collection.is_public ? <Globe className="h-4 w-4 text-green-300" /> : <Lock className="h-4 w-4" />}
+                                    {collection.is_public ? "Public" : "Private"}
+                                </span>
+                                </div>
+                                <p className="pl-2 mt-2 text-sm text-neutral-300 font-semibold">{shared ? "Shared collection" : "My collection"}</p>
+                                
+                            </div>
+                            {collection.owner && (
                                         <>
                                             <span className="flex items-center mt-5 gap-2">
                                             <UserProfile user={{username: collection.owner, avatar_url: collection.owner_avatar_url}} className="flex h-8 w-8 items-center justify-center rounded-full text-white overflow-hidden"/>
                                             <span>Created by <span className="font-medium text-[#EFAC61]">{collection.owner}</span></span>
                                             </span>
                                         </>
-                                    )}
-                                </div>
-                                <span className="inline-flex items-center gap-2 rounded-full bg-black/20 px-3 py-2 text-sm text-neutral-200">
-                                    {collection.is_public ? <Globe className="h-4 w-4 text-green-300" /> : <Lock className="h-4 w-4" />}
-                                    {collection.is_public ? "Public" : "Private"}
-                                </span>
-                            </div>
+                            )}
                             <div className="mt-5 flex flex-wrap items-center gap-4">
                                 <p className="inline-flex items-center gap-2 text-sm text-neutral-300">
                                     <Bookmark className="h-4 w-4" /> {items.length} {items.length === 1 ? "movie" : "movies"}
@@ -172,14 +177,14 @@ const CollectionDetailPage = ({ shared = false }) => {
                                             setShowAddForm((current) => !current);
                                             setAddError("");
                                         }}
-                                        className="inline-flex items-center gap-2 rounded-lg border border-[#66568f] bg-[#1d1b2d] px-4 py-2 text-sm font-medium text-white transition hover:border-[#9596D6] hover:bg-[#302746]"
+                                        className="inline-flex items-center gap-2 rounded-lg border-2 border-[#EFAC61] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#EFAC61]"
                                     >
-                                        <Plus className="h-4 w-4" /> Add movies
+                                        <Plus className="h-4 w-4" /> Add more
                                     </button>
                                 )}
                             </div>
-                        </header>
-
+                        </div>
+                    </section>
                         {!shared && showAddForm && (
                             <section className="mt-4 rounded-xl border border-white/10 bg-black/20 p-4">
                                 <label htmlFor="collection-show-search" className="mb-2 block text-sm font-medium text-neutral-200">
@@ -196,7 +201,7 @@ const CollectionDetailPage = ({ shared = false }) => {
                                             setAddError("");
                                         }}
                                         placeholder="Type at least 2 characters..."
-                                        className="w-full rounded-lg border border-white/10 bg-neutral-900/80 py-2.5 pl-10 pr-3 text-sm text-white outline-none placeholder:text-neutral-500 focus:border-[#9596D6]"
+                                        className="w-full rounded-lg border border-white/10 bg-neutral-900/80 py-2.5 pl-10 pr-3 text-sm text-white outline-none placeholder:text-neutral-500 focus:border-[#EFAC61]"
                                     />
                                 </div>
                                 {addError && <p role="alert" className="mt-3 text-sm text-red-300">{addError}</p>}
@@ -246,7 +251,7 @@ const CollectionDetailPage = ({ shared = false }) => {
                         ) : (
                             <section className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
                                 {items.map((show) => (
-                                    <article key={show.id} className="flex h-full flex-col overflow-hidden rounded-xl border border-white/10 bg-neutral-950/75 transition hover:border-[#66568f] hover:bg-[#1c1c20]">
+                                    <article key={show.id} className="flex h-full flex-col overflow-hidden rounded-sm border border-white/10 bg-neutral-950/75 transition hover:border-[#EFAC61]">
                                         <Link to={`/shows/${show.id}`} className="block aspect-[2/3] bg-neutral-800" aria-label={`View details for ${show.name}`}>
                                             {show.photo_url ? (
                                                 <img src={show.photo_url} alt={show.name} className="h-full w-full object-cover transition-opacity hover:opacity-80" />
