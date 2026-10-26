@@ -13,12 +13,15 @@ import {
   X,
 } from "lucide-react";
 
+// This file controls the admin dashboard. It lets staff switch between entity groups,
+// browse table data, search/filter records, and create, edit, or delete entries.
 const sections = [
   { label: "User", entities: [{ name: "users", label: "Users" }] },
   { label: "Show", entities: [{ name: "shows", label: "Shows" }] },
   { label: "Submission", entities: [{ name: "show_submission", label: "Submissions" }] },
 ];
 
+// Shared constant for paginated admin queries.
 const PAGE_SIZE = 50;
 
 const getRecordKey = (row, keys) =>
@@ -63,6 +66,8 @@ const displayValue = (value, type) => {
   return String(value);
 };
 
+// Main admin page component. It loads data from /api/admin, manages the active entity,
+// and renders the table, search bar, create/edit modal form, and show details.
 const Admin = ({ user }) => {
   const [activeSection, setActiveSection] = useState("User");
   const [entityName, setEntityName] = useState("users");
@@ -96,6 +101,7 @@ const Admin = ({ user }) => {
   const entities = activeGroup?.entities ?? [];
   const selectedEntity = entities.find((entity) => entity.name === entityName) ?? entities[0];
 
+  // Fetch the currently selected table data (rows, fields, primary keys, etc.) from the backend.
   useEffect(() => {
     if (!selectedEntity) return;
 
@@ -132,6 +138,7 @@ const Admin = ({ user }) => {
     };
   }, [selectedEntity, page, search, reload]);
 
+  // Load detailed relations for the selected show, such as platforms, cast members, and crew credits.
   useEffect(() => {
     if (!selectedShow) {
       return undefined;
@@ -163,6 +170,7 @@ const Admin = ({ user }) => {
     target?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [activeSection, form, selectedShow]);
 
+  // Load the selected user's watchlist so it can be managed in the admin panel.
   useEffect(() => {
     if (!selectedWatchlistUser) {
       return undefined;
@@ -440,10 +448,52 @@ const Admin = ({ user }) => {
     }
   };
 
+  // Build the form controls for each database field based on its type and metadata.
   const renderInput = (field) => {
     const value = formValues[field.name] ?? "";
     const sharedClass =
-      "mt-1 w-full rounded-lg border border-neutral-600 bg-neutral-800 px-3 py-2 text-sm text-white outline-none focus:border-[#9596D6] focus:ring-2 focus:ring-[#9596D6]/30";
+      "mt-1 box-border h-12 w-full rounded-lg border border-neutral-600 bg-neutral-800 px-3 py-2 text-sm text-white outline-none focus:border-[#9596D6] focus:ring-2 focus:ring-[#9596D6]/30";
+
+    if (field.name === "avatar_url" && selectedEntity.name === "users") {
+      const previewable = value.startsWith("/") || /^https?:\/\//i.test(value);
+
+      return (
+        <label key={field.name} className="block text-sm font-medium text-neutral-200 sm:col-span-2">
+          Profile picture
+          {field.nullable && <span className="ml-1 text-xs font-normal text-neutral-400">(optional)</span>}
+          <div className="mt-2 grid gap-3 rounded-lg border border-white/10 bg-neutral-900/40 p-3 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center">
+            {value && previewable ? (
+              <img
+                src={value}
+                alt="User profile picture preview"
+                className="h-14 w-14 rounded-full border border-white/10 object-cover"
+              />
+            ) : (
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-neutral-700 text-neutral-300">
+                <UserRound size={24} aria-hidden="true" />
+              </div>
+            )}
+            <input
+              type="text"
+              value={value}
+              onChange={(event) =>
+                setFormValues((current) => ({ ...current, [field.name]: event.target.value }))
+              }
+              placeholder="https://example.com/avatar.jpg or /uploads/avatars/..."
+              className={`${sharedClass} mt-0 min-w-0 w-full`}
+            />
+            <button
+              type="button"
+              disabled={!value}
+              onClick={() => setFormValues((current) => ({ ...current, [field.name]: "" }))}
+              className="rounded-lg border border-rose-500/30 bg-rose-950 px-3 py-2 text-xs font-medium text-rose-200 hover:bg-rose-900 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Remove picture
+            </button>
+          </div>
+        </label>
+      );
+    }
 
     if (field.type === "boolean") {
       return (
@@ -485,7 +535,7 @@ const Admin = ({ user }) => {
           onChange={(event) =>
             setFormValues((current) => ({ ...current, [field.name]: event.target.value }))
           }
-          className={`${sharedClass} min-h-24`}
+          className={`${sharedClass} h-auto min-h-24`}
         />
       );
     } else {
@@ -545,6 +595,7 @@ const Admin = ({ user }) => {
     record &&
     JSON.stringify(getRecordKey(form.record, keys)) === JSON.stringify(getRecordKey(record, keys));
 
+  // Render the create/edit form for the selected entity.
   const renderEditor = () => form && (
     <form
       ref={editorRef}
@@ -584,10 +635,11 @@ const Admin = ({ user }) => {
     </form>
   );
 
+  // Main dashboard layout: page header, entity switcher, records table, and related detail panels.
   return (
     <main className="min-h-screen px-4 pb-16 pt-8 text-white sm:pt-12">
       <div className="mx-auto max-w-6xl">
-        <div className="mb-8 flex flex-col justify-between gap-5 border-b border-white/10 pb-6 sm:flex-row sm:items-end">
+        <header className="mb-8 flex flex-col justify-between gap-5 border-b border-white/10 pb-6 sm:flex-row sm:items-end">
           <div>
             <p className="mb-2 text-xs font-semibold uppercase tracking-[0.22em] text-[#EFAC61]">Control room</p>
             <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">Admin</h1>
@@ -609,7 +661,7 @@ const Admin = ({ user }) => {
               className="min-w-0 flex-1 bg-transparent text-sm text-white outline-none placeholder:text-neutral-500"
             />
           </label>
-        </div>
+        </header>
 
         <nav aria-label="Admin sections" className="mb-6 flex flex-wrap gap-2">
           {sections.map((section) => (

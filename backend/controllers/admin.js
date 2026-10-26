@@ -1,4 +1,6 @@
 import bcrypt from "bcryptjs";
+import fs from "fs";
+import path from "path";
 import { randomUUID } from "crypto";
 import pool from "../db/db.js";
 
@@ -12,6 +14,7 @@ const entities = {
             field("id", "integer", { key: true }),
             field("username", "text", { required: true }),
             field("email", "text", { required: true }),
+            field("avatar_url", "url", { nullable: true }),
             field("password", "password", { writeOnly: true }),
             field("role", "enum", { required: true, options: ["user", "moderator", "admin"] }),
             field("is_verified", "boolean"),
@@ -159,6 +162,14 @@ const validateFields = (entity, values, { creating }) => {
             }
             result[name] = value;
         } else if (definition.type === "url" && typeof value === "string") {
+            if (
+                entity.table === "users"
+                && name === "avatar_url"
+                && /^\/uploads\/avatars\/[0-9a-f-]{36}\.(jpg|png|webp)$/i.test(value)
+            ) {
+                result[name] = value;
+                continue;
+            }
             try {
                 const parsed = new URL(value);
                 if (!["http:", "https:"].includes(parsed.protocol)) {
@@ -215,6 +226,18 @@ const whereForKey = (entity, key) => ({
 });
 
 const publicColumns = (entity) => entity.fields.filter((item) => !item.writeOnly);
+
+const deleteLocalAvatar = (avatarUrl) => {
+    if (!avatarUrl || typeof avatarUrl !== "string") return;
+
+    const normalized = avatarUrl.startsWith("/") ? avatarUrl : `/${avatarUrl}`;
+    const fullPath = path.join(path.resolve(), normalized.replace(/^\/+/, ""));
+    const uploadsRoot = path.join(path.resolve(), "uploads");
+
+    if (fullPath.startsWith(uploadsRoot) && fs.existsSync(fullPath)) {
+        fs.unlinkSync(fullPath);
+    }
+};
 
 const lockAdminUsers = async (connection) => {
     const [admins] = await connection.execute(
@@ -512,24 +535,32 @@ export const updateRecord = async (req, res) => {
     const connection = await pool.getConnection();
     try {
         await connection.beginTransaction();
-        if (entity.table === "users" && values.role !== undefined) {
-            const userId = Number(keyResult.key.id);
-            const adminIds = await lockAdminUsers(connection);
-            const [[target]] = await connection.execute(
-                "SELECT id, role FROM users WHERE id = ? FOR UPDATE",
-                [userId],
+        if (entity.table === "users") {
+            const [currentRows] = await connection.execute(
+                "SELECT avatar_url, role FROM users WHERE id = ? FOR UPDATE",
+                [keyResult.key.id],
             );
-            if (!target) {
+            const currentUser = currentRows[0];
+            if (!currentUser) {
                 await connection.rollback();
                 return res.status(404).json({ message: "Record not found." });
             }
-            if (userId === Number(req.user.id) && values.role !== "admin") {
-                await connection.rollback();
-                return res.status(400).json({ message: "You cannot demote your own admin account." });
+
+            if (values.role !== undefined) {
+                const userId = Number(keyResult.key.id);
+                const adminIds = await lockAdminUsers(connection);
+                if (userId === Number(req.user.id) && values.role !== "admin") {
+                    await connection.rollback();
+                    return res.status(400).json({ message: "You cannot demote your own admin account." });
+                }
+                if (currentUser.role === "admin" && values.role !== "admin" && adminIds.length <= 1) {
+                    await connection.rollback();
+                    return res.status(400).json({ message: "The last admin account cannot be demoted." });
+                }
             }
-            if (target.role === "admin" && values.role !== "admin" && adminIds.length <= 1) {
-                await connection.rollback();
-                return res.status(400).json({ message: "The last admin account cannot be demoted." });
+
+            if (values.avatar_url !== undefined && values.avatar_url !== currentUser.avatar_url) {
+                deleteLocalAvatar(currentUser.avatar_url);
             }
         }
 
@@ -588,7 +619,7 @@ export const deleteRecord = async (req, res) => {
                 return res.status(400).json({ message: "You cannot delete your own admin account." });
             }
             const [[target]] = await connection.execute(
-                "SELECT role FROM users WHERE id = ? FOR UPDATE",
+                "SELECT role, avatar_url FROM users WHERE id = ? FOR UPDATE",
                 [keyResult.key.id],
             );
             if (!target) {
@@ -599,6 +630,7 @@ export const deleteRecord = async (req, res) => {
                 await connection.rollback();
                 return res.status(400).json({ message: "The last admin account cannot be deleted." });
             }
+            deleteLocalAvatar(target.avatar_url);
         }
 
         const where = whereForKey(entity, keyResult.key);
