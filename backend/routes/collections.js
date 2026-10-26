@@ -21,5 +21,7 @@ router.post("/:id/items", collections.addCollectionItem);
 router.patch("/:id", collections.updateCollection);
 router.delete("/:id", collections.deleteCollection);
 router.delete("/:id/items/:showId", collections.removeCollectionItem);
+router.get("/shows/:showId", collections.listCollectionShows);
+router.post("/shows/:showId", collections.updateCollectionShows);
 
 export default router;

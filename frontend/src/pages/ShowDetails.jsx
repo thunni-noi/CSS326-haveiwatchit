@@ -11,6 +11,7 @@ import { BookMarked, Check, Globe, Lock, LoaderCircle, Plus, X,
 import ReviewSection from "../components/DetailComponents/ReviewSection";
 import AddWatchlistModal from "../components/AddWatchlistModal";
 import ErrorDisplay from "../components/ErrorDisplay";
+import AddCollectionModal from "../components/AddCollectionModal";
 
 
 
@@ -75,77 +76,9 @@ function ShowDetails( {user} ) {
     const [isLoading, setLoading] = useState(true);
     const [error, setError] = useState(false);
     const [refresh, setRefresh] = useState(false);
-    const [collectionPickerOpen, setCollectionPickerOpen] = useState(false);
-    const [userCollections, setUserCollections] = useState([]);
-    const [selectedCollectionIds, setSelectedCollectionIds] = useState([]);
-    const [collectionsLoading, setCollectionsLoading] = useState(false);
-    const [savingToCollections, setSavingToCollections] = useState(false);
-    const [collectionError, setCollectionError] = useState("");
-    const [collectionSuccess, setCollectionSuccess] = useState("");
     const [openWatchlist, setOpenWatchlist] = useState(null);
     const [watchlistStatus, setWatchlistStatus] = useState(null);
-
-
-    const openCollectionSelection = async () => {
-        setCollectionPickerOpen(true);
-        setSelectedCollectionIds([]);
-        setCollectionError("");
-        setCollectionSuccess("");
-        if (!user) {
-            setCollectionError("Please log in to add this title to a collection.");
-            return;
-        }
-
-        setCollectionsLoading(true);
-        try {
-            const { data } = await axios.get("/api/collections");
-            const collections = Array.isArray(data?.collections) ? data.collections : Array.isArray(data) ? data : [];
-            setUserCollections(collections);
-        } catch (requestError) {
-            setCollectionError(requestError.response?.data?.message || "Unable to load your collections.");
-            setUserCollections([]);
-        } finally {
-            setCollectionsLoading(false);
-        }
-    };
-
-    const toggleSelectedCollection = (collectionId) => {
-        setSelectedCollectionIds((current) => current.includes(collectionId)
-            ? current.filter((id) => id !== collectionId)
-            : [...current, collectionId]);
-    };
-
-    const addShowToSelectedCollections = async () => {
-        if (!selectedCollectionIds.length) {
-            setCollectionError("Choose at least one collection.");
-            return;
-        }
-
-        setSavingToCollections(true);
-        setCollectionError("");
-        setCollectionSuccess("");
-        const results = await Promise.allSettled(selectedCollectionIds.map((collectionId) =>
-            axios.post(`/api/collections/${collectionId}/items`, { show_id: Number(showId) })
-        ));
-        const addedCount = results.filter((result) => result.status === "fulfilled").length;
-        const duplicateCount = results.filter((result) => result.status === "rejected" && result.reason?.response?.status === 409).length;
-        const failedCount = results.length - addedCount - duplicateCount;
-
-        if (addedCount) {
-            const noun = addedCount === 1 ? "collection" : "collections";
-            setCollectionSuccess(`Added to ${addedCount} ${noun}.`);
-        }
-        if (duplicateCount || failedCount) {
-            const messages = [];
-            if (duplicateCount) messages.push(`${duplicateCount} already contained this title`);
-            if (failedCount) messages.push(`${failedCount} could not be updated`);
-            setCollectionError(`${messages.join("; ")}.`);
-        }
-        if (!addedCount && !duplicateCount && !failedCount) {
-            setCollectionError("Unable to add this title to the selected collections.");
-        }
-        setSavingToCollections(false);
-    };
+    const [openCollection, setOpenCollection] = useState(false);
 
     const refreshPage = () => setRefresh((refresh) => !refresh);
 
@@ -210,10 +143,10 @@ function ShowDetails( {user} ) {
                                 <button type="button"
                                 onClick={() => setOpenWatchlist(showInfo)}
                                 className="flex w-full items-center justify-center gap-2 rounded-md bg-[#303969] py-2 text-sm font-semibold text-white transition-all hover:bg-[#414b82]">
-                                {watchlistButton(watchlistStatus.status)}
+                                {watchlistButton(watchlistStatus?.status)}
                                 </button>
                                 <button type="button"
-                                onClick={openCollectionSelection}
+                                onClick={() => setOpenCollection(true)}
                                 className="flex w-full items-center justify-center gap-2 rounded-md bg-[#303969] py-2 text-sm font-semibold text-white transition-all hover:bg-[#414b82]">
                                 <Plus className="h-4 w-4" /> Add to Collection
                                 </button>
@@ -336,66 +269,7 @@ function ShowDetails( {user} ) {
                 </div>
             </div>
         </main>
-        {collectionPickerOpen && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 py-6 backdrop-blur-sm">
-                <section role="dialog" aria-modal="true" aria-labelledby="collection-picker-title" className="flex max-h-[85vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-[#66568f] bg-[#1c1a2b] shadow-2xl shadow-black/50">
-                    <header className="flex items-start justify-between gap-4 border-b border-white/10 bg-linear-to-r from-[#251329] via-[#30204a] to-[#4a214b] px-5 py-4">
-                        <div className="min-w-0 flex-1">
-                            <h2 id="collection-picker-title" className="text-xl font-bold text-white">Add to Collection</h2>
-                            <p className="mt-1 break-words text-sm text-[#c9c2d8]">Choose one or more collections for {showInfo.title}.</p>
-                        </div>
-                        <button type="button" onClick={() => setCollectionPickerOpen(false)} aria-label="Close" className="mt-0.5 ml-3 shrink-0 rounded-lg p-2 text-neutral-300 transition hover:bg-white/10 hover:text-white">
-                            <X className="h-5 w-5" />
-                        </button>
-                    </header>
-
-                    <div className="min-h-0 flex-1 overflow-y-auto p-5">
-                        {collectionsLoading ? (
-                            <p className="flex items-center justify-center gap-2 py-10 text-neutral-300"><LoaderCircle className="h-5 w-5 animate-spin" /> Loading collections...</p>
-                        ) : !user ? (
-                            <p className="py-6 text-center text-neutral-300">Please <Link to="/login" onClick={() => setCollectionPickerOpen(false)} className="font-semibold text-[#EFAC61] hover:underline">log in</Link> to add this title to your collections.</p>
-                        ) : userCollections.length === 0 ? (
-                            <div className="py-6 text-center">
-                                <BookMarked className="mx-auto h-9 w-9 text-[#9596D6]" />
-                                <p className="mt-3 text-neutral-300">You have no collections yet.</p>
-                                <Link to="/collections" onClick={() => setCollectionPickerOpen(false)} className="mt-3 inline-block font-semibold text-[#EFAC61] hover:underline">Create a collection</Link>
-                            </div>
-                        ) : (
-                            <div className="space-y-2">
-                                {userCollections.map((collection) => {
-                                    const selected = selectedCollectionIds.includes(collection.id);
-                                    return (
-                                        <label key={collection.id} className={`flex cursor-pointer items-center gap-3 rounded-xl border p-3 transition ${selected ? "border-[#EFAC61]/70 bg-[#EFAC61]/10" : "border-white/10 bg-black/15 hover:border-[#66568f] hover:bg-white/5"}`}>
-                                            <input type="checkbox" checked={selected} onChange={() => toggleSelectedCollection(collection.id)} className="h-4 w-4 accent-[#EFAC61]" />
-                                            <span className="min-w-0 flex-1 truncate font-medium text-white">{collection.name}</span>
-                                            <span className="flex shrink-0 items-center gap-1 text-xs text-[#c9c2d8]">
-                                                {collection.is_public ? <Globe className="h-3.5 w-3.5 text-green-400" /> : <Lock className="h-3.5 w-3.5 text-[#9596D6]" />}
-                                                {collection.is_public ? "Public" : "Private"}
-                                            </span>
-                                        </label>
-                                    );
-                                })}
-                            </div>
-                        )}
-                        {collectionError && <p role="alert" className="mt-4 rounded-lg border border-red-400/20 bg-red-950/40 p-3 text-sm text-red-200">{collectionError}</p>}
-                        {collectionSuccess && <p role="status" className="mt-4 flex items-center gap-2 rounded-lg border border-green-400/20 bg-green-950/30 p-3 text-sm text-green-200"><Check className="h-4 w-4" />{collectionSuccess}</p>}
-                    </div>
-
-                    {user && userCollections.length > 0 && !collectionsLoading && (
-                        <footer className="flex items-center justify-between gap-3 border-t border-white/10 bg-black/10 px-5 py-4">
-                            <span className="text-sm text-neutral-400">{selectedCollectionIds.length} selected</span>
-                            <div className="flex gap-2">
-                                <button type="button" onClick={() => setCollectionPickerOpen(false)} className="rounded-xl border border-white/15 px-4 py-2 text-sm text-neutral-200 transition hover:bg-white/5">Close</button>
-                                <button type="button" onClick={addShowToSelectedCollections} disabled={savingToCollections || !selectedCollectionIds.length} className="inline-flex items-center gap-2 rounded-xl bg-[#EFAC61] px-4 py-2 text-sm font-semibold text-[#17152a] transition hover:bg-[#f3bd7f] disabled:cursor-not-allowed disabled:opacity-50">
-                                    {savingToCollections ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-                                    Add to selected
-                                </button>
-                            </div>
-                        </footer>
-                    )}
-                </section>
-            </div>
-        )}
+        {openCollection && <AddCollectionModal showInfo={showInfo} user={user} onClose={() => setOpenCollection(false)}/>}
         {openWatchlist && <AddWatchlistModal user={user} show={openWatchlist} onCancel={() => setOpenWatchlist(null)} onSubmit={() => setOpenWatchlist(null)}/>}
         </>
     )
