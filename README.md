@@ -59,3 +59,10 @@ Authentication is done via `App.jsx` which requests `api/auth/me` on every page 
 
 ### Admin
 Users with the `admin` role can open `/admin` to search, page through, create, edit, and delete users, shows, and submissions. Platform availability and cast/crew are managed within each show’s details, and show poster images can be set using an HTTP or HTTPS URL. Admins can assign or remove moderator roles. The backend enforces admin access for these API routes, protects the signed-in and last admin accounts, and never returns password hashes. Restart the backend after pulling or changing backend code.
+
+### How to set Admin
+ in sql
+ SELECT username, email, role FROM users;
+ UPDATE users
+ SET role = 'admin'
+ WHERE email = 'user email';
