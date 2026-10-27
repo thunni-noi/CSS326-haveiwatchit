@@ -29,14 +29,11 @@ const Register = ({ setUser }) => {
     };
 
     return (
-        <div className="relative min-h-[80vh] flex items-center justify-center overflow-hidden p-4 pt-24 bg-gradient-to-b from-[#171717] via-[#17121f] to-[#0A0A0A]">
-            {/* Background glow */}
-            <div className="pointer-events-none absolute -top-24 right-1/4 h-72 w-72 rounded-full bg-[#9596D6]/10 blur-3xl" />
-            <div className="pointer-events-none absolute -bottom-24 left-1/4 h-72 w-72 rounded-full bg-[#EFAC61]/10 blur-3xl" />
-
+        <div className="relative min-h-[80vh] flex items-center justify-center overflow-hidden p-4 pt-24 bg-black/50 backdrop-blur-lg">
+            
             <form
                 onSubmit={handleSubmit}
-                className="relative z-10 w-full max-w-md rounded-2xl border border-white/10 bg-[#1C1C20]/90 p-8 text-center shadow-2xl shadow-black/30 backdrop-blur-xl sm:p-10"
+                className="relative z-10 w-full max-w-md rounded-2xl border border-gray-500/20 bg-gray-900 p-8 text-center shadow-2xl shadow-black/30"
             >
                 <button
                     type="button"
@@ -85,7 +82,7 @@ const Register = ({ setUser }) => {
                             placeholder="Choose a username"
                             autoComplete="username"
                             required
-                            className="w-full rounded-xl border border-white/10 bg-[#0F0F12] p-3.5 text-white placeholder:text-gray-600 transition focus:border-[#EFAC61] focus:outline-none focus:ring-2 focus:ring-[#EFAC61]/20"
+                            className="w-full rounded-xl border border-white/10 bg-neutral-800/80 p-3.5 text-white placeholder:text-neutral-500 transition focus:border-[#9596D6] focus:outline-none"
                             value={form.username}
                             onChange={(e) =>
                                 setForm({ ...form, username: e.target.value })
@@ -107,7 +104,7 @@ const Register = ({ setUser }) => {
                             placeholder="Enter your email"
                             autoComplete="email"
                             required
-                            className="w-full rounded-xl border border-white/10 bg-[#0F0F12] p-3.5 text-white placeholder:text-gray-600 transition focus:border-[#EFAC61] focus:outline-none focus:ring-2 focus:ring-[#EFAC61]/20"
+                            className="w-full rounded-xl border border-white/10 bg-neutral-800/80 p-3.5 text-white placeholder:text-neutral-500 transition focus:border-[#9596D6] focus:outline-none"
                             value={form.email}
                             onChange={(e) =>
                                 setForm({ ...form, email: e.target.value })
@@ -130,7 +127,7 @@ const Register = ({ setUser }) => {
                             autoComplete="new-password"
                             required
                             minLength={6}
-                            className="w-full rounded-xl border border-white/10 bg-[#0F0F12] p-3.5 text-white placeholder:text-gray-600 transition focus:border-[#EFAC61] focus:outline-none focus:ring-2 focus:ring-[#EFAC61]/20"
+                            className="w-full rounded-xl border border-white/10 bg-neutral-800/80 p-3.5 text-white placeholder:text-neutral-500 transition focus:border-[#9596D6] focus:outline-none"
                             value={form.password}
                             onChange={(e) =>
                                 setForm({ ...form, password: e.target.value })
@@ -144,47 +141,17 @@ const Register = ({ setUser }) => {
 
                 <button
                     type="submit"
-                    className="mt-6 w-full rounded-xl bg-[#EFAC61] p-3.5 font-bold text-[#251329] shadow-lg shadow-[#EFAC61]/10 transition hover:bg-[#F4BC7C] active:scale-[0.98]"
+                    className="mt-6 w-full rounded-xl bg-[#303969] p-3.5 font-bold text-white transition hover:bg-[#414b82] active:scale-[0.98]"
                 >
                     Create Account
                 </button>
-
-                <div className="my-6 flex items-center gap-3">
-                    <div className="h-px flex-1 bg-white/10" />
-                    <span className="whitespace-nowrap text-xs font-medium tracking-wider text-gray-500">
-                        OR SIGN UP WITH
-                    </span>
-                    <div className="h-px flex-1 bg-white/10" />
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                    <button
-                        type="button"
-                        className="flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-[#111114] py-3 text-sm font-medium text-gray-200 transition hover:border-[#9596D6]/50 hover:bg-[#9596D6]/10"
-                    >
-                        <img
-                            src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
-                            alt=""
-                            className="h-5 w-5"
-                        />
-                        Google
-                    </button>
-
-                    <button
-                        type="button"
-                        className="flex items-center justify-center gap-2 rounded-xl bg-[#1877F2] py-3 text-sm font-medium text-white transition hover:bg-[#166FE5]"
-                    >
-                        <span className="text-xl font-bold">f</span>
-                        Facebook
-                    </button>
-                </div>
-
-                <p className="mt-7 text-sm text-gray-400">
+                
+                <p className="mt-6 text-sm text-gray-400">
                     Already have an account?{" "}
                     <button
                         type="button"
                         onClick={() => navigate("/login")}
-                        className="font-semibold text-[#EFAC61] transition hover:text-[#F4BC7C] hover:underline"
+                        className="font-semibold text-[#EFAC61] transition hover:text-[#c27f33] hover:underline"
                     >
                         Login
                     </button>
