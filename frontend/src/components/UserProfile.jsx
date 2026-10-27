@@ -26,7 +26,7 @@ function UserProfile( {user, className} ){
     }
     else {
         return (
-            <GuestIcon className={`${className} border-2 border-black`}/>
+            <GuestIcon className={`${className}`}/>
         )
     }
     

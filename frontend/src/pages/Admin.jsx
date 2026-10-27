@@ -709,7 +709,7 @@ const Admin = ({ user }) => {
         <button
           type="submit"
           disabled={saving}
-          className="rounded-lg bg-[purple-600] px-5 py-2 text-sm font-semibold text-white hover:bg-[#9698ff] disabled:opacity-60"
+          className="rounded-lg bg-blue-500 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-800 disabled:opacity-60"
         >
           {saving ? "Saving…" : "Save"}
         </button>

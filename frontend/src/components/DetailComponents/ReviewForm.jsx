@@ -59,7 +59,7 @@ function ReviewForm( {current, onSubmit, onCancel} ){
                         </button>
                     ))
                 }
-                {score && (<span className="text-blue-400"> - {scoreList[score]}</span>)}
+                {!!score && (<span className="text-blue-400"> - {scoreList[score]}</span>)}
                 </div>
 
                 <div className="flex flex-row gap-2 justify-start">

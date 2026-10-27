@@ -395,19 +395,13 @@ const CollectionsPage = ({ user }) => {
                                 </div>
                             </div>
                         </section>
-                        <div className="mt-16 flex justify-center">
-                            <div className="text-center">
-                            <p className="text-white text-xl mb-4">
-                                Please log in to view your collections.
-                            </p>
-                            <Link
-                                to="/login"
-                                className="bg-black text-white px-6 py-3 rounded-xl hover:bg-neutral-800 transition font-medium inline-block"
-                            >
-                                Login
+                        <section className="mx-10 mt-8 rounded-xl border border-white/10 bg-neutral-900/80 p-8 text-center">
+                            <h2 className="text-xl font-semibold">You need to sign in to see your collections</h2>
+                            <p className="mt-2 text-sm text-neutral-400">As wise man once said, 401: Who are you? - Tsun Tzu</p>
+                            <Link to="/login" className="mt-5 inline-flex rounded-lg bg-[#3336cc] px-5 py-2.5 font-semibold text-white transition hover:bg-blue-900">
+                                Sign in
                             </Link>
-                            </div>
-                        </div>
+                    </section>
                 </div>
             </main> 
         );

@@ -191,9 +191,9 @@ function WatchlistPage({ user }) {
             <div className="mx-auto max-w-5xl sm:px-8">
                 {!user ? (
                     <section className="mt-8 rounded-xl border border-white/10 bg-neutral-900/80 p-8 text-center">
-                        <h2 className="text-xl font-semibold">Sign in to see your watchlist</h2>
-                        <p className="mt-2 text-sm text-neutral-400">Your saved movies and shows will be waiting here.</p>
-                        <Link to="/login" className="mt-5 inline-flex rounded-lg bg-[#303969] px-5 py-2.5 font-semibold text-white transition hover:bg-[#414b82]">
+                        <h2 className="text-xl font-semibold">You need to sign in to see your watchlist</h2>
+                        <p className="mt-2 text-sm text-neutral-400">As wise man once said, 401: Who are you? - Tsun Tzu</p>
+                        <Link to="/login" className="mt-5 inline-flex rounded-lg bg-[#3336cc] px-5 py-2.5 font-semibold text-white transition hover:bg-blue-900">
                             Sign in
                         </Link>
                     </section>
