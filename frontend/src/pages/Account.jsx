@@ -2,6 +2,7 @@ import axios from "axios";
 import LoadingPlaceHolder from "../components/LoadingScreen";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import UserProfile from "../components/UserProfile";
 import {
     ArrowLeft,
     Camera,
@@ -12,6 +13,7 @@ import {
     CheckCircle2,
     AlertCircle,
     LoaderCircle,
+    CircleCheck as VerifiedIcon
 } from "lucide-react";
 
 const ALLOWED = ["image/jpeg", "image/png", "image/webp"];
@@ -226,21 +228,10 @@ function Account({ user, setUser }) {
                         <aside className="h-fit overflow-hidden rounded-2xl bg-[#2b2b31]">
                             <div className="h-28 bg-[#9596D6]" />
 
-                            <div className="px-5 pb-6 text-center">
+                            <div className="flex flex-col px-5 pb-6 gap-y-1 justify justify-center items-center">
                                 <div className="relative -mt-14 mx-auto w-fit">
                                     <div className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-full border-[6px] border-neutral-900 bg-neutral-800">
-                                        {avatarSrc && !avatarError ? (
-                                            <img
-                                                src={avatarSrc}
-                                                alt="Profile"
-                                                onError={() => setAvatarError(true)}
-                                                className="h-full w-full object-cover"
-                                            />
-                                        ) : (
-                                            <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#9596D6] to-[#303969] text-4xl font-bold">
-                                                {(user.username || "U").trim().charAt(0)}
-                                            </div>
-                                        )}
+                                        <UserProfile user={user}/>
                                     </div>
 
                                     <button
@@ -260,10 +251,12 @@ function Account({ user, setUser }) {
                                         className="hidden"
                                     />
                                 </div>
-
-                                <h1 className="mt-4 break-all text-2xl font-bold">{user.username}</h1>
+                                <div className="flex flex-row items-center align-middle mt-1 gap-2">
+                                    <h1 className="break-all text-2xl font-bold">{user.username}</h1>
+                                    {user?.is_verified && <span title="This user is verified!"> <VerifiedIcon color="#EFAC61" className="size-4" /> </span>}
+                                </div>
                                 <p className="text-sm capitalize text-neutral-400">{user.role}</p>
-
+                                {!!user?.is_suspended && <span className="text-sm font-bold text-center text-red-300"> You are currently suspended! <br/> <p className="text-xs font-medium"> Please contact admin If you believe this is a mistake </p></span>}
                                 <button
                                     type="button"
                                     onClick={() => setTab("edit")}
@@ -273,12 +266,8 @@ function Account({ user, setUser }) {
                                     Edit Profile
                                 </button>
 
-                                <p className="mt-5 text-sm leading-6 text-neutral-300">
-                                    {user.bio || "No bio yet."}
-                                </p>
-
                                 {memberSince && (
-                                    <div className="mt-5">
+                                    <div className="mt-5 self-start">
                                         <p className="text-xs font-bold text-neutral-300">Member Since</p>
                                         <p className="mt-1 text-sm text-neutral-400">{memberSince}</p>
                                     </div>
@@ -396,7 +385,6 @@ function Account({ user, setUser }) {
                                                 className="w-full rounded-xl border border-white/10 bg-neutral-900/80 py-3.5 pl-11 pr-4 text-sm text-white outline-none transition placeholder:text-neutral-500 focus:border-[#9596D6]"
                                             />
                                         </div>
-                                        <p className="mt-2 text-xs text-neutral-500">This is the name displayed on your profile.</p>
                                     </div>
 
                                     <div>
@@ -413,7 +401,7 @@ function Account({ user, setUser }) {
                                                 className="w-full cursor-not-allowed rounded-xl border border-white/5 bg-neutral-900/70 py-3.5 pl-11 pr-4 text-sm text-neutral-500 outline-none"
                                             />
                                         </div>
-                                        <p className="mt-2 text-xs text-neutral-500">Your email address cannot be changed here.</p>
+                                        <p className="mt-2 text-xs text-neutral-500">Please contact admin if you wish to change you email or password!</p>
                                     </div>
 
                                     <div>

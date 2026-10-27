@@ -340,20 +340,20 @@ export const getShowAssociations = async (req, res) => {
 
         const [platforms] = await pool.execute(
             `SELECT p.id, p.name, p.logo_url, p.url
-             FROM show_sources source
-             JOIN show_platform p ON p.id = source.platform_id
-             WHERE source.show_id = ?
-             ORDER BY p.name`,
+            FROM show_sources source
+            JOIN show_platform p ON p.id = source.platform_id
+            WHERE source.show_id = ?
+            ORDER BY p.name`,
             [showId],
         );
         const [cast] = await pool.execute(
             `SELECT credit.id, credit.role, credit.character_name, credit.character_photo,
                     person.id AS people_id, person.name AS person_name, person.bio AS person_bio,
                     person.photo_url AS person_photo_url
-             FROM show_roles credit
-             JOIN people person ON person.id = credit.people_id
-             WHERE credit.show_id = ?
-             ORDER BY person.name`,
+            FROM show_roles credit
+            JOIN people person ON person.id = credit.people_id
+            WHERE credit.show_id = ?
+            ORDER BY person.name`,
             [showId],
         );
         const [platformOptions] = await pool.execute(
@@ -432,18 +432,18 @@ export const getUserWatchlist = async (req, res) => {
         const [items] = await pool.execute(
             `SELECT item.show_id, item.status, item.updated_at,
                     s.name, s.type, s.photo_url
-             FROM watchlist_items item
-             JOIN shows s ON s.id = item.show_id
-             WHERE item.user_id = ?
-             ORDER BY item.updated_at DESC, s.name`,
+            FROM watchlist_items item
+            JOIN shows s ON s.id = item.show_id
+            WHERE item.user_id = ?
+            ORDER BY item.updated_at DESC, s.name`,
             [userId],
         );
         const [availableShows] = await pool.execute(
             `SELECT id, name, type, photo_url
-             FROM shows
-             WHERE id NOT IN (SELECT show_id FROM watchlist_items WHERE user_id = ?)
-             ORDER BY name
-             LIMIT 1000`,
+            FROM shows
+            WHERE id NOT IN (SELECT show_id FROM watchlist_items WHERE user_id = ?)
+            ORDER BY name
+            LIMIT 1000`,
             [userId],
         );
 
@@ -731,3 +731,39 @@ export const deleteRecord = async (req, res) => {
         connection.release();
     }
 };
+
+const wrapper = (errMsg, controller) => async (req, res) =>
+    {try {
+        await controller(req, res);
+    } catch (error) {
+        console.error(`${errMsg}`, error);
+        res.status(500).json({message: errMsg});
+    }};
+
+export const suspendUser = wrapper("Unable to suspend user", async(req, res) => {
+    const userId = req.user.id;
+    const targetId = Number(req.params.targetId);
+
+    if (Number.isNaN(targetId) || targetId < 0) return res.status(400).json({message: "Invalid ID"});
+    const [r] = await pool.execute(`
+        UPDATE users SET is_suspended = 1 WHERE id = ?`, [targetId])
+    
+    if (r.affectedRows === 0){
+        return r.status(404).json({message: "Target ID not found!"})
+    }
+    return res.json({message: "Suspend user successfully"})
+})
+
+export const unsuspendUser = wrapper("Unable to unsuspend user", async(req, res) => {
+    const userId = req.user.id;
+    const targetId = Number(req.params.targetId);
+
+    if (Number.isNaN(targetId) || targetId < 0) return res.status(400).json({message: "Invalid ID"});
+    const [r] = await pool.execute(`
+        UPDATE users SET is_suspended = 0 WHERE id = ?`, [targetId])
+    
+    if (r.affectedRows === 0){
+        return r.status(404).json({message: "Target ID not found!"})
+    }
+    return res.json({message: "User are now unsuspended"});
+})

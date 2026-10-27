@@ -26,109 +26,107 @@ const Login = ({ setUser }) => {
     };
 
     return (
-        <div className="relative min-h-[80vh] flex items-center justify-center overflow-hidden p-4 pt-24 bg-black/50 backdrop-blur-lg">
-
-            <form
-                onSubmit={handleSubmit}
-                className="relative z-10 w-full max-w-md rounded-2xl border border-gray-500/20 bg-gray-900 p-8 text-center shadow-2xl shadow-black/30"
-            >
-                <button
-                    type="button"
-                    onClick={() => navigate(-1)}
-                    aria-label="Go back"
-                    className="absolute left-4 top-4 rounded-full p-2 text-[#9596D6] transition hover:bg-[#9596D6]/10 hover:text-[#EFAC61]"
+        <main className="container mx-auto px-4 py-6">
+            <div className="flex py-24 mx-auto min-h-screen items-center justify-center bg-black/50 backdrop-blur-lg text-white">
+                <form
+                    onSubmit={handleSubmit}
+                    className="relative z-10 w-full max-w-md rounded-2xl border border-gray-500/20 bg-neutral-800 p-8 text-center shadow-2xl shadow-black/30"
                 >
-                    <ArrowLeft className="h-5 w-5" />
-                </button>
-
-                <div className="mb-6">
-                    <p className="mb-2 text-xs font-bold uppercase tracking-[0.3em] text-[#EFAC61]">
-                        Have I Watched It?
-                    </p>
-
-                    <h2 className="mb-3 text-3xl font-bold text-white sm:text-4xl">
-                        Welcome Back
-                    </h2>
-
-                    <p className="text-sm leading-relaxed text-gray-400">
-                        Sign in to keep track of your movies and shows.
-                    </p>
-                </div>
-
-                {error && (
-                    <p
-                        role="alert"
-                        className="mb-4 rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400"
-                    >
-                        {error}
-                    </p>
-                )}
-
-                <div className="space-y-4 text-left">
-                    <div>
-                        <label
-                            htmlFor="login-email"
-                            className="mb-2 block text-sm font-medium text-gray-300"
-                        >
-                            Email
-                        </label>
-
-                        <input
-                            id="login-email"
-                            type="email"
-                            placeholder="Enter your email"
-                            autoComplete="email"
-                            required
-                            className="w-full rounded-xl border border-white/10 bg-neutral-800/80 p-3.5 text-white placeholder:text-neutral-500 transition focus:border-[#9596D6] focus:outline-none"
-                            value={form.email}
-                            onChange={(e) =>
-                                setForm({ ...form, email: e.target.value })
-                            }
-                        />
-                    </div>
-
-                    <div>
-                        <label
-                            htmlFor="login-password"
-                            className="mb-2 block text-sm font-medium text-gray-300"
-                        >
-                            Password
-                        </label>
-
-                        <input
-                            id="login-password"
-                            type="password"
-                            placeholder="Enter your password"
-                            autoComplete="current-password"
-                            required
-                            className="w-full rounded-xl border border-white/10 bg-neutral-800/80 p-3.5 text-white placeholder:text-neutral-500 transition focus:border-[#9596D6] focus:outline-none"
-                            value={form.password}
-                            onChange={(e) =>
-                                setForm({ ...form, password: e.target.value })
-                            }
-                        />
-                    </div>
-                </div>
-
-                <button
-                    type="submit"
-                    className="mt-6 w-full rounded-xl bg-[#303969] p-3.5 font-bold text-white transition hover:bg-[#414b82] active:scale-[0.98]"
-                >
-                    Login
-                </button>
-
-                <p className="mt-6 text-sm text-gray-400">
-                    Don't have an account?{" "}
                     <button
                         type="button"
-                        onClick={() => navigate("/register")}
-                        className="font-semibold text-[#EFAC61] transition hover:text-[#c27f33] hover:underline"
+                        onClick={() => navigate(-1)}
+                        aria-label="Go back"
+                        className="absolute left-4 top-4 rounded-full p-2 text-[#9596D6] transition hover:bg-[#9596D6]/10 hover:text-[#EFAC61]"
                     >
-                        Register
+                        <ArrowLeft className="h-5 w-5" />
                     </button>
-                </p>
-            </form>
-        </div>
+
+                    <div className="mb-6 mt-5">
+                        <span className="text-[#9596D6] font-bold text-2xl sm:text-4xl inline-block px-2 py-1 rounded-md">
+                                <span className="text-[#EFAC61]">WELCOME</span> BACK
+                        </span>
+
+
+                        <p className="text-sm leading-relaxed text-gray-400">
+                            Sign in to keep track of your movies and shows.
+                        </p>
+                    </div>
+
+                    {error && (
+                        <p                                                                                                                              
+                            role="alert"
+                            className="mb-4 rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400"
+                        >
+                            {error}
+                        </p>
+                    )}
+
+                    <div className="space-y-4 text-left">
+                        <div>
+                            <label
+                                htmlFor="login-email"
+                                className="mb-2 block text-sm font-medium text-gray-300"
+                            >
+                                Email
+                            </label>
+
+                            <input
+                                id="login-email"
+                                type="email"
+                                placeholder="Enter your email"
+                                autoComplete="email"
+                                required
+                                className="w-full rounded-xl border border-white/10 bg-neutral-800/80 p-3.5 text-white placeholder:text-neutral-500 transition focus:border-[#9596D6] focus:outline-none"
+                                value={form.email}
+                                onChange={(e) =>
+                                    setForm({ ...form, email: e.target.value })
+                                }
+                            />
+                        </div>
+
+                        <div>
+                            <label
+                                htmlFor="login-password"
+                                className="mb-2 block text-sm font-medium text-gray-300"
+                            >
+                                Password
+                            </label>
+
+                            <input
+                                id="login-password"
+                                type="password"
+                                placeholder="Enter your password"
+                                autoComplete="current-password"
+                                required
+                                className="w-full rounded-xl border border-white/10 bg-neutral-800/80 p-3.5 text-white placeholder:text-neutral-500 transition focus:border-[#9596D6] focus:outline-none"
+                                value={form.password}
+                                onChange={(e) =>
+                                    setForm({ ...form, password: e.target.value })
+                                }
+                            />
+                        </div>
+                    </div>
+
+                    <button
+                        type="submit"
+                        className="mt-6 w-full rounded-xl bg-[#303969] p-3.5 font-bold text-white transition hover:bg-[#414b82] active:scale-[0.98]"
+                    >
+                        Login
+                    </button>
+
+                    <p className="mt-6 text-sm text-gray-400">
+                        Don't have an account?{" "}
+                        <button
+                            type="button"
+                            onClick={() => navigate("/register")}
+                            className="font-semibold text-[#EFAC61] transition hover:text-[#c27f33] hover:underline"
+                        >
+                            Register
+                        </button>
+                    </p>
+                </form>
+            </div>
+        </main>
     );
 };
 

@@ -1,11 +1,14 @@
 import express from "express";
 import * as admin from "../controllers/admin.js";
-import { requireAdmin } from "../middleware/auth.js";
+import { requireRole } from "../middleware/auth.js";
 import { protect } from "../middleware/auth.js";
 
 const router = express.Router();
 
-router.use(protect, requireAdmin);
+router.post("/ban/:targetId", protect, requireRole("admin", "moderator"), admin.suspendUser);
+router.post("/unban/:targetId", protect, requireRole("admin", "moderator"), admin.unsuspendUser);
+
+router.use(protect, requireRole("admin"));
 router.get("/shows/:id/associations", admin.getShowAssociations);
 router.get("/users/:id/watchlist", admin.getUserWatchlist);
 router.post("/users/:id/watchlist", admin.addUserWatchlistItem);

@@ -29,11 +29,12 @@ const Register = ({ setUser }) => {
     };
 
     return (
-        <div className="relative min-h-[80vh] flex items-center justify-center overflow-hidden p-4 pt-24 bg-black/50 backdrop-blur-lg">
+        <main className="container mx-auto px-4 py-6">
+            <div className="flex py-24 mx-auto min-h-screen items-center justify-center bg-black/50 backdrop-blur-lg text-white">
             
             <form
                 onSubmit={handleSubmit}
-                className="relative z-10 w-full max-w-md rounded-2xl border border-gray-500/20 bg-gray-900 p-8 text-center shadow-2xl shadow-black/30"
+                className="relative z-10 w-full max-w-md rounded-2xl border border-gray-500/20 bg-neutral-800 p-8 text-center shadow-2xl shadow-black/30"
             >
                 <button
                     type="button"
@@ -44,19 +45,16 @@ const Register = ({ setUser }) => {
                     <ArrowLeft className="h-5 w-5" />
                 </button>
 
-                <div className="mb-6">
-                    <p className="mb-2 text-xs font-bold uppercase tracking-[0.3em] text-[#EFAC61]">
-                        Have I Watched It?
-                    </p>
+                <div className="mb-6 mt-5">
+                        <span className="text-[#EFAC61] font-bold text-2xl sm:text-4xl inline-block px-2 py-1 rounded-md">
+                                <span className="text-[#9596D6]">CREATE</span> ACCOUNT
+                        </span>
 
-                    <h2 className="mb-3 text-3xl font-bold text-white sm:text-4xl">
-                        Create Account
-                    </h2>
 
-                    <p className="text-sm leading-relaxed text-gray-400">
-                        Join us and keep track of your movies and shows.
-                    </p>
-                </div>
+                        <p className="text-sm leading-relaxed text-gray-400">
+                            Create account to keep track of your shows!
+                        </p>
+                    </div>
 
                 {error && (
                     <p
@@ -137,27 +135,28 @@ const Register = ({ setUser }) => {
                             Password must be at least 6 characters.
                         </p>
                     </div>
-                </div>
+                    </div>
 
-                <button
-                    type="submit"
-                    className="mt-6 w-full rounded-xl bg-[#303969] p-3.5 font-bold text-white transition hover:bg-[#414b82] active:scale-[0.98]"
-                >
-                    Create Account
-                </button>
-                
-                <p className="mt-6 text-sm text-gray-400">
-                    Already have an account?{" "}
                     <button
-                        type="button"
-                        onClick={() => navigate("/login")}
-                        className="font-semibold text-[#EFAC61] transition hover:text-[#c27f33] hover:underline"
+                        type="submit"
+                        className="mt-6 w-full rounded-xl bg-[#303969] p-3.5 font-bold text-white transition hover:bg-[#414b82] active:scale-[0.98]"
                     >
-                        Login
+                        Create Account
                     </button>
-                </p>
-            </form>
-        </div>
+                    
+                    <p className="mt-6 text-sm text-gray-400">
+                        Already have an account?{" "}
+                        <button
+                            type="button"
+                            onClick={() => navigate("/login")}
+                            className="font-semibold text-[#EFAC61] transition hover:text-[#c27f33] hover:underline"
+                        >
+                            Login
+                        </button>
+                    </p>
+                </form>
+            </div>
+        </main>
     );
 };
 

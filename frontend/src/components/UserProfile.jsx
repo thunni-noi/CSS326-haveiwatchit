@@ -7,7 +7,7 @@ function UserProfile( {user, className} ){
 
     if (user?.avatar_url && !imgFailed){
         return( 
-        <div className={`${className}`}>
+        <div className={`${className} border border-white/40`}>
             <img 
                 src={user.avatar_url}
                 onError={() => setImgFailed(true)}
@@ -17,8 +17,8 @@ function UserProfile( {user, className} ){
     }
     else if (typeof user?.username === "string") {
         return (
-            <div className={`${className}`}>
-                <span className="text-lg font-semibold">
+            <div className={`${className} border border-neutral-950 bg-neutral-900`}>
+                <span className="text-lg font-semibold text-white ">
                     {user.username.trim().charAt(0)}
                 </span>
             </div>
@@ -26,7 +26,7 @@ function UserProfile( {user, className} ){
     }
     else {
         return (
-            <GuestIcon className={className}/>
+            <GuestIcon className={`${className} border-2 border-black`}/>
         )
     }
     

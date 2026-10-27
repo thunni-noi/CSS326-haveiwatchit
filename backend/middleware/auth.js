@@ -25,26 +25,18 @@ export const protect = async (req, res, next) => {
     }
 }
 
-export const requireAdmin = (req, res, next) => {
-    if (req.user?.role !== "admin") {
-        return res.status(403).json({ message: "Required admin permission level." });
+export const requireRole = (...roles) => (req, res, next) => {
+    if (!req.user || !roles.includes(req.user.role)){
+        return res.status(403).json({message: "You do not have required permission"})
     }
-
-    next();
-};
-
-export const requireModerator = (req, res, next) => {
-    if (req.user?.role !== "admin" && req.user?.role !== "moderator"){
-        return res.status(403).json({ message: "Required atleast moderator permission level."});
-    }
-
+    
     next();
 }
 
 // Used for review delete
 export const requireSelfOrMod = (req, res, next) => {
     const isSelf = req.user.id === Number(req.params.userId);
-    const isMod = req.user.role === "admin" || req.user.role === "moderator";
+    const isMod = ["admin", "moderator"].includes(req.user.role);
     if (!isSelf && !isMod) return res.status(403).json({message: "Do not have required permission"});
 
     next();

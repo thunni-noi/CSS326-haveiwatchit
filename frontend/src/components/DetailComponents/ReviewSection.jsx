@@ -117,6 +117,9 @@ function ReviewSection( {showId, user, onUpdated }) {
         setMyReview({
             user_id: user.id,
             username: user.username,
+            avatar_url: user.avatar_url,
+            is_suspended: user.is_suspended,
+            is_verified: user.is_verified,
             score: score,
             text: text,
             created_at: new Date().toISOString().slice(0, 10)
@@ -129,11 +132,14 @@ function ReviewSection( {showId, user, onUpdated }) {
     const handleRemove = async (review) => {
         console.log(review)
         const isMine = Boolean(user) && review.user_id === user.id
-        await removeReview(showId, review.user_id);
 
-        setReviews((prev) => prev.filter((r) => r.user_id !== review.user_id))
-        if (isMine) setMyReview(null);
-        onUpdated?.();
+        axios.delete(`/api/shows/${showId}/reviews/${review.user_id}`)
+        .then(() => {
+            setReviews((prev) => prev.filter((r) => r.user_id !== review.user_id))
+            if (isMine) setMyReview(null);
+            onUpdated?.();
+        })
+        .catch((err) => setLoadError(err.response?.data?.message ?? "Cannot remove review"))
     }
 
     // Not included user's review
@@ -152,7 +158,7 @@ function ReviewSection( {showId, user, onUpdated }) {
                     className="mb-4 flex items-center gap-2 rounded-md px-4 py-2 text-sm bg-[#585ad3] text-white transition-all disabled:opacity-50 disabled:line-through">
                         Write new review
                     </button>
-                    {user.is_suspended && <span className="text-neutral-400 text-xs"> (Suspended user can't write or edit reviews)</span>}
+                    {!!user.is_suspended && <span className="text-neutral-400 text-xs"> (Suspended user can't write or edit reviews)</span>}
                 </div>
             )}
             {user && !loading && reviewFormOpen && (
@@ -169,19 +175,21 @@ function ReviewSection( {showId, user, onUpdated }) {
                     <div className="space-y-3">
                         {myReview && !reviewFormOpen && (
                             <ReviewCard 
+                                curUser={user}
+                                curShowId={showId}
                                 review={myReview}
                                 isMine={true}
-                                canRemove={!user.is_suspended}
                                 onRemove={() => handleRemove(myReview)}
                                 onEdit={() => setReviewFormOpen(true)}
                             />
                         )}
                         {reviewList.map((r) => (
                             <ReviewCard 
+                                curUser={user}
+                                curShowId={showId}
                                 key={r.username}
                                 review={r}
                                 isMine={false}
-                                canRemove={isMod}
                                 onRemove={() => handleRemove(r)}
                                 onEdit={() => setReviewFormOpen(true)}
                                 />

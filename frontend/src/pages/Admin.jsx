@@ -709,7 +709,7 @@ const Admin = ({ user }) => {
         <button
           type="submit"
           disabled={saving}
-          className="rounded-lg bg-purple-600 px-5 py-2 text-sm font-semibold text-white hover:bg-purple-700 disabled:opacity-60"
+          className="rounded-lg bg-[purple-600] px-5 py-2 text-sm font-semibold text-white hover:bg-[#9698ff] disabled:opacity-60"
         >
           {saving ? "Saving…" : "Save"}
         </button>
@@ -723,8 +723,7 @@ const Admin = ({ user }) => {
       <div className="mx-auto max-w-6xl">
         <header className="mb-8 flex flex-col justify-between gap-5 border-b border-white/10 pb-6 sm:flex-row sm:items-end">
           <div>
-            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.22em] text-[#EFAC61]">Control room</p>
-            <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">Admin</h1>
+            <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">Admin Page</h1>
             <p className="mt-2 text-sm text-neutral-400">
               Signed in as <span className="font-medium text-neutral-200">{user?.username}</span>
             </p>
@@ -752,9 +751,9 @@ const Admin = ({ user }) => {
               type="button"
               aria-current={activeSection === section.label ? "page" : undefined}
               onClick={() => changeSection(section.label)}
-              className={`min-w-24 rounded-full px-5 py-2 text-sm font-medium transition ${
+              className={`min-w-24 rounded-xs px-5 py-2 text-sm font-medium transition ${
                 activeSection === section.label
-                  ? "bg-purple-600 text-white shadow-lg shadow-purple-950/40"
+                  ? "bg-[#3336cc] text-white"
                   : "border border-white/10 bg-neutral-900/80 text-neutral-300 hover:bg-neutral-800 hover:text-white"
               }`}
             >
@@ -808,7 +807,7 @@ const Admin = ({ user }) => {
               <button
                 type="button"
                 onClick={startCreate}
-                className="inline-flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-purple-700"
+                className="inline-flex items-center gap-2 rounded-lg bg-[#3336cc] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#060863]"
               >
                 <Plus size={16} />
                 Add {selectedEntity?.label.replace(/s$/, "")}
@@ -856,7 +855,7 @@ const Admin = ({ user }) => {
                   <button
                     type="submit"
                     disabled={saving || !watchlistData.availableShows.length}
-                    className="self-end rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="self-end rounded-lg bg-bg-[#3336cc] px-4 py-2 text-sm font-semibold text-white hover:bg-[#060863] disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <span className="inline-flex items-center gap-2"><Plus size={16} /> Add to watchlist</span>
                   </button>
@@ -991,7 +990,7 @@ const Admin = ({ user }) => {
                           setRelationForm({ type: "platform" });
                           setRelationValues({ create_new: false });
                         }}
-                        className="rounded-lg bg-purple-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-purple-700"
+                        className="rounded-lg bg-bg-[#3336cc] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#060863]"
                       >
                         + Add platform
                       </button>
@@ -1054,7 +1053,7 @@ const Admin = ({ user }) => {
                           setRelationForm({ type: "person" });
                           setRelationValues({ create_new: false });
                         }}
-                        className="rounded-lg bg-purple-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-purple-700"
+                        className="rounded-lg bg-bg-[#3336cc] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#060863]"
                       >
                         + Add person
                       </button>
@@ -1172,7 +1171,7 @@ const Admin = ({ user }) => {
                     )}
                     <div className="mt-4 flex justify-end gap-2">
                       <button type="button" onClick={() => setRelationForm(null)} className="rounded-lg px-4 py-2 text-sm text-neutral-300 hover:bg-white/10">Cancel</button>
-                      <button type="submit" disabled={saving} className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">
+                      <button type="submit" disabled={saving} className="rounded-lg bg-bg-[#3336cc] px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">
                         {saving ? "Saving…" : "Add"}
                       </button>
                     </div>
@@ -1194,7 +1193,7 @@ const Admin = ({ user }) => {
                   ? [
                     record.role === "admin" && {
                       label: "Admin",
-                      className: "bg-purple-500/15 text-purple-300",
+                      className: "bg-green-800/15 text-green-200",
                     },
                     record.role === "moderator" && {
                       label: "Moderator",
@@ -1252,7 +1251,7 @@ const Admin = ({ user }) => {
                         <button
                           type="button"
                           onClick={() => openWatchlist(record)}
-                          className="inline-flex items-center gap-2 rounded-lg bg-purple-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-purple-700"
+                          className="inline-flex items-center gap-2 rounded-lg bg-[#3336cc] px-3 py-1.5 text-sm font-semibold text-white hover:bg-[#060863]"
                         >
                           <ListVideo size={16} />
                           Watchlist

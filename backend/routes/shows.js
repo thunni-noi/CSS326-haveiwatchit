@@ -1,5 +1,5 @@
 import express from "express";
-import { protect, requireModerator, requireSelfOrMod } from "../middleware/auth.js";
+import { protect, requireRole, requireSelfOrMod } from "../middleware/auth.js";
 import * as shows from "../controllers/shows.js"
 
 const router = express.Router();
