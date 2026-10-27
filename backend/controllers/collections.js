@@ -461,45 +461,18 @@ export const updateCollectionShows = wrapper("Unable to update collection" ,asyn
     const userId = req.user.id;
     const showId = Number(req.params.showId);
     const { added = [], removed = [] } = req.body;
-    const allId  = [...added, ...removed]
     
     if (Number.isNaN(showId) || showId < 0) return res.status(400).json({message: "Invalid id!"});
 
-    const conn = await pool.getConnection();
-
     try {
-
-        await conn.beginTransaction();
-        if (allId.length){
-            const [mine] = await conn.query(
-            `SELECT id FROM collections WHERE user_id = ? AND id IN (?)`,
-            [userId, allId])
-            if (mine.length !== allId.length){
-                await conn.rollback();
-                return res.status(403).json({message: "User is not owner of at least one collections in request."})
-            }
-        }
-
-        // bulk insert
-        if (added.length){
-            await conn.query(`
-                INSERT IGNORE INTO collection_items (collection_id, show_id) VALUES ?`
-            ,[added.map(id => [id, showId])])
-        }
-
-        if (removed.length){
-            await conn.query(`
-                DELETE FROM collection_items WHERE show_id = ? AND collection_id IN (?)`,
-            [showId, removed])
-        }
-        await conn.commit();
-        return res.json({message: `Updated successfully: ${added.length} added, ${removed.length} deleted`})
-
-    } catch(err) {
-        await conn.rollback();
+        await pool.execute(
+            "CALL update_show_collections(?, ?, ?, ?)",
+            [userId, showId, JSON.stringify(added), JSON.stringify(removed)]
+        );
+    } catch (err) {
+        if (err.sqlState === "45000") return res.status(403).json({ message: "You do not have permission to add/remove one or more requested collection(s)"});
         throw err;
-    } finally {
-        conn.release();
     }
 
+    return res.json({message: "Successfully updated!"})
 })

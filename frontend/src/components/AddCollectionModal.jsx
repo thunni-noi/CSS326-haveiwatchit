@@ -56,6 +56,9 @@ function AddCollectionModal( {showInfo, user, onClose}){
         axios.post(`/api/collections/shows/${showInfo.id}`, {
             added: added, removed: removed
         })
+        .then(() => {
+            onClose();
+        })
         .catch((err) => {
             if (!axios.isCancel(err)) setError(err.response?.data?.message ?? "Unable to update collections.");
         })

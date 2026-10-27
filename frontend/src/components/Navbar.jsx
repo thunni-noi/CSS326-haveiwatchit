@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Search as SearchIcon, User as UserIcon, X as XIcon, Menu as MenuIcon } from "lucide-react";
+import { Search as SearchIcon, User as UserIcon, X as XIcon, Menu as MenuIcon, CircleCheck as VerifiedIcon } from "lucide-react";
 import axios from "axios";
 import UserProfile from "./UserProfile";
 import { useRef, useState, useEffect } from "react";
@@ -68,11 +68,16 @@ const UserMenu = ({ user, setUser }) => {
                     open ? "visible scale-y-100 opacity-100" : "invisible scale-y-110 opacity-0"
                 }`}
             >
-                <div className="flex flex-col items-center gap-0 pb-3 pt-3 text-white">
-                    {/* <UserAvatar username={user?.username} avatarUrl={user?.avatar_url} iconClass="h-8 w-8" textClass="text-2xl" imgClass="h-16 w-16 shrink-0"/> */}
+                <div className="flex flex-col items-center gap-y-1 pb-3 pt-3 text-white">
                     <UserProfile user={user} className="flex h-10 w-10 justify-center items-center rounded-full bg-neutral-900 overflow-hidden"/>
-                    <span className="font-semibold mt-2"> {user ? user.username : "Guests"} </span>
-                    <span className="font-light mt-1">{user ? user.role : "Not logged in"}</span>
+                    <div className="flex flex-row items-center gap-1 mt-1">
+                        <span className="font-semibold"> {user ? user.username : "Guests"} </span>
+                        {user?.is_verified && <span title="This user is verified!"> <VerifiedIcon color="#EFAC61" className="size-4" /> </span>}
+                    </div>
+                    <span className="font-light">
+                        {user ? user.role : "Not logged in"}
+                    </span>
+                    {!!user?.is_suspended && <span className="text-xs text-red-300"> You are currently suspended! </span>}
                 </div>
                 {(user?.role === "admin") &&
                     (
@@ -99,7 +104,7 @@ const UserMenu = ({ user, setUser }) => {
                             navigate("/account");
                             setOpen(false);
                         }}
-                        className="w-full rounded-md bg-[#303969] mt-2 py-2 text-sm text-white transition font-semibold hover:bg-[#8D8AB5]"
+                        className="w-full rounded-md bg-[#303969] mt-2 mb-2 py-2 text-sm text-white transition font-semibold hover:bg-[#8D8AB5]"
                     >
                         My account
                     </button>
@@ -149,7 +154,6 @@ const UserMenu = ({ user, setUser }) => {
     );
 };
 
-/* TODO: CONNECT THIS TO DATABASE */
 const useShowSearch = () => {
     const [query, setQuery] = useState("");
     const [results, setResults] = useState([]);
@@ -188,7 +192,6 @@ const useShowSearch = () => {
     return { query, setQuery, results, loading };
 };
 
-/* TODO: CONNECT THIS TO DATABASE */
 const SearchResults = ({ query, results, loading, onSelect }) => {
     if (!query.trim() || loading) return null;
 
