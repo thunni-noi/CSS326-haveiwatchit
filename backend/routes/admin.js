@@ -11,6 +11,7 @@ router.get("/users/:id/watchlist", admin.getUserWatchlist);
 router.post("/users/:id/watchlist", admin.addUserWatchlistItem);
 router.put("/users/:id/watchlist/:showId", admin.updateUserWatchlistItem);
 router.delete("/users/:id/watchlist/:showId", admin.deleteUserWatchlistItem);
+router.put("/users/:id/avatar", admin.receiveUserAvatar, admin.updateUserAvatar);
 router.get("/:entity", admin.listRecords);
 router.post("/:entity", admin.createRecord);
 router.put("/:entity", admin.updateRecord);

@@ -3,6 +3,7 @@ import axios from "axios";
 import {
   ChevronLeft,
   ChevronRight,
+  Camera,
   CircleUserRound,
   ListVideo,
   Pencil,
@@ -12,6 +13,7 @@ import {
   UserRound,
   X,
 } from "lucide-react";
+import UserProfile from "../components/UserProfile";
 
 // This file controls the admin dashboard. It lets staff switch between entity groups,
 // browse table data, search/filter records, and create, edit, or delete entries.
@@ -23,6 +25,8 @@ const sections = [
 
 // Shared constant for paginated admin queries.
 const PAGE_SIZE = 50;
+const ALLOWED_AVATAR_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const MAX_AVATAR_SIZE = 2 * 1024 * 1024;
 
 const getRecordKey = (row, keys) =>
   Object.fromEntries(keys.map((key) => [key, row[key]]));
@@ -82,6 +86,8 @@ const Admin = ({ user }) => {
   const [notice, setNotice] = useState("");
   const [form, setForm] = useState(null);
   const [formValues, setFormValues] = useState({});
+  const [avatarFile, setAvatarFile] = useState(null);
+  const [avatarPreview, setAvatarPreview] = useState(null);
   const [saving, setSaving] = useState(false);
   const [reload, setReload] = useState(0);
   const [selectedShow, setSelectedShow] = useState(null);
@@ -96,6 +102,11 @@ const Admin = ({ user }) => {
   const [newWatchlistStatus, setNewWatchlistStatus] = useState("wishlist");
   const showDetailsRef = useRef(null);
   const editorRef = useRef(null);
+  const avatarInputRef = useRef(null);
+
+  useEffect(() => () => {
+    if (avatarPreview) URL.revokeObjectURL(avatarPreview);
+  }, [avatarPreview]);
 
   const activeGroup = sections.find((section) => section.label === activeSection);
   const entities = activeGroup?.entities ?? [];
@@ -205,11 +216,17 @@ const Admin = ({ user }) => {
     setNotice("");
     setForm({ mode: "create", record: null });
     setFormValues({});
+    setAvatarFile(null);
+    setAvatarPreview(null);
+    if (avatarInputRef.current) avatarInputRef.current.value = "";
   };
 
   const startEdit = (record) => {
     setNotice("");
     setForm({ mode: "edit", record });
+    setAvatarFile(null);
+    setAvatarPreview(null);
+    if (avatarInputRef.current) avatarInputRef.current.value = "";
     setFormValues(
       Object.fromEntries(
         fields
@@ -219,13 +236,20 @@ const Admin = ({ user }) => {
     );
   };
 
+  const closeEditor = () => {
+    setForm(null);
+    setAvatarFile(null);
+    setAvatarPreview(null);
+    if (avatarInputRef.current) avatarInputRef.current.value = "";
+  };
+
   const changeSection = (section) => {
     const nextGroup = sections.find((item) => item.label === section);
     setActiveSection(section);
     setEntityName(nextGroup.entities[0].name);
     setPage(0);
     setSearch("");
-    setForm(null);
+    closeEditor();
     setSelectedShow(null);
     setShowAssociations(null);
     setRelationForm(null);
@@ -238,7 +262,7 @@ const Admin = ({ user }) => {
   const changeEntity = (name) => {
     setEntityName(name);
     setPage(0);
-    setForm(null);
+    closeEditor();
     setNotice("");
   };
 
@@ -345,6 +369,7 @@ const Admin = ({ user }) => {
     setNotice("");
     const values = { ...formValues };
     if (form.mode === "edit" && !values.password) delete values.password;
+    if (avatarFile) delete values.avatar_url;
 
     try {
       if (form.mode === "create") {
@@ -353,11 +378,19 @@ const Admin = ({ user }) => {
       } else {
         const key = getRecordKey(form.record, keys);
         await axios.put(`/api/admin/${selectedEntity.name}`, { key, values });
+        if (avatarFile && selectedEntity.name === "users") {
+          const data = new FormData();
+          data.append("avatar", avatarFile);
+          await axios.put(`/api/admin/users/${form.record.id}/avatar`, data);
+        }
         setNotice(selectedEntity.name === "users" && values.role === "moderator"
           ? "User saved. Moderator role assigned."
           : "Record updated.");
       }
       setForm(null);
+      setAvatarFile(null);
+      setAvatarPreview(null);
+      if (avatarInputRef.current) avatarInputRef.current.value = "";
       setPage(0);
       setReload((value) => value + 1);
     } catch (requestError) {
@@ -456,15 +489,16 @@ const Admin = ({ user }) => {
 
     if (field.name === "avatar_url" && selectedEntity.name === "users") {
       const previewable = value.startsWith("/") || /^https?:\/\//i.test(value);
+      const avatarSrc = avatarPreview || value;
 
       return (
         <label key={field.name} className="block text-sm font-medium text-neutral-200 sm:col-span-2">
           Profile picture
           {field.nullable && <span className="ml-1 text-xs font-normal text-neutral-400">(optional)</span>}
-          <div className="mt-2 grid gap-3 rounded-lg border border-white/10 bg-neutral-900/40 p-3 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center">
-            {value && previewable ? (
+          <div className="mt-2 flex flex-wrap items-center gap-3 rounded-lg border border-white/10 bg-neutral-900/40 p-3">
+            {avatarSrc && (avatarPreview || previewable) ? (
               <img
-                src={value}
+                src={avatarSrc}
                 alt="User profile picture preview"
                 className="h-14 w-14 rounded-full border border-white/10 object-cover"
               />
@@ -473,19 +507,67 @@ const Admin = ({ user }) => {
                 <UserRound size={24} aria-hidden="true" />
               </div>
             )}
-            <input
-              type="text"
-              value={value}
-              onChange={(event) =>
-                setFormValues((current) => ({ ...current, [field.name]: event.target.value }))
-              }
-              placeholder="https://example.com/avatar.jpg or /uploads/avatars/..."
-              className={`${sharedClass} mt-0 min-w-0 w-full`}
-            />
+            <div className="min-w-0 flex-1">
+              <input
+                type="text"
+                value={value}
+                onChange={(event) => {
+                  setAvatarFile(null);
+                  setAvatarPreview(null);
+                  if (avatarInputRef.current) avatarInputRef.current.value = "";
+                  setFormValues((current) => ({ ...current, [field.name]: event.target.value }));
+                }}
+                placeholder="https://example.com/avatar.jpg or /uploads/avatars/..."
+                className={`${sharedClass} mt-0 w-full`}
+              />
+              {form.mode === "edit" && (
+                <>
+                  <input
+                    ref={avatarInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    onChange={(event) => {
+                      const selected = event.target.files?.[0];
+                      if (!selected) return;
+                      if (!ALLOWED_AVATAR_TYPES.includes(selected.type)) {
+                        setError("Choose a JPG, PNG or WebP image.");
+                        event.target.value = "";
+                        return;
+                      }
+                      if (selected.size > MAX_AVATAR_SIZE) {
+                        setError("Profile picture must be smaller than 2 MB.");
+                        event.target.value = "";
+                        return;
+                      }
+                      setError("");
+                      setAvatarPreview(URL.createObjectURL(selected));
+                      setAvatarFile(selected);
+                    }}
+                    className="sr-only"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => avatarInputRef.current?.click()}
+                    className="mt-2 inline-flex items-center gap-2 rounded-lg bg-neutral-700 px-3 py-2 text-xs font-medium text-white hover:bg-neutral-600"
+                  >
+                    <Camera size={15} aria-hidden="true" />
+                    Choose from PC
+                  </button>
+                  {avatarFile && (
+                    <span className="ml-2 text-xs text-neutral-400">{avatarFile.name}</span>
+                  )}
+                </>
+              )}
+            </div>
             <button
               type="button"
-              disabled={!value}
-              onClick={() => setFormValues((current) => ({ ...current, [field.name]: "" }))}
+              disabled={!value && !avatarFile}
+              onClick={() => {
+                setAvatarFile(null);
+                setAvatarPreview(null);
+                if (avatarInputRef.current) avatarInputRef.current.value = "";
+                setFormValues((current) => ({ ...current, [field.name]: "" }));
+              }}
               className="rounded-lg border border-rose-500/30 bg-rose-950 px-3 py-2 text-xs font-medium text-rose-200 hover:bg-rose-900 disabled:cursor-not-allowed disabled:opacity-50"
             >
               Remove picture
@@ -606,7 +688,7 @@ const Admin = ({ user }) => {
         <h3 className="font-semibold">
           {form.mode === "create" ? "Add" : "Edit"} {selectedEntity.label.replace(/s$/, "")}
         </h3>
-        <button type="button" aria-label="Close form" onClick={() => setForm(null)} className="rounded-full p-1 text-neutral-300 hover:bg-white/10">
+        <button type="button" aria-label="Close form" onClick={closeEditor} className="rounded-full p-1 text-neutral-300 hover:bg-white/10">
           <X size={18} />
         </button>
       </div>
@@ -621,7 +703,7 @@ const Admin = ({ user }) => {
         )}
       </div>
       <div className="mt-5 flex justify-end gap-2">
-        <button type="button" onClick={() => setForm(null)} className="rounded-lg px-4 py-2 text-sm text-neutral-300 hover:bg-white/10">
+        <button type="button" onClick={closeEditor} className="rounded-lg px-4 py-2 text-sm text-neutral-300 hover:bg-white/10">
           Cancel
         </button>
         <button
@@ -637,7 +719,7 @@ const Admin = ({ user }) => {
 
   // Main dashboard layout: page header, entity switcher, records table, and related detail panels.
   return (
-    <main className="min-h-screen px-4 pb-16 pt-8 text-white sm:pt-12">
+    <main className="min-h-screen px-4 pb-16 pt-26 text-white sm:pt-30">
       <div className="mx-auto max-w-6xl">
         <header className="mb-8 flex flex-col justify-between gap-5 border-b border-white/10 pb-6 sm:flex-row sm:items-end">
           <div>
@@ -1108,16 +1190,50 @@ const Admin = ({ user }) => {
             <div className="space-y-3">
               {records.map((record) => {
                 const key = getRecordKey(record, keys);
+                const userFlairs = selectedEntity.name === "users"
+                  ? [
+                    record.role === "admin" && {
+                      label: "Admin",
+                      className: "bg-purple-500/15 text-purple-300",
+                    },
+                    record.role === "moderator" && {
+                      label: "Moderator",
+                      className: "bg-[#EFAC61]/15 text-[#EFAC61]",
+                    },
+                    (record.is_verified === true || record.is_verified === 1) && {
+                      label: "Verified",
+                      className: "bg-sky-500/15 text-sky-300",
+                    },
+                    (record.is_suspended === true || record.is_suspended === 1) && {
+                      label: "Suspended",
+                      className: "bg-rose-500/15 text-rose-300",
+                    },
+                  ].filter(Boolean)
+                  : [];
                 return (
                   <article key={JSON.stringify(key)} className="overflow-hidden rounded-xl border border-white/10 bg-neutral-800">
                     <header className="flex items-center gap-3 border-b border-white/10 bg-neutral-800 px-4 py-2">
                       {selectedEntity.name === "users"
-                        ? <UserRound aria-hidden="true" size={18} className="fill-slate-950" />
+                        ? <UserProfile
+                          user={record}
+                          className="flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-neutral-700 text-neutral-300"
+                        />
                         : <CircleUserRound aria-hidden="true" size={18} />}
-                      <h3 className="min-w-0 flex-1 truncate text-sm font-semibold">
-                        {record.username ?? record.name ?? record.email ?? keys.map((name) => `${name} ${record[name]}`).join(" · ")}
-                        {record.role === "moderator" && (
-                          <span className="ml-2 rounded-full bg-[#EFAC61]/15 px-2 py-0.5 text-xs font-medium text-[#EFAC61]">Moderator</span>
+                      <h3 className="flex min-w-0 flex-1 flex-wrap items-center gap-2 text-sm font-semibold">
+                        <span className="min-w-0 truncate">
+                          {record.username ?? record.name ?? record.email ?? keys.map((name) => `${name} ${record[name]}`).join(" · ")}
+                        </span>
+                        {userFlairs.length > 0 && (
+                          <span className="flex flex-wrap gap-1.5">
+                            {userFlairs.map((flair) => (
+                              <span
+                                key={flair.label}
+                                className={`rounded-full px-2 py-0.5 text-xs font-medium ${flair.className}`}
+                              >
+                                {flair.label}
+                              </span>
+                            ))}
+                          </span>
                         )}
                       </h3>
                       {selectedEntity.name === "shows" && (

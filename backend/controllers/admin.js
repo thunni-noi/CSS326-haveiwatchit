@@ -1,10 +1,48 @@
 import bcrypt from "bcryptjs";
 import fs from "fs";
+import multer from "multer";
 import path from "path";
 import { randomUUID } from "crypto";
 import pool from "../db/db.js";
 
 const field = (name, type, options = {}) => ({ name, type, ...options });
+const avatarUploadDirectory = path.join(path.resolve(), "uploads", "avatars");
+const avatarExtensions = {
+    "image/jpeg": ".jpg",
+    "image/png": ".png",
+    "image/webp": ".webp",
+};
+
+fs.mkdirSync(avatarUploadDirectory, { recursive: true });
+
+const avatarUpload = multer({
+    storage: multer.diskStorage({
+        destination: avatarUploadDirectory,
+        filename: (req, file, callback) => callback(null, `${randomUUID()}${avatarExtensions[file.mimetype]}`),
+    }),
+    limits: { fileSize: 2 * 1024 * 1024 },
+    fileFilter: (req, file, callback) => {
+        if (!avatarExtensions[file.mimetype]) {
+            callback(new Error("Choose a JPG, PNG or WebP image."));
+            return;
+        }
+        callback(null, true);
+    },
+});
+
+export const receiveUserAvatar = (req, res, next) => {
+    avatarUpload.single("avatar")(req, res, (error) => {
+        if (!error) {
+            next();
+            return;
+        }
+
+        const message = error instanceof multer.MulterError && error.code === "LIMIT_FILE_SIZE"
+            ? "Profile picture must be smaller than 2 MB."
+            : error.message;
+        res.status(400).json({ message });
+    });
+};
 
 const entities = {
     users: {
@@ -335,6 +373,45 @@ const parsePositiveId = (value) => {
     if (!/^\d+$/.test(String(value))) return null;
     const id = Number(value);
     return Number.isSafeInteger(id) && id > 0 ? id : null;
+};
+
+export const updateUserAvatar = async (req, res) => {
+    const userId = parsePositiveId(req.params.id);
+    if (!userId) {
+        if (req.file) fs.rmSync(req.file.path, { force: true });
+        return res.status(400).json({ message: "Invalid user ID." });
+    }
+    if (!req.file) {
+        return res.status(400).json({ message: "Choose a profile picture to upload." });
+    }
+
+    try {
+        const [[targetUser]] = await pool.execute(
+            "SELECT avatar_url FROM users WHERE id = ?",
+            [userId],
+        );
+        if (!targetUser) {
+            fs.rmSync(req.file.path, { force: true });
+            return res.status(404).json({ message: "User not found." });
+        }
+
+        const avatarUrl = `/uploads/avatars/${req.file.filename}`;
+        await pool.execute(
+            "UPDATE users SET avatar_url = ? WHERE id = ?",
+            [avatarUrl, userId],
+        );
+
+        try {
+            deleteLocalAvatar(targetUser.avatar_url);
+        } catch (error) {
+            console.error("Admin old avatar cleanup failed:", error);
+        }
+        return res.json({ avatar_url: avatarUrl });
+    } catch (error) {
+        fs.rmSync(req.file.path, { force: true });
+        console.error("Admin avatar update failed:", error);
+        return res.status(500).json({ message: "Unable to update the user's profile picture." });
+    }
 };
 
 export const getUserWatchlist = async (req, res) => {
