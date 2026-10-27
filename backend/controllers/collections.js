@@ -3,6 +3,15 @@ import pool from "../db/db.js";
 
 const asBoolean = (value) => value === true || value === 1 || value === "1" || value === "true";
 
+// Wrapper used to handle error for all api calls
+const wrapper = (errMsg, controller) => async (req, res) =>
+    {try {
+        await controller(req, res);
+    } catch (error) {
+        console.error(`${errMsg}`, error);
+        res.status(500).json({message: errMsg});
+    }};
+
 const getCollection = async (collectionId, userId) => {
     const [rows] = await pool.execute(
         `SELECT c.id, c.name, c.is_public, c.share_uuid, u.username AS owner, u.avatar_url AS owner_avatar_url
@@ -351,9 +360,9 @@ export const getSharedCollection = async (req, res) => {
     try {
         const [rows] = await pool.execute(
             `SELECT c.id, c.name, c.is_public, c.share_uuid, u.username AS owner, u.avatar_url AS owner_avatar_url
-             FROM collections c
-             JOIN users u ON u.id = c.user_id
-             WHERE c.share_uuid = ? AND c.is_public = TRUE`,
+            FROM collections c
+            JOIN users u ON u.id = c.user_id
+            WHERE c.share_uuid = ? AND c.is_public = TRUE`,
             [req.params.uuid]
         );
         const collection = rows[0];
@@ -421,3 +430,76 @@ export const removeCollectionItem = async (req, res) => {
         return res.status(500).json({ message: "Unable to remove show from collection." });
     }
 };
+
+// /api/collections/shows/:showId
+// get user collections with details for each shows
+export const listCollectionShows = wrapper("Unable to fetch collection",async (req, res) => {
+    const userId = req.user.id;
+    const showId = Number(req.params.showId);
+
+    if (Number.isNaN(showId) || showId < 0) return res.status(400).json({message: "Invalid id!"});
+
+    const[r] = await pool.execute(`
+        SELECT c.id , c.name , c.is_public AS visibility,
+        EXISTS (SELECT 1 FROM collection_items i WHERE i.collection_id = c.id AND i.show_id = ?) AS has_show
+        FROM collections c
+        WHERE c.user_id = ?;
+        `, [showId, userId]
+    )
+
+    if (r.length === 0) return res.status(404).json({message: "No collection found!"})
+    
+    const result = r.map(row => ({
+        ...row,
+        collection_visibility: Boolean(row.collection_visibility),
+        has_show: Boolean(row.has_show)
+    }))
+    return res.json(result);
+});
+
+export const updateCollectionShows = wrapper("Unable to update collection" ,async(req, res) => {
+    const userId = req.user.id;
+    const showId = Number(req.params.showId);
+    const { added = [], removed = [] } = req.body;
+    const allId  = [...added, ...removed]
+    
+    if (Number.isNaN(showId) || showId < 0) return res.status(400).json({message: "Invalid id!"});
+
+    const conn = await pool.getConnection();
+
+    try {
+
+        await conn.beginTransaction();
+        if (allId.length){
+            const [mine] = await conn.query(
+            `SELECT id FROM collections WHERE user_id = ? AND id IN (?)`,
+            [userId, allId])
+            if (mine.length !== allId.length){
+                await conn.rollback();
+                return res.status(403).json({message: "User is not owner of at least one collections in request."})
+            }
+        }
+
+        // bulk insert
+        if (added.length){
+            await conn.query(`
+                INSERT IGNORE INTO collection_items (collection_id, show_id) VALUES ?`
+            ,[added.map(id => [id, showId])])
+        }
+
+        if (removed.length){
+            await conn.query(`
+                DELETE FROM collection_items WHERE show_id = ? AND collection_id IN (?)`,
+            [showId, removed])
+        }
+        await conn.commit();
+        return res.json({message: `Updated successfully: ${added.length} added, ${removed.length} deleted`})
+
+    } catch(err) {
+        await conn.rollback();
+        throw err;
+    } finally {
+        conn.release();
+    }
+
+})

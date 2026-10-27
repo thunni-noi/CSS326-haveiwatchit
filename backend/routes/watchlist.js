@@ -8,6 +8,7 @@ router.use(protect);
 router.get("/", watchlist.getWatchlist);
 router.post("/", watchlist.addWatchlistItem);
 router.put("/:showId", watchlist.updateWatchlistItem);
+router.get("/:showId", watchlist.getShowStatus);
 router.delete("/:showId", watchlist.deleteWatchlistItem);
 
 export default router;

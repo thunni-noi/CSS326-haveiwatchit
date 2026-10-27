@@ -37,14 +37,14 @@ function Widget({ title, items }) {
     return (
         <Link
             to="/watchlist"
-            className="flex min-h-40 flex-col items-center justify-center gap-3 rounded-2xl border border-white/[0.06] bg-white/[0.03] p-4 text-center transition hover:border-[#EFAC61]/30 hover:bg-white/[0.06]"
+            className="flex min-h-40 flex-col items-center justify-center gap-3 rounded-2xl border border-white/10 bg-netural-900/80 p-4 text-center transition hover:border-[#EFAC61]/30 hover:bg-neutral-800"
         >
             {shown.length > 0 ? (
                 <div className="flex -space-x-4">
                     {shown.map((item) => (
                         <div
                             key={item.show_id}
-                            className="h-24 w-16 overflow-hidden rounded-lg border-2 border-[#232327] bg-neutral-800 shadow-lg"
+                            className="h-24 w-16 overflow-hidden rounded-lg border-2 border-neutral-900 bg-neutral-800 shadow-lg"
                         >
                             {item.poster_url && (
                                 <img src={item.poster_url} alt="" className="h-full w-full object-cover" />
@@ -115,13 +115,13 @@ function Account({ user, setUser }) {
         watching: items.filter((i) => i.status === "watching" || i.status === "rewatching"),
         wishlist: items.filter((i) => i.status === "wishlist"),
         watched: items.filter((i) => i.status === "watched"),
-        topRated: [...items]
+        topRated: items
             .filter((i) => Number(i.avg_score) > 0)
-            .sort((a, b) => Number(b.avg_score) - Number(a.avg_score)),
+            .sort((a, b) => Number(b.avg_score) - Number(a.avg_score) || Number(b.review_count || 0) - Number(a.review_count || 0)),
     }), [items]);
 
     const activity = useMemo(
-        () => [...items].sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at)).slice(0, 10),
+        () => items.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at)).slice(0, 10),
         [items]
     );
 
@@ -205,26 +205,26 @@ function Account({ user, setUser }) {
     };
 
     return (
-        <main className="min-h-screen bg-gradient-to-b from-neutral-900 via-neutral-950 to-black px-4 pb-32 pt-24 text-white sm:px-6">
+        <main className="min-h-screen bg-black/50 px-4 pb-32 pt-24 text-white backdrop-blur-lg sm:px-6">
             <div className="mx-auto max-w-5xl">
                 <button
                     type="button"
                     onClick={() => navigate(-1)}
-                    className="mb-6 inline-flex items-center gap-2 rounded-xl border border-white/5 px-3 py-2 text-sm text-neutral-400 transition hover:border-[#9596D6]/20 hover:bg-[#9596D6]/[0.08] hover:text-white"
+                    className="mb-6 inline-flex items-center gap-2 rounded-xl border border-white/10 px-3 py-2 text-sm text-neutral-400 transition hover:border-[#9596D6]/20 hover:bg-[#9596D6]/[0.08] hover:text-white"
                 >
                     <ArrowLeft size={18} />
                     Back
                 </button>
 
                 <form onSubmit={handleSubmit}>
-                    <div className="grid gap-4 rounded-3xl border border-white/10 bg-[#232327] p-3 shadow-2xl shadow-black/40 lg:grid-cols-[380px_minmax(0,1fr)]">
+                    <div className="grid gap-4 rounded-3xl border border-white/10 bg-neutral-950/65 p-3 shadow-2xl shadow-black/40 lg:grid-cols-[380px_minmax(0,1fr)]">
                         {/* Left: profile card (Centering contents) */}
-                        <aside className="h-fit overflow-hidden rounded-2xl bg-[#2b2b31]">
-                            <div className="h-28 bg-gradient-to-r from-[#251329] via-[#30204a] to-[#4a214b]" />
+                        <aside className="h-fit overflow-hidden rounded-2xl bg-neutral-900/80">
+                            <div className="h-28 bg-gradient-to-r from-[#303969] via-[#303969]/60 to-[#EFAC61]/30" />
 
                             <div className="px-5 pb-6 text-center">
                                 <div className="relative -mt-14 mx-auto w-fit">
-                                    <div className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-full border-[6px] border-[#2b2b31] bg-[#1c1c20]">
+                                    <div className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-full border-[6px] border-neutral-900 bg-neutral-800">
                                         {avatarSrc && !avatarError ? (
                                             <img
                                                 src={avatarSrc}
@@ -233,7 +233,7 @@ function Account({ user, setUser }) {
                                                 className="h-full w-full object-cover"
                                             />
                                         ) : (
-                                            <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#9596D6] to-[#4a214b] text-4xl font-bold">
+                                            <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#9596D6] to-[#303969] text-4xl font-bold">
                                                 {(user.username || "U").trim().charAt(0)}
                                             </div>
                                         )}
@@ -243,7 +243,7 @@ function Account({ user, setUser }) {
                                         type="button"
                                         onClick={() => fileRef.current?.click()}
                                         aria-label="Change profile photo"
-                                        className="absolute bottom-0 right-0 flex h-9 w-9 items-center justify-center rounded-full border-4 border-[#2b2b31] bg-[#EFAC61] text-[#251329] shadow-lg transition hover:scale-105 hover:bg-[#f5c184]"
+                                        className="absolute bottom-0 right-0 flex h-9 w-9 items-center justify-center rounded-full border-4 border-neutral-900 bg-[#EFAC61] text-white shadow-lg transition hover:scale-105 hover:bg-[#c27f33]"
                                     >
                                         <Camera size={15} />
                                     </button>
@@ -306,7 +306,7 @@ function Account({ user, setUser }) {
                                     role="status"
                                     className={`mt-4 flex items-start gap-2 rounded-xl border p-3 text-sm ${
                                         message.type === "success"
-                                            ? "border-[#9596D6]/25 bg-[#9596D6]/10 text-[#c8c9ff]"
+                                            ? "border-[#9596D6]/25 bg-[#9596D6]/10 text-[#9596D6]"
                                             : "border-red-400/20 bg-red-400/10 text-red-300"
                                     }`}
                                 >
@@ -345,7 +345,7 @@ function Account({ user, setUser }) {
                                         activity.map((item) => (
                                             <div
                                                 key={item.show_id}
-                                                className="flex items-center gap-3 rounded-xl bg-white/[0.03] p-3"
+                                                className="flex items-center gap-3 rounded-xl bg-neutral-900/80 p-3"
                                             >
                                                 <div className="h-14 w-10 shrink-0 overflow-hidden rounded bg-neutral-800">
                                                     {item.poster_url && (
@@ -389,7 +389,7 @@ function Account({ user, setUser }) {
                                                 maxLength={50}
                                                 required
                                                 placeholder="Enter your display name"
-                                                className="w-full rounded-xl border border-white/10 bg-black/25 py-3.5 pl-11 pr-4 text-sm text-white outline-none transition placeholder:text-neutral-600 focus:border-[#EFAC61]/70 focus:bg-black/35 focus:ring-2 focus:ring-[#EFAC61]/10"
+                                                className="w-full rounded-xl border border-white/10 bg-neutral-900/80 py-3.5 pl-11 pr-4 text-sm text-white outline-none transition placeholder:text-neutral-500 focus:border-[#9596D6]"
                                             />
                                         </div>
                                         <p className="mt-2 text-xs text-neutral-500">This is the name displayed on your profile.</p>
@@ -406,7 +406,7 @@ function Account({ user, setUser }) {
                                                 type="email"
                                                 value={user.email ?? ""}
                                                 disabled
-                                                className="w-full cursor-not-allowed rounded-xl border border-white/5 bg-white/[0.03] py-3.5 pl-11 pr-4 text-sm text-neutral-500 outline-none"
+                                                className="w-full cursor-not-allowed rounded-xl border border-white/5 bg-neutral-900/70 py-3.5 pl-11 pr-4 text-sm text-neutral-500 outline-none"
                                             />
                                         </div>
                                         <p className="mt-2 text-xs text-neutral-500">Your email address cannot be changed here.</p>
@@ -417,7 +417,7 @@ function Account({ user, setUser }) {
                                         <button
                                             type="button"
                                             onClick={() => fileRef.current?.click()}
-                                            className="inline-flex items-center gap-2 rounded-xl border border-[#9596D6]/25 bg-[#303969]/60 px-4 py-2.5 text-sm font-medium text-[#eee9fb] transition hover:bg-[#303969]"
+                                            className="inline-flex items-center gap-2 rounded-xl bg-[#303969] px-4 py-2.5 text-white hover:bg-[#414b82]"
                                         >
                                             <Camera size={16} />
                                             Choose a photo
@@ -432,7 +432,7 @@ function Account({ user, setUser }) {
                     {/* Unsaved changes bar */}
                     {changed && (
                         <div className="fixed inset-x-0 bottom-4 z-40 px-4">
-                            <div className="mx-auto flex max-w-2xl items-center justify-between gap-3 rounded-2xl border border-white/10 bg-[#1c1c20]/95 px-4 py-3 shadow-2xl shadow-black/50 backdrop-blur-xl">
+                            <div className="mx-auto flex max-w-2xl items-center justify-between gap-3 rounded-2xl border border-white/10 bg-neutral-900/95 px-4 py-3 shadow-2xl shadow-black/50 backdrop-blur-xl">
                                 <p className="text-sm text-neutral-200">Careful — you have unsaved changes!</p>
                                 <div className="flex items-center gap-2">
                                     <button
@@ -446,7 +446,7 @@ function Account({ user, setUser }) {
                                     <button
                                         type="submit"
                                         disabled={saving}
-                                        className="inline-flex items-center gap-2 rounded-lg bg-[#EFAC61] px-4 py-2 text-sm font-semibold text-[#251329] transition hover:bg-[#f5c184] disabled:opacity-50"
+                                        className="inline-flex items-center gap-2 rounded-lg bg-[#EFAC61] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#c27f33] disabled:opacity-50"
                                     >
                                         {saving ? (
                                             <>

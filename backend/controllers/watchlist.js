@@ -8,6 +8,15 @@ const parsePositiveId = (value) => {
     return Number.isSafeInteger(id) && id > 0 ? id : null;
 };
 
+// Wrapper used to handle error for all api calls
+const wrapper = (errMsg, controller) => async (req, res) =>
+    {try {
+        await controller(req, res);
+    } catch (error) {
+        console.error(`${errMsg}`, error);
+        res.status(500).json({message: errMsg});
+    }};
+
 export const getWatchlist = async (req, res) => {
     try {
         const [items] = await pool.execute(
@@ -18,15 +27,15 @@ export const getWatchlist = async (req, res) => {
                     s.photo_url AS poster_url,
                     ROUND(r.avg_score, 1) AS avg_score,
                     COALESCE(r.review_count, 0) AS review_count
-             FROM watchlist_items item
-             JOIN shows s ON s.id = item.show_id
-             LEFT JOIN (
-                 SELECT show_id, AVG(review_score) AS avg_score, COUNT(*) AS review_count
-                 FROM reviews
-                 GROUP BY show_id
-             ) r ON r.show_id = s.id
-             WHERE item.user_id = ?
-             ORDER BY item.updated_at DESC, s.name`,
+            FROM watchlist_items item
+            JOIN shows s ON s.id = item.show_id
+            LEFT JOIN (
+                SELECT show_id, AVG(review_score) AS avg_score, COUNT(*) AS review_count
+                FROM reviews
+                GROUP BY show_id
+            ) r ON r.show_id = s.id
+            WHERE item.user_id = ?
+            ORDER BY item.updated_at DESC, s.name`,
             [req.user.id],
         );
 
@@ -113,3 +122,18 @@ export const deleteWatchlistItem = async (req, res) => {
         return res.status(500).json({ message: "Unable to remove this watchlist item." });
     }
 };
+
+// GET /watchlist/:showId
+export const getShowStatus = wrapper("Unable to fetch watchlist", async(req, res) => {
+    const userId = req.user.id;
+    const showId = req.params.showId;
+
+    if (Number.isNaN(showId) || showId < 0) return res.status(400).json({message: "Invalid id!"});
+    const [r] = await pool.execute(`
+        SELECT status FROM watchlist_items WHERE user_id = ? AND show_id = ?`,
+    [userId, showId]);
+    if (r.affectedRows === 0){
+        return r.status(404).json({ message: "Watchlist item not found! "})
+    }
+    return res.json(r)
+})
