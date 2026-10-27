@@ -1,4 +1,5 @@
 import axios from "axios";
+import LoadingPlaceHolder from "../components/LoadingScreen";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
@@ -72,6 +73,8 @@ function Account({ user, setUser }) {
     const fileRef = useRef(null);
     const userId = user?.id;
 
+    const [loading, setLoading] = useState(true);
+
     const [tab, setTab] = useState("board");
     const [items, setItems] = useState([]);
     const [username, setUsername] = useState(user?.username ?? "");
@@ -103,11 +106,12 @@ function Account({ user, setUser }) {
     }, [file]);
 
     useEffect(() => {
-        if (!userId) return undefined;
+        if (!userId) return navigate("/");
         const controller = new AbortController();
         axios.get("/api/watchlist", { signal: controller.signal })
             .then(({ data }) => setItems(data.items))
-            .catch(() => setItems([]));
+            .catch(() => setItems([]))
+            .finally(() => setLoading(false));
         return () => controller.abort();
     }, [userId]);
 
@@ -205,7 +209,7 @@ function Account({ user, setUser }) {
     };
 
     return (
-        <main className="min-h-screen bg-black/50 px-4 pb-32 pt-24 text-white backdrop-blur-lg sm:px-6">
+        <main className="relative min-h-screen px-4 pb-32 pt-24 text-white sm:px-6">
             <div className="mx-auto max-w-5xl">
                 <button
                     type="button"
@@ -219,8 +223,8 @@ function Account({ user, setUser }) {
                 <form onSubmit={handleSubmit}>
                     <div className="grid gap-4 rounded-3xl border border-white/10 bg-neutral-950/65 p-3 shadow-2xl shadow-black/40 lg:grid-cols-[380px_minmax(0,1fr)]">
                         {/* Left: profile card (Centering contents) */}
-                        <aside className="h-fit overflow-hidden rounded-2xl bg-neutral-900/80">
-                            <div className="h-28 bg-gradient-to-r from-[#303969] via-[#303969]/60 to-[#EFAC61]/30" />
+                        <aside className="h-fit overflow-hidden rounded-2xl bg-[#2b2b31]">
+                            <div className="h-28 bg-[#9596D6]" />
 
                             <div className="px-5 pb-6 text-center">
                                 <div className="relative -mt-14 mx-auto w-fit">
@@ -463,6 +467,11 @@ function Account({ user, setUser }) {
                     )}
                 </form>
             </div>
+            {loading && (
+                <div className="absolute inset-0 z-10 flex items-center justify-center bg-neutral-900">
+                    <LoadingPlaceHolder />
+                </div>
+            )}
         </main>
     );
 }

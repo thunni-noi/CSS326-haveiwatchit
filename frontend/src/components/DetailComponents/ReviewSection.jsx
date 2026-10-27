@@ -147,10 +147,13 @@ function ReviewSection( {showId, user, onUpdated }) {
                 <p className="mb-4 text-sm text-neutral-400">Log in to write a reviews</p>
             )}
             {user && !myReview && !reviewFormOpen && !loading && (
-                <button type="button" onClick={() => setReviewFormOpen(true)}
-                className="mb-4 flex items-center gap-2 rounded-md bg-neutral-900 px-4 py-2 text-sm text-white transition-all">
-                    Write a review
-                </button>
+                <div className="flex flex-row items-center gap-3">
+                    <button type="button" onClick={() => setReviewFormOpen(true)} disabled={user.is_suspended}
+                    className="mb-4 flex items-center gap-2 rounded-md px-4 py-2 text-sm bg-[#585ad3] text-white transition-all disabled:opacity-50 disabled:line-through">
+                        Write new review
+                    </button>
+                    {user.is_suspended && <span className="text-neutral-400 text-xs"> (Suspended user can't write or edit reviews)</span>}
+                </div>
             )}
             {user && !loading && reviewFormOpen && (
                 <div className="mb-4">
@@ -168,7 +171,7 @@ function ReviewSection( {showId, user, onUpdated }) {
                             <ReviewCard 
                                 review={myReview}
                                 isMine={true}
-                                canRemove={true}
+                                canRemove={!user.is_suspended}
                                 onRemove={() => handleRemove(myReview)}
                                 onEdit={() => setReviewFormOpen(true)}
                             />
