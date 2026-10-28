@@ -1,17 +1,24 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import { X, LoaderCircle, BookMarked, Globe, Check, Plus, Lock } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import LoadingPlaceHolder from "./LoadingScreen";
 import ErrorDisplay from "./ErrorDisplay";
+import SuccessDisplay from "./SuccessDisplay";
 
 function AddCollectionModal( {showInfo, user, onClose}){
     const [userCollections, setUserCollections] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(false);
+    const [error, setError] = useState("");
+    const [success, setSuccess] = useState(false);
     const [saving, setSaving] = useState(false);
 
+    const timer = useRef(null);
     const navigate = useNavigate();
+
+    useEffect(() => {
+        return () => clearTimeout(timer.current);
+    }, []);
 
     useEffect(() => {
         if (!user) {
@@ -57,7 +64,8 @@ function AddCollectionModal( {showInfo, user, onClose}){
             added: added, removed: removed
         })
         .then(() => {
-            onClose();
+            setSuccess(true);
+            timer.current = setTimeout(() => onClose(), 2000);
         })
         .catch((err) => {
             if (!axios.isCancel(err)) setError(err.response?.data?.message ?? "Unable to update collections.");
@@ -156,6 +164,11 @@ function AddCollectionModal( {showInfo, user, onClose}){
             {loading && (
                     <div className="absolute inset-0 z-10 flex items-center justify-center bg-neutral-900">
                         <LoadingPlaceHolder />
+                    </div>
+                )}
+            {success && (
+                    <div className="absolute inset-0 z-10 flex items-center justify-center bg-neutral-900">
+                        <SuccessDisplay text="Added to collection successfully!" />
                     </div>
                 )}
             {error  && 

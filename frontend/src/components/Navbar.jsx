@@ -97,17 +97,31 @@ const UserMenu = ({ user, setUser }) => {
                 }
                 {/* <hr className="my-2 border-t-2 border-white/80" /> */}
                 {user && (
-                    <button
-                        type="button"
-                        role="menuitem"
-                        onClick={() => {
-                            navigate("/account");
-                            setOpen(false);
-                        }}
-                        className="w-full rounded-md bg-[#303969] mt-2 mb-2 py-2 text-sm text-white transition font-semibold hover:bg-[#8D8AB5]"
-                    >
-                        My account
-                    </button>
+                    <>
+                        <button
+                            type="button"
+                            role="menuitem"
+                            onClick={() => {
+                                navigate("/account");
+                                setOpen(false);
+                            }}
+                            className="w-full rounded-md bg-[#303969] mt-2 mb-2 py-2 text-sm text-white transition font-semibold hover:bg-[#8D8AB5]"
+                        >
+                            My account
+                        </button>
+
+                        <button
+                            type="button"
+                            role="menuitem"
+                            onClick={() => {
+                                navigate("/request-new");
+                                setOpen(false);
+                            }}
+                            className="w-full rounded-md bg-[#303969] mt-2 mb-2 py-2 text-sm text-white transition font-semibold hover:bg-[#8D8AB5]"
+                        >
+                            Request shows
+                        </button>
+                    </>
                 )}
 
                 <hr className="my-2 border-t-2 border-white/80" />

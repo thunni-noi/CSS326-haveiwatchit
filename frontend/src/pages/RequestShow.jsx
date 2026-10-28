@@ -1,13 +1,21 @@
 import axios from "axios";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
+import SuccessDisplay from "../components/SuccessDisplay";
+import ErrorDisplay from "../components/ErrorDisplay";
 
 const RequestPage = ({ user }) => {
 
     const [error, setError] = useState("");
+    const [success, setSuccess] = useState(false);
     const [posting, setPosting] = useState(false);
     const navigate = useNavigate();
+
+    const timer = useRef(null);
+    useEffect(() => {
+            return () => clearTimeout(timer.current);
+        }, []);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -27,8 +35,13 @@ const RequestPage = ({ user }) => {
             synopsis: synopsis,
             details: details
         })
+        .then(() => {
+            setSuccess(true);
+            timer.current = setTimeout(() => window.location.reload(), 1000)
+        })
         .catch((err) => {
-            setError("Could not save submission.")}
+            setError("Could not save submission. Please try again later")
+            timer.current = setTimeout(() => setError(false), 10000)}
         )
         .finally(() => setPosting(false)) 
 
@@ -67,8 +80,8 @@ const RequestPage = ({ user }) => {
 
     return (
         <main className="container mx-auto px-4 py-6">
-            <div className="flex py-24 mx-auto min-h-screen items-center justify-center bg-black/50 backdrop-blur-lg text-white">
-                <form onSubmit={handleSubmit} className="w-full max-w-2xl space-y-3 rounded-md border border-neutral-700 bg-neutral-800/60 p-4">
+            <div className="relative flex py-24 mx-auto min-h-screen items-center justify-center bg-black/50 backdrop-blur-lg text-white">
+                <form onSubmit={handleSubmit} className="relative w-full max-w-2xl space-y-3 rounded-md border border-neutral-700 bg-neutral-800/60 p-4">
                     <h3 className="text-lg font-semibold text-white">
                         Request new shows to be added
                     </h3>
@@ -108,12 +121,22 @@ const RequestPage = ({ user }) => {
                         </textarea>
 
                         <div className="flex flex-row gap-2 justify-end">
-                            <button type="submit"
-                            className="text-white bg-blue-500  rounded-md py-1 w-40 hover:bg-blue-800">
+                            <button type="submit" disabled={posting}
+                            className="text-white bg-blue-500  rounded-md py-1 w-40 hover:bg-blue-800 disabled:opacity-50">
                                 {posting? "Submitting..." : "Submit"}
                             </button>
                         </div>
                     </div>
+                    {success && (
+                    <div className="absolute inset-0 z-10 flex items-center justify-center bg-neutral-900">
+                        <SuccessDisplay text="Your submission has been saved!" />
+                    </div>   
+                    )}
+                    {error  && 
+                    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-neutral-900 text-neutral-300 text-sm md:text-base">
+                        <ErrorDisplay text={error} />
+                        This menu will close itself shortly...
+                    </div>}
                 </form>
             </div>
         </main>

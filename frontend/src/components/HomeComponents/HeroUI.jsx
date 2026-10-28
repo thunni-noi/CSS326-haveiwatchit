@@ -7,6 +7,7 @@ import AddWatchlistModal from "../AddWatchlistModal";
 
 const AUTOMOVE_MS = 10000; // 10 sec
 
+
 function HeroUI( { shows =[], error = false, user = null }) {
     const navigate = useNavigate()
     const [showIndex, setShowIndex] = useState(0);
@@ -20,6 +21,14 @@ function HeroUI( { shows =[], error = false, user = null }) {
         const timer = setTimeout(() => setShowIndex((i) => (i + 1) % showCount), AUTOMOVE_MS);
         return () => clearTimeout(timer);
     }, [showIndex, showCount, openWatchlist]);
+
+    const updateWatchStatus = async (watchStatus)  => {
+        axios.patch(`/api/watchlist/${openWatchlist?.id}`, {status: watchStatus})
+        .then((res) => {
+            return(res.data)
+        })
+        .catch((err) => {throw err})
+    }
 
     const heroShow = shows[showIndex];
     if (error || shows.length === 0) {
@@ -123,7 +132,7 @@ function HeroUI( { shows =[], error = false, user = null }) {
                 
             </div>
 
-            {openWatchlist && <AddWatchlistModal user={user} show={openWatchlist} onCancel={() => setOpenWatchlist(false)} onSubmit={() => setOpenWatchlist(false)}/>}
+            {openWatchlist && <AddWatchlistModal user={user} show={openWatchlist} initialStatus={null} onSubmit={updateWatchStatus} onClose={() => setOpenWatchlist(null)}/>}
 
     </div>
     )}

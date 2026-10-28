@@ -10,5 +10,6 @@ router.post("/", watchlist.addWatchlistItem);
 router.put("/:showId", watchlist.updateWatchlistItem);
 router.get("/:showId", watchlist.getShowStatus);
 router.delete("/:showId", watchlist.deleteWatchlistItem);
+router.patch("/:showId", watchlist.setWatchlistItem);
 
 export default router;

@@ -137,3 +137,21 @@ export const getShowStatus = wrapper("Unable to fetch watchlist", async(req, res
     }
     return res.json(r)
 })
+
+// PATCH /api/watchlists/:showId
+export const setWatchlistItem = wrapper("Unable to update watchlist item", async(req, res) => {
+    const userId = req.user.id;
+    const showId = Number(req.params?.showId);
+    const status = req.body.status;
+
+    if (Number.isNaN(showId) || showId < 0) return res.status(400).json({message: "Invalid id!"});
+    if (!statuses.includes(status)) return res.status(400).json({message: "Status is not valid!"});
+
+    await pool.execute(`
+        INSERT INTO watchlist_items (user_id, show_id, status)
+        VALUES (?, ?, ?)
+        ON DUPLICATE KEY UPDATE status = VALUES(status)
+        `, [userId, showId, status])
+
+    return res.json({message: "Update successfully!"});
+})

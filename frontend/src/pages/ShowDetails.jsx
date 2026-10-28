@@ -106,6 +106,15 @@ function ShowDetails( {user} ) {
         };
     }, [showId, refresh]);
 
+    const updateWatchStatus = async (watchStatus)  => {
+        axios.patch(`/api/watchlist/${showId}`, {status: watchStatus})
+        .then((res) => {
+            setWatchlistStatus({status: watchStatus});
+            return(res.data)
+        })
+        .catch((err) => {throw err})
+    }
+
     if (isLoading) {
         return (
             <LoadingPlaceHolder className="relative w-full h-screen bg-neutral-900"/>
@@ -270,7 +279,7 @@ function ShowDetails( {user} ) {
             </div>
         </main>
         {openCollection && <AddCollectionModal showInfo={showInfo} user={user} onClose={() => setOpenCollection(false)}/>}
-        {openWatchlist && <AddWatchlistModal user={user} show={openWatchlist} onCancel={() => setOpenWatchlist(null)} onSubmit={() => setOpenWatchlist(null)}/>}
+        {openWatchlist && <AddWatchlistModal user={user} show={showInfo} initialStatus={watchlistStatus?.status} onSubmit={updateWatchStatus} onClose={() => setOpenWatchlist(false)}/>}
         </>
     )
 }
