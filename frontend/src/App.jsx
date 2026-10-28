@@ -11,6 +11,7 @@ import LoadingPlaceHolder from "./components/LoadingScreen";
 import NotFound from "./components/NotFound";
 import ShowDetails from "./pages/ShowDetails";
 import Account from "./pages/Account";
+import RequestPage from "./pages/RequestShow";
 
 axios.defaults.withCredentials = true;
 
@@ -28,22 +29,16 @@ function AppRoutes({ user, setUser, error }) {
         <Route path="/collections" element={<CollectionsPage user={user} />} />
         <Route path="/collections/share/:uuid" element={<CollectionDetailPage shared />} />
         <Route path="/collections/:id" element={<CollectionDetailPage />} />
-        <Route
-          path="/login"
-          element={user ? <Navigate to="/" /> : <LoginPage setUser={setUser} />}
-        />
+        <Route path="/request-new" element={<RequestPage user={user} />} />
+        <Route path="/login"element={user ? <Navigate to="/" /> : <LoginPage setUser={setUser} />}/>
         <Route
           path="/register"
           element={user ? <Navigate to="/" /> : <RegisterPage user={user} setUser={setUser} />}
         />
         <Route
             path="/account"
-            element={
-                user
-                    ? <Account user={user} setUser={setUser} />
-                    : <Navigate to="/login" replace />
-            }
-        />
+            element={user? <Account user={user} setUser={setUser} />: <Navigate to="/login" replace />
+            }/>
         <Route path="/shows/:showId" element={<ShowDetails user={user} />} />
         <Route
           path="/admin"

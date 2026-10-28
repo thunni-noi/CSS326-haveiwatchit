@@ -154,7 +154,6 @@ export const getUserShowReviews = wrapper("Unable to load review", async(req, re
 
 // POST /api/shows/:id/reviews (authenticated)
 export const saveShowReview = wrapper("Unable to save review", async(req, res) => {
-    console.log(req.body)
     const showId = Number(req.params.id);
     const score = Number(req.body?.score);
     const text = typeof req.body?.text === "string" ? req.body.text.trim() : "";
@@ -333,3 +332,19 @@ export const getShowByType = wrapper("Unable to fetch show by types", async(req,
         still_more: stillMore
     })
 } )
+
+export const requestSubmission = wrapper("Unable to save submission", async(req, res) => {
+    const user = req.user
+    const {title, type, content_rating, synopsis, details} = req.body;
+
+    if (user.is_suspended) {
+        return res.status(403).json({ message: "Your account is suspended. "})
+    }
+
+    await pool.execute(`
+        INSERT INTO show_submission (submitted_by, name, type, synopsis, content_rating, other_details)
+        VALUES (?, ?, ?, ?, ?, ?)
+        `, [req.user.id ,title, type, synopsis, content_rating, details])
+
+    return res.json({message: "Added successfully"})
+})

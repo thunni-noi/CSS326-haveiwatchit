@@ -14,4 +14,6 @@ router.get("/:id", shows.getShowById);
 router.post("/:id/reviews", protect, shows.saveShowReview);
 router.delete("/:showId/reviews/:userId", protect, requireSelfOrMod, shows.removeReview);
 
+router.post("/submission", protect, shows.requestSubmission);
+
 export default router;

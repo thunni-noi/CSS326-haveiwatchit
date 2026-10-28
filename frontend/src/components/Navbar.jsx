@@ -72,7 +72,7 @@ const UserMenu = ({ user, setUser }) => {
                     <UserProfile user={user} className="flex h-10 w-10 justify-center items-center rounded-full bg-neutral-900 overflow-hidden"/>
                     <div className="flex flex-row items-center gap-1 mt-1">
                         <span className="font-semibold"> {user ? user.username : "Guests"} </span>
-                        {user?.is_verified && <span title="This user is verified!"> <VerifiedIcon color="#EFAC61" className="size-4" /> </span>}
+                        {!!user?.is_verified && <span title="This user is verified!"> <VerifiedIcon color="#EFAC61" className="size-4" /> </span>}
                     </div>
                     <span className="font-light">
                         {user ? user.role : "Not logged in"}

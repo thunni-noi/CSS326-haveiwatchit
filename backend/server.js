@@ -2,9 +2,7 @@ import express from "express";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import cors from 'cors';
-import { adminRoute, authRoute, showsRoute } from "./routes/routes.js";
-import watchlistRoute from "./routes/watchlist.js";
-import collectionsRoute from "./routes/collections.js";
+import { adminRoute, authRoute, showsRoute, watchlistRoute, collectionsRoute } from "./routes/routes.js";
 import path from "path";
 import accountRoutes from "./middleware/account.js";
 
@@ -13,7 +11,7 @@ dotenv.config();
 const app = express();
 
 // Use for testing loading screen or if you want app to be slow for some reason ig?
-// app.use((req, res, next) => setTimeout(next, 500));
+// app.use((req, res, next) => setTimeout(next, 1000));
 
 app.use(cors({
     origin: process.env.CLIENT_URL || "http://localhost:5000",
