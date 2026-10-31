@@ -4,6 +4,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Camera,
+  BookMarked,
   CircleUserRound,
   ListVideo,
   Pencil,
@@ -108,6 +109,17 @@ const Admin = ({ user }) => {
   const [watchlistReload, setWatchlistReload] = useState(0);
   const [newWatchlistShowId, setNewWatchlistShowId] = useState("");
   const [newWatchlistStatus, setNewWatchlistStatus] = useState("wishlist");
+  const [selectedCollectionUser, setSelectedCollectionUser] = useState(null);
+  const [userCollections, setUserCollections] = useState(null);
+  const [collectionsLoading, setCollectionsLoading] = useState(false);
+  const [selectedUserCollection, setSelectedUserCollection] = useState(null);
+  const [userCollectionData, setUserCollectionData] = useState(null);
+  const [collectionLoading, setCollectionLoading] = useState(false);
+  const [collectionReload, setCollectionReload] = useState(0);
+  const [newCollectionShowId, setNewCollectionShowId] = useState("");
+  const [followedCollectionData, setFollowedCollectionData] = useState(null);
+  const [followedCollectionLoading, setFollowedCollectionLoading] = useState(false);
+  const [selectedFollowCollectionId, setSelectedFollowCollectionId] = useState("");
   const showDetailsRef = useRef(null);
   const editorRef = useRef(null);
   const avatarInputRef = useRef(null);
@@ -215,6 +227,81 @@ const Admin = ({ user }) => {
     };
   }, [selectedWatchlistUser, watchlistReload]);
 
+  useEffect(() => {
+    if (!selectedCollectionUser) {
+      return undefined;
+    }
+
+    let cancelled = false;
+    axios.get(`/api/admin/users/${selectedCollectionUser.id}/collections`)
+      .then((response) => {
+        if (!cancelled) setUserCollections(response.data.collections);
+      })
+      .catch((requestError) => {
+        if (!cancelled) {
+          setUserCollections(null);
+          setError(requestError.response?.data?.message ?? "Unable to load this user's collections.");
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setCollectionsLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedCollectionUser, collectionReload]);
+
+  useEffect(() => {
+    if (!selectedCollectionUser) {
+      return undefined;
+    }
+
+    let cancelled = false;
+    axios.get(`/api/admin/users/${selectedCollectionUser.id}/followed-collections`)
+      .then((response) => {
+        if (!cancelled) setFollowedCollectionData(response.data);
+      })
+      .catch((requestError) => {
+        if (!cancelled) {
+          setFollowedCollectionData(null);
+          setError(requestError.response?.data?.message ?? "Unable to load followed collections.");
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setFollowedCollectionLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedCollectionUser, collectionReload]);
+
+  useEffect(() => {
+    if (!selectedCollectionUser || !selectedUserCollection) {
+      return undefined;
+    }
+
+    let cancelled = false;
+    axios.get(`/api/admin/users/${selectedCollectionUser.id}/collections/${selectedUserCollection.id}`)
+      .then((response) => {
+        if (!cancelled) setUserCollectionData(response.data);
+      })
+      .catch((requestError) => {
+        if (!cancelled) {
+          setUserCollectionData(null);
+          setError(requestError.response?.data?.message ?? "Unable to load this collection.");
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setCollectionLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedCollectionUser, selectedUserCollection, collectionReload]);
+
   const visibleFields = useMemo(
     () => fields.filter((field) => !field.writeOnly),
     [fields],
@@ -264,6 +351,13 @@ const Admin = ({ user }) => {
     setSelectedWatchlistUser(null);
     setWatchlistData(null);
     setWatchlistLoading(false);
+    setSelectedCollectionUser(null);
+    setUserCollections(null);
+    setSelectedUserCollection(null);
+    setUserCollectionData(null);
+    setCollectionLoading(false);
+    setFollowedCollectionData(null);
+    setFollowedCollectionLoading(false);
     setNotice("");
   };
 
@@ -466,11 +560,132 @@ const Admin = ({ user }) => {
   const openWatchlist = (record) => {
     setError("");
     setNotice("");
+    setCollectionsLoading(false);
+    setCollectionLoading(false);
+    setSelectedCollectionUser(null);
+    setSelectedUserCollection(null);
+    setUserCollectionData(null);
+    setFollowedCollectionData(null);
+    setFollowedCollectionLoading(false);
     setWatchlistData(null);
     setWatchlistLoading(true);
     setNewWatchlistShowId("");
     setNewWatchlistStatus("wishlist");
     setSelectedWatchlistUser(record);
+  };
+
+  const openCollections = (record) => {
+    setError("");
+    setNotice("");
+    setWatchlistLoading(false);
+    setSelectedWatchlistUser(null);
+    setWatchlistData(null);
+    setSelectedCollectionUser(record);
+    setCollectionsLoading(true);
+    setUserCollections(null);
+    setSelectedUserCollection(null);
+    setUserCollectionData(null);
+    setFollowedCollectionData(null);
+    setFollowedCollectionLoading(true);
+    setCollectionLoading(false);
+    setNewCollectionShowId("");
+  };
+
+  const changeFollowedCollection = async (action, collectionId) => {
+    if (!selectedCollectionUser || !collectionId) return;
+    setError("");
+    setNotice("");
+    setSaving(true);
+    try {
+      if (action === "follow") {
+        await axios.post(
+          `/api/admin/users/${selectedCollectionUser.id}/followed-collections/${collectionId}`,
+        );
+        setNotice("Collection followed for this user.");
+      } else {
+        await axios.delete(
+          `/api/admin/users/${selectedCollectionUser.id}/followed-collections/${collectionId}`,
+        );
+        setNotice("Collection unfollowed for this user.");
+      }
+      setSelectedFollowCollectionId("");
+      setCollectionReload((value) => value + 1);
+    } catch (requestError) {
+      setError(requestError.response?.data?.message ?? "Unable to update followed collections.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const openUserCollection = (collection) => {
+    setError("");
+    setNotice("");
+    setUserCollectionData(null);
+    setCollectionLoading(true);
+    setNewCollectionShowId("");
+    setSelectedUserCollection(collection);
+  };
+
+  const updateCollectionDetails = async (event) => {
+    event.preventDefault();
+    if (!selectedCollectionUser || !userCollectionData) return;
+    const { collection } = userCollectionData;
+    setSaving(true);
+    setError("");
+    setNotice("");
+    try {
+      const response = await axios.put(
+        `/api/admin/users/${selectedCollectionUser.id}/collections/${collection.id}`,
+        { name: collection.name, is_public: Boolean(collection.is_public) },
+      );
+      setUserCollectionData((current) => ({ ...current, collection: response.data.collection }));
+      setSelectedUserCollection((current) => current
+        ? { ...current, ...response.data.collection }
+        : current);
+      setCollectionReload((value) => value + 1);
+      setNotice("Collection details updated.");
+    } catch (requestError) {
+      setError(requestError.response?.data?.message ?? "Unable to update this collection.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const addUserCollectionItem = async (event) => {
+    event.preventDefault();
+    if (!selectedCollectionUser || !selectedUserCollection || !newCollectionShowId) return;
+    setSaving(true);
+    setError("");
+    setNotice("");
+    try {
+      await axios.post(
+        `/api/admin/users/${selectedCollectionUser.id}/collections/${selectedUserCollection.id}/items`,
+        { show_id: Number(newCollectionShowId) },
+      );
+      setNewCollectionShowId("");
+      setCollectionReload((value) => value + 1);
+      setNotice("Show added to the collection.");
+    } catch (requestError) {
+      setError(requestError.response?.data?.message ?? "Unable to add this show to the collection.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const removeUserCollectionItem = async (item) => {
+    if (!selectedCollectionUser || !selectedUserCollection) return;
+    if (!window.confirm(`Remove "${item.name}" from "${selectedUserCollection.name}"?`)) return;
+    setError("");
+    setNotice("");
+    try {
+      await axios.delete(
+        `/api/admin/users/${selectedCollectionUser.id}/collections/${selectedUserCollection.id}/items/${item.id}`,
+      );
+      setCollectionReload((value) => value + 1);
+      setNotice("Show removed from the collection.");
+    } catch (requestError) {
+      setError(requestError.response?.data?.message ?? "Unable to remove this show from the collection.");
+    }
   };
 
   const removeWatchlistItem = async (item) => {
@@ -779,6 +994,10 @@ const Admin = ({ user }) => {
               <h2 className="text-2xl font-bold">
                 {selectedWatchlistUser
                   ? `${selectedWatchlistUser.username}'s Watchlist`
+                  : selectedCollectionUser
+                    ? selectedUserCollection
+                      ? `${selectedCollectionUser.username}'s Collections · ${selectedUserCollection.name}`
+                      : `${selectedCollectionUser.username}'s Collections`
                   : selectedEntity?.label}
               </h2>
               {entities.length > 1 && (
@@ -796,13 +1015,21 @@ const Admin = ({ user }) => {
                 </label>
               )}
             </div>
-            {selectedWatchlistUser ? (
+            {selectedWatchlistUser || selectedCollectionUser ? (
               <button
                 type="button"
                 onClick={() => {
                   setSelectedWatchlistUser(null);
                   setWatchlistData(null);
                   setWatchlistLoading(false);
+                  setSelectedCollectionUser(null);
+                  setUserCollections(null);
+                  setSelectedUserCollection(null);
+                  setUserCollectionData(null);
+                  setCollectionsLoading(false);
+                  setCollectionLoading(false);
+                  setFollowedCollectionData(null);
+                  setFollowedCollectionLoading(false);
                   setError("");
                   setNotice("");
                 }}
@@ -917,7 +1144,272 @@ const Admin = ({ user }) => {
                 )}
               </div>
             ) : null
-          ) : (
+            ) : selectedCollectionUser && !selectedUserCollection ? (
+              <div className="space-y-8">
+                <section className="space-y-3">
+                  <h3 className="text-lg font-semibold">User collections</h3>
+                  {collectionsLoading ? (
+                    <p role="status" className="rounded-xl border border-white/10 bg-neutral-800 p-8 text-center text-sm text-neutral-400">
+                      Loading {selectedCollectionUser.username}&apos;s collections…
+                    </p>
+                  ) : userCollections?.length ? (
+                    <ul className="space-y-3">
+                      {userCollections.map((collection) => (
+                        <li key={collection.id} className="flex flex-wrap items-center gap-4 rounded-xl border border-white/10 bg-neutral-800 p-4">
+                          <div className="min-w-0 flex-1">
+                            <h3 className="truncate font-semibold text-white">{collection.name}</h3>
+                            <p className="mt-1 text-sm text-neutral-400">
+                              {Number(collection.item_count)} {Number(collection.item_count) === 1 ? "title" : "titles"}
+                              {" · "}
+                              {collection.is_public ? "Public" : "Private"}
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => openUserCollection(collection)}
+                            className="inline-flex items-center gap-2 rounded-lg bg-[#3336cc] px-4 py-2 text-sm font-semibold text-white hover:bg-[#060863]"
+                          >
+                            <Pencil size={16} />
+                            Edit collection
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : userCollections ? (
+                    <p className="rounded-xl border border-white/10 bg-neutral-800 p-8 text-center text-sm text-neutral-400">
+                      This user has no collections.
+                    </p>
+                  ) : null}
+                </section>
+
+                <section className="space-y-3">
+                  <h3 className="text-lg font-semibold">Followed collections</h3>
+                  {followedCollectionLoading ? (
+                    <p role="status" className="rounded-xl border border-white/10 bg-neutral-800 p-8 text-center text-sm text-neutral-400">
+                      Loading {selectedCollectionUser.username}&apos;s followed collections…
+                    </p>
+                  ) : followedCollectionData ? (
+                    <div className="space-y-5">
+                  <form
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      changeFollowedCollection("follow", selectedFollowCollectionId);
+                    }}
+                    className="grid gap-3 rounded-xl border border-white/10 bg-neutral-800 p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end"
+                  >
+                    <label className="text-sm font-medium text-neutral-200">
+                      Follow a public collection
+                      <select
+                        required
+                        value={selectedFollowCollectionId}
+                        onChange={(event) => setSelectedFollowCollectionId(event.target.value)}
+                        className="mt-1 w-full rounded-lg border border-neutral-600 bg-neutral-900 px-3 py-2 text-sm text-white"
+                      >
+                        <option value="">Choose a public collection</option>
+                        {followedCollectionData.availableCollections.map((collection) => (
+                          <option key={collection.id} value={collection.id}>
+                            {collection.name} · {collection.owner}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <button
+                      type="submit"
+                      disabled={saving || !selectedFollowCollectionId}
+                      className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#3336cc] px-4 py-2 text-sm font-semibold text-white hover:bg-[#060863] disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <Plus size={16} />
+                      Follow collection
+                    </button>
+                    {!followedCollectionData.availableCollections.length && (
+                      <p className="text-xs text-neutral-400 sm:col-span-2">
+                        No other public collections are available to follow.
+                      </p>
+                    )}
+                  </form>
+
+                  {followedCollectionData.collections.length ? (
+                    <ul className="space-y-3">
+                      {followedCollectionData.collections.map((collection) => (
+                        <li key={collection.id} className="flex flex-wrap items-center gap-4 rounded-xl border border-white/10 bg-neutral-800 p-4">
+                          <div className="min-w-0 flex-1">
+                            <h3 className="truncate font-semibold text-white">{collection.name}</h3>
+                            <p className="mt-1 text-sm text-neutral-400">
+                              By {collection.owner} · {collection.is_public ? "Public" : "Private"} ·{" "}
+                              {Number(collection.item_count)} {Number(collection.item_count) === 1 ? "title" : "titles"}
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            disabled={saving}
+                            onClick={() => changeFollowedCollection("unfollow", collection.id)}
+                            className="rounded-lg bg-rose-950 px-3 py-2 text-sm font-semibold text-rose-300 hover:bg-rose-900 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            Unfollow
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="rounded-xl border border-white/10 bg-neutral-800 p-8 text-center text-sm text-neutral-400">
+                      This user has no followed collections.
+                    </p>
+                  )}
+                  </div>
+                ) : null}
+              </section>
+            </div>
+            ) : selectedCollectionUser ? (
+              collectionsLoading ? (
+                <p role="status" className="rounded-xl border border-white/10 bg-neutral-800 p-8 text-center text-sm text-neutral-400">
+                  Loading {selectedCollectionUser.username}&apos;s collections…
+                </p>
+              ) : selectedUserCollection ? (
+                collectionLoading ? (
+                  <p role="status" className="rounded-xl border border-white/10 bg-neutral-800 p-8 text-center text-sm text-neutral-400">
+                    Loading collection…
+                  </p>
+                ) : userCollectionData ? (
+                  <div className="space-y-5">
+                    <div className="flex items-center justify-between gap-3">
+                      <h3 className="text-lg font-semibold">Edit collection</h3>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedUserCollection(null);
+                          setUserCollectionData(null);
+                          setError("");
+                          setNotice("");
+                        }}
+                        className="inline-flex items-center gap-2 rounded-lg bg-neutral-700 px-4 py-2 text-sm font-semibold text-white hover:bg-neutral-600"
+                      >
+                        <ChevronLeft size={16} />
+                        Back to collections
+                      </button>
+                    </div>
+
+                    <form onSubmit={updateCollectionDetails} className="grid gap-3 rounded-xl border border-white/10 bg-neutral-800 p-4 sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-end">
+                      <label className="text-sm font-medium text-neutral-200">
+                        Collection name
+                        <input
+                          required
+                          maxLength={255}
+                          value={userCollectionData.collection.name}
+                          onChange={(event) => setUserCollectionData((current) => ({
+                            ...current,
+                            collection: { ...current.collection, name: event.target.value },
+                          }))}
+                          className="mt-1 w-full rounded-lg border border-neutral-600 bg-neutral-900 px-3 py-2 text-sm text-white"
+                        />
+                      </label>
+                      <label className="flex items-center gap-2 rounded-lg border border-neutral-600 bg-neutral-900 px-3 py-2 text-sm text-neutral-200">
+                        <input
+                          type="checkbox"
+                          checked={Boolean(userCollectionData.collection.is_public)}
+                          onChange={(event) => setUserCollectionData((current) => ({
+                            ...current,
+                            collection: { ...current.collection, is_public: event.target.checked },
+                          }))}
+                          className="accent-[#EFAC61]"
+                        />
+                        Public collection
+                      </label>
+                      <button
+                        type="submit"
+                        disabled={saving}
+                        className="rounded-lg bg-[#EFAC61] px-4 py-2 text-sm font-semibold text-black hover:bg-[#ec9532] disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {saving ? "Saving…" : "Save details"}
+                      </button>
+                    </form>
+
+                    <form onSubmit={addUserCollectionItem} className="grid gap-3 rounded-xl border border-white/10 bg-neutral-800 p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+                      <label className="text-sm font-medium text-neutral-200">
+                        Add a show
+                        <select
+                          required
+                          value={newCollectionShowId}
+                          onChange={(event) => setNewCollectionShowId(event.target.value)}
+                          className="mt-1 w-full rounded-lg border border-neutral-600 bg-neutral-900 px-3 py-2 text-sm text-white"
+                        >
+                          <option value="">Choose a show</option>
+                          {userCollectionData.availableShows.map((show) => (
+                            <option key={show.id} value={show.id}>{show.name} ({show.type})</option>
+                          ))}
+                        </select>
+                      </label>
+                      <button
+                        type="submit"
+                        disabled={saving || !userCollectionData.availableShows.length}
+                        className="rounded-lg bg-[#3336cc] px-4 py-2 text-sm font-semibold text-white hover:bg-[#060863] disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        <span className="inline-flex items-center gap-2"><Plus size={16} /> Add to collection</span>
+                      </button>
+                      {!userCollectionData.availableShows.length && (
+                        <p className="text-xs text-neutral-400 sm:col-span-2">Every show is already in this collection.</p>
+                      )}
+                    </form>
+
+                    {userCollectionData.items.length ? (
+                      <ul className="space-y-3">
+                        {userCollectionData.items.map((item) => (
+                          <li key={item.id} className="flex flex-wrap items-center gap-4 rounded-xl border border-white/10 bg-neutral-800 p-3 sm:flex-nowrap">
+                            {item.photo_url ? (
+                              <img src={item.photo_url} alt={`${item.name} poster`} className="h-20 w-14 rounded-md object-cover" />
+                            ) : (
+                              <div className="flex h-20 w-14 items-center justify-center rounded-md bg-neutral-700 text-center text-[10px] text-neutral-400">No poster</div>
+                            )}
+                            <div className="min-w-0 flex-1">
+                              <h4 className="truncate font-semibold text-white">{item.name}</h4>
+                              <p className="mt-1 text-sm capitalize text-neutral-400">{item.type}</p>
+                            </div>
+                            <button
+                              type="button"
+                              aria-label={`Remove ${item.name} from collection`}
+                              onClick={() => removeUserCollectionItem(item)}
+                              className="rounded-lg bg-rose-950 p-2 text-rose-300 hover:bg-rose-900"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="rounded-xl border border-white/10 bg-neutral-800 p-8 text-center text-sm text-neutral-400">
+                        This collection is empty.
+                      </p>
+                    )}
+                  </div>
+                ) : null
+              ) : userCollections?.length ? (
+                <ul className="space-y-3">
+                  {userCollections.map((collection) => (
+                    <li key={collection.id} className="flex flex-wrap items-center gap-4 rounded-xl border border-white/10 bg-neutral-800 p-4">
+                      <div className="min-w-0 flex-1">
+                        <h3 className="truncate font-semibold text-white">{collection.name}</h3>
+                        <p className="mt-1 text-sm text-neutral-400">
+                          {Number(collection.item_count)} {Number(collection.item_count) === 1 ? "title" : "titles"}
+                          {" · "}
+                          {collection.is_public ? "Public" : "Private"}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => openUserCollection(collection)}
+                        className="inline-flex items-center gap-2 rounded-lg bg-[#3336cc] px-4 py-2 text-sm font-semibold text-white hover:bg-[#060863]"
+                      >
+                        <Pencil size={16} />
+                        Edit collection
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : userCollections ? (
+                <p className="rounded-xl border border-white/10 bg-neutral-800 p-8 text-center text-sm text-neutral-400">
+                  This user has no collections.
+                </p>
+              ) : null
+            ) : (
           <>
           {activeSection === "Show" && selectedShow && (
             <section
@@ -1256,14 +1748,24 @@ const Admin = ({ user }) => {
                         </button>
                       )}
                       {selectedEntity.name === "users" && (
-                        <button
-                          type="button"
-                          onClick={() => openWatchlist(record)}
-                          className="inline-flex items-center gap-2 rounded-lg bg-[#3336cc] px-3 py-1.5 text-sm font-semibold text-white hover:bg-[#060863]"
-                        >
-                          <ListVideo size={16} />
-                          Watchlist
-                        </button>
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => openWatchlist(record)}
+                            className="inline-flex items-center gap-2 rounded-lg bg-[#3336cc] px-3 py-1.5 text-sm font-semibold text-white hover:bg-[#060863]"
+                          >
+                            <ListVideo size={16} />
+                            Watchlist
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => openCollections(record)}
+                            className="inline-flex items-center gap-2 rounded-lg bg-neutral-700 px-3 py-1.5 text-sm font-semibold text-white hover:bg-neutral-600"
+                          >
+                            <BookMarked size={16} />
+                            Collections
+                          </button>
+                        </>
                       )}
                       <button
                         type="button"
