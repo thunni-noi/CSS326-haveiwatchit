@@ -1,6 +1,8 @@
 import { useState } from "react";
 import axios from "axios";
-import { Trash as RemoveIcon, Pencil as EditIcon, CircleCheck as VerifiedIcon, UserRoundX as BanUserIcon, UserPlus as UnbanUserIcon } from "lucide-react";
+import {    Trash as RemoveIcon, Pencil as EditIcon, CircleCheck as VerifiedIcon, 
+            UserRoundX as BanUserIcon, UserPlus as UnbanUserIcon,
+            ShieldUser as AdminBadge, UserKey as ModBadge } from "lucide-react";
 import UserProfile from "../UserProfile";
 
 function formatDate(dateVal){
@@ -71,6 +73,8 @@ function ReviewCard( {curUser, curShowId, review, isMine, onEdit, onRemove }) {
                     className="flex size-9 items-center justify-center rounded-full object-cover overflow-hidden" />
                     <span className={`flex gap-1 items-center text-sm font-medium ${review.is_suspended && !isMine? "text-neutral-300 line-through" : "text-white"}`}>{`${review.username} ${review.is_suspended ? "(suspended)" : ""} `}
                         {!!review.is_verified && !review.is_suspended && <span title="This user is verified!"> <VerifiedIcon color="#EFAC61" className="size-4" /> </span>}
+                        {review.role === "moderator" && !review.is_suspended && <span title="This user is a moderator!"> <ModBadge color="#EFAC61" className="size-4" /> </span>}
+                        {review.role === "admin" && !review.is_suspended && <span title="This user is an admin!"> <AdminBadge color="#EFAC61" className="size-4" /> </span>}
                         {isMine && !review.is_suspended && <span className="text-gray-300">(you) </span>}
                         {isMine && !!review.is_suspended && <span className="text-red-300">(You are currently suspended - cannot edit or delete reviews) </span>}
                     </span>

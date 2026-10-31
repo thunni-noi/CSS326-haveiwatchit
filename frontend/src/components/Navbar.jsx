@@ -1,5 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Search as SearchIcon, User as UserIcon, X as XIcon, Menu as MenuIcon, CircleCheck as VerifiedIcon } from "lucide-react";
+import { Search as SearchIcon, User as UserIcon, X as XIcon, Menu as MenuIcon, CircleCheck as VerifiedIcon,
+        ShieldUser as AdminBadge, UserKey as ModBadge
+} from "lucide-react";
 import axios from "axios";
 import UserProfile from "./UserProfile";
 import { useRef, useState, useEffect } from "react";
@@ -73,6 +75,8 @@ const UserMenu = ({ user, setUser }) => {
                     <div className="flex flex-row items-center gap-1 mt-1">
                         <span className="font-semibold"> {user ? user.username : "Guests"} </span>
                         {!!user?.is_verified && <span title="This user is verified!"> <VerifiedIcon color="#EFAC61" className="size-4" /> </span>}
+                        {user?.role === "moderator" && <span title="This user is a moderator!"> <ModBadge color="#EFAC61" className="size-4" /> </span>}
+                        {user?.role === "admin" && <span title="This user is an admin!"> <AdminBadge color="#EFAC61" className="size-4" /> </span>}
                     </div>
                     <span className="font-light">
                         {user ? user.role : "Not logged in"}

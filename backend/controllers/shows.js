@@ -6,14 +6,9 @@ SELECT  s.id, s.name AS title, s.synopsis, s.status, s.type,
         DATE_FORMAT(s.release_date, '%Y-%m-%d') AS release_date,
         YEAR(s.release_date) AS release_year,
         s.episode_count, s.duration, s.content_rating, s.photo_url, s.cover_url,
-        ROUND(r.avg_score, 1) AS avg_score,
-        COALESCE(r.review_count, 0) as review_count
+        ROUND(s.avg_score, 1) AS avg_score,
+        s.review_count
 FROM    shows s
-        LEFT JOIN (
-            SELECT show_id, AVG(review_score) AS avg_score, COUNT(*) AS review_count
-            FROM reviews
-            GROUP BY show_id
-        )   r ON r.show_id = s.id
         `
 
 // Map database into json
@@ -105,7 +100,7 @@ export const getShowReviews = wrapper("Unable to load reviews", async(req, res) 
     if (shows.length === 0) return res.status(404).json({message: "Show not found!"});
 
     const [rows] = await pool.execute(`
-        SELECT  u.username, u.avatar_url, u.id AS user_id, u.is_verified, u.is_suspended,
+        SELECT  u.username, u.avatar_url, u.id AS user_id, u.is_verified, u.is_suspended, u.role,
                 r.review_score AS score, r.review_txt AS text,
                 DATE_FORMAT(r.created_at, '%Y-%m-%d') AS created_at
         FROM    reviews r
@@ -133,7 +128,7 @@ export const getUserShowReviews = wrapper("Unable to load review", async(req, re
     if (Number.isNaN(userId) || userId < 0) return res.status(400).json({message: "Invalid userId!"});
 
     const [rows] = await pool.execute(`
-        SELECT  u.username, u.avatar_url, u.id AS user_id, u.is_verified, u.is_suspended,
+        SELECT  u.username, u.avatar_url, u.id AS user_id, u.is_verified, u.is_suspended, u.role,
                 r.review_score AS score, r.review_txt AS text,
                 DATE_FORMAT(r.created_at, '%Y-%m-%d') AS created_at
         FROM    reviews r
@@ -276,22 +271,18 @@ export const getTopShows = wrapper("Unable to fetch top rated shows", async(req,
             DATE_FORMAT(s.release_date, '%Y-%m-%d') AS release_date,
             YEAR(s.release_date) AS release_year,
             s.episode_count, s.duration, s.content_rating, s.photo_url, s.cover_url,
-            ROUND(r.avg_score, 1) AS avg_score,
-            r.review_count as review_count,
+            ROUND(s.avg_score, 1) AS avg_score,
+            s.review_count as review_count,
             ROUND (
-                (r.review_count / (r.review_count + 10)) * r.avg_score
-                + (10 / (10 + review_count)) * g.global_avg
+                (s.review_count / (s.review_count + 10)) * s.avg_score
+                + (10 / (10 + s.review_count)) * g.global_avg
             , 2) AS weighted_score
 
     FROM    shows s
-    JOIN (
-            SELECT show_id, AVG(review_score) AS avg_score, COUNT(*) AS review_count
-            FROM reviews
-            GROUP BY show_id
-        )   r ON r.show_id = s.id
     CROSS JOIN (
             SELECT AVG(review_score) AS global_avg FROM reviews
     )       g
+    WHERE s.review_count > 0
     `
     const [rows] = await pool.execute(`
         ${weighted_query}

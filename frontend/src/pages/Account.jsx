@@ -13,7 +13,8 @@ import {
     CheckCircle2,
     AlertCircle,
     LoaderCircle,
-    CircleCheck as VerifiedIcon
+    CircleCheck as VerifiedIcon,
+    ShieldUser as AdminBadge, UserKey as ModBadge
 } from "lucide-react";
 
 const ALLOWED = ["image/jpeg", "image/png", "image/webp"];
@@ -231,7 +232,7 @@ function Account({ user, setUser }) {
                             <div className="flex flex-col px-5 pb-6 gap-y-1 justify justify-center items-center">
                                 <div className="relative -mt-14 mx-auto w-fit">
                                     <div className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-full border-[6px] border-neutral-900 bg-neutral-800">
-                                        <UserProfile user={user}/>
+                                        <UserProfile user={user} className={"h-11/10 w-11/10"}/>
                                     </div>
 
                                     <button
@@ -254,6 +255,8 @@ function Account({ user, setUser }) {
                                 <div className="flex flex-row items-center align-middle mt-1 gap-2">
                                     <h1 className="break-all text-2xl font-bold">{user.username}</h1>
                                     {user?.is_verified && <span title="This user is verified!"> <VerifiedIcon color="#EFAC61" className="size-4" /> </span>}
+                                    {user?.role === "moderator" && <span title="This user is a moderator!"> <ModBadge color="#EFAC61" className="size-4" /> </span>}
+                                    {user?.role === "admin" && <span title="This user is an admin!"> <AdminBadge color="#EFAC61" className="size-4" /> </span>}
                                 </div>
                                 <p className="text-sm capitalize text-neutral-400">{user.role}</p>
                                 {!!user?.is_suspended && <span className="text-sm font-bold text-center text-red-300"> You are currently suspended! <br/> <p className="text-xs font-medium"> Please contact admin If you believe this is a mistake </p></span>}
