@@ -5,7 +5,9 @@ import path from "path";
 import { randomUUID } from "crypto";
 import pool from "../db/db.js";
 
+// Build a field definition used by the admin entity schemas.
 const field = (name, type, options = {}) => ({ name, type, ...options });
+// Store avatars under a shared directory and map accepted MIME types to extensions.
 const avatarUploadDirectory = path.join(path.resolve(), "uploads", "avatars");
 const avatarExtensions = {
     "image/jpeg": ".jpg",
@@ -13,8 +15,10 @@ const avatarExtensions = {
     "image/webp": ".webp",
 };
 
+// Ensure the destination exists before Multer receives an uploaded file.
 fs.mkdirSync(avatarUploadDirectory, { recursive: true });
 
+// Configure avatar file naming, size limits, and allowed image formats.
 const avatarUpload = multer({
     storage: multer.diskStorage({
         destination: avatarUploadDirectory,
@@ -30,6 +34,7 @@ const avatarUpload = multer({
     },
 });
 
+// Run avatar uploads through Multer and convert upload failures into HTTP 400 responses.
 export const receiveUserAvatar = (req, res, next) => {
     avatarUpload.single("avatar")(req, res, (error) => {
         if (!error) {
@@ -44,6 +49,7 @@ export const receiveUserAvatar = (req, res, next) => {
     });
 };
 
+// Describe the database tables and fields that the generic admin API can manage.
 const entities = {
     users: {
         table: "users",
@@ -137,12 +143,16 @@ const entities = {
     },
 };
 
+// Restrict watchlist operations to statuses supported by the application.
 const watchlistStatuses = ["wishlist", "watching", "watched", "rewatching", "on_hold", "dropped"];
 
+// Look up an entity schema from an API route parameter.
 const getEntity = (name) => entities[name];
 
+// Create a name-to-definition lookup for validating an entity's fields.
 const fieldMap = (entity) => new Map(entity.fields.map((item) => [item.name, item]));
 
+// Validate submitted values, enforce field rules, and normalize values for SQL.
 const validateFields = (entity, values, { creating }) => {
     if (!values || typeof values !== "object" || Array.isArray(values)) {
         return { error: "Provide record fields as an object." };
@@ -238,6 +248,7 @@ const validateFields = (entity, values, { creating }) => {
     return { values: result };
 };
 
+// Check that a record key contains exactly the entity's required primary-key fields.
 const validateKey = (entity, key) => {
     if (!key || typeof key !== "object" || Array.isArray(key)) {
         return { error: "Provide the record key." };
@@ -258,13 +269,16 @@ const validateKey = (entity, key) => {
     return { key };
 };
 
+// Build a parameterized WHERE clause for the entity's primary key.
 const whereForKey = (entity, key) => ({
     clause: entity.keys.map((name) => `\`${name}\` = ?`).join(" AND "),
     values: entity.keys.map((name) => key[name]),
 });
 
+// Exclude write-only fields, such as passwords, from database responses.
 const publicColumns = (entity) => entity.fields.filter((item) => !item.writeOnly);
 
+// Delete a local avatar only if its resolved path is inside the uploads directory.
 const deleteLocalAvatar = (avatarUrl) => {
     if (!avatarUrl || typeof avatarUrl !== "string") return;
 
@@ -277,6 +291,7 @@ const deleteLocalAvatar = (avatarUrl) => {
     }
 };
 
+// Lock admin account rows while checking rules that protect administrator access.
 const lockAdminUsers = async (connection) => {
     const [admins] = await connection.execute(
         "SELECT id FROM users WHERE role = 'admin' FOR UPDATE",
@@ -284,6 +299,7 @@ const lockAdminUsers = async (connection) => {
     return admins.map((admin) => Number(admin.id));
 };
 
+// Return a paginated, searchable list of records and its field metadata.
 export const listRecords = async (req, res) => {
     const entity = getEntity(req.params.entity);
     if (!entity) {
@@ -295,19 +311,34 @@ export const listRecords = async (req, res) => {
     const query = typeof req.query.q === "string" ? req.query.q.trim().slice(0, 100) : "";
     const columns = publicColumns(entity).map((item) => `\`${item.name}\``).join(", ");
     const searchable = publicColumns(entity).filter((item) => !["datetime", "boolean"].includes(item.type));
-    const searchClause = query && searchable.length
-        ? ` WHERE (${searchable.map((item) => `CAST(\`${item.name}\` AS CHAR) LIKE ?`).join(" OR ")})`
-        : "";
-    const searchValues = query && searchable.length ? searchable.map(() => `%${query}%`) : [];
+    const filters = [];
+    const filterValues = [];
+
+    if (entity.table === "show_submission") {
+        const submissionStatus = req.query.submission_status ?? "pending";
+        if (!["all", "pending", "approved", "rejected"].includes(submissionStatus)) {
+            return res.status(400).json({ message: "Invalid submission status filter." });
+        }
+        if (submissionStatus !== "all") {
+            filters.push("`status` = ?");
+            filterValues.push(submissionStatus);
+        }
+    }
+
+    if (query && searchable.length) {
+        filters.push(`(${searchable.map((item) => `CAST(\`${item.name}\` AS CHAR) LIKE ?`).join(" OR ")})`);
+        filterValues.push(...searchable.map(() => `%${query}%`));
+    }
+    const whereClause = filters.length ? ` WHERE ${filters.join(" AND ")}` : "";
 
     try {
         const [rows] = await pool.execute(
-            `SELECT ${columns} FROM \`${entity.table}\`${searchClause} ORDER BY ${entity.keys.map((name) => `\`${name}\``).join(", ")} LIMIT ? OFFSET ?`,
-            [...searchValues, limit, offset],
+            `SELECT ${columns} FROM \`${entity.table}\`${whereClause} ORDER BY ${entity.keys.map((name) => `\`${name}\``).join(", ")} LIMIT ? OFFSET ?`,
+            [...filterValues, limit, offset],
         );
         const [countRows] = await pool.execute(
-            `SELECT COUNT(*) AS total FROM \`${entity.table}\`${searchClause}`,
-            searchValues,
+            `SELECT COUNT(*) AS total FROM \`${entity.table}\`${whereClause}`,
+            filterValues,
         );
         return res.json({
             rows,
@@ -323,6 +354,7 @@ export const listRecords = async (req, res) => {
     }
 };
 
+// Load a show's platforms and cast/crew, along with options for editing those links.
 export const getShowAssociations = async (req, res) => {
     const showId = req.params.id;
     if (!/^\d+$/.test(showId)) {
@@ -369,12 +401,14 @@ export const getShowAssociations = async (req, res) => {
     }
 };
 
+// Convert a positive integer-like value to a number, or reject it with null.
 const parsePositiveId = (value) => {
     if (!/^\d+$/.test(String(value))) return null;
     const id = Number(value);
     return Number.isSafeInteger(id) && id > 0 ? id : null;
 };
 
+// Save a user's new avatar, cleaning up uploaded or replaced files as needed.
 export const updateUserAvatar = async (req, res) => {
     const userId = parsePositiveId(req.params.id);
     if (!userId) {
@@ -414,6 +448,7 @@ export const updateUserAvatar = async (req, res) => {
     }
 };
 
+// Load a user's watchlist and the shows available to add.
 export const getUserWatchlist = async (req, res) => {
     const userId = parsePositiveId(req.params.id);
     if (!userId) {
@@ -459,6 +494,7 @@ export const getUserWatchlist = async (req, res) => {
     }
 };
 
+// Add a show to a user's watchlist after validating its ID and status.
 export const addUserWatchlistItem = async (req, res) => {
     const userId = parsePositiveId(req.params.id);
     const showId = parsePositiveId(req.body?.show_id);
@@ -491,6 +527,7 @@ export const addUserWatchlistItem = async (req, res) => {
     }
 };
 
+// Change the status of an existing item in a user's watchlist.
 export const updateUserWatchlistItem = async (req, res) => {
     const userId = parsePositiveId(req.params.id);
     const showId = parsePositiveId(req.params.showId);
@@ -517,6 +554,7 @@ export const updateUserWatchlistItem = async (req, res) => {
     }
 };
 
+// Remove a show from a user's watchlist.
 export const deleteUserWatchlistItem = async (req, res) => {
     const userId = parsePositiveId(req.params.id);
     const showId = parsePositiveId(req.params.showId);
@@ -539,6 +577,7 @@ export const deleteUserWatchlistItem = async (req, res) => {
     }
 };
 
+// List a user's collections with an item count for each collection.
 export const getUserCollections = async (req, res) => {
     const userId = parsePositiveId(req.params.id);
     if (!userId) {
@@ -570,6 +609,7 @@ export const getUserCollections = async (req, res) => {
     }
 };
 
+// Load one collection, its items, and shows that are available to add.
 export const getUserCollection = async (req, res) => {
     const userId = parsePositiveId(req.params.id);
     const collectionId = parsePositiveId(req.params.collectionId);
@@ -613,6 +653,7 @@ export const getUserCollection = async (req, res) => {
     }
 };
 
+// Update a collection's name and public/private visibility.
 export const updateUserCollection = async (req, res) => {
     const userId = parsePositiveId(req.params.id);
     const collectionId = parsePositiveId(req.params.collectionId);
@@ -646,6 +687,7 @@ export const updateUserCollection = async (req, res) => {
     }
 };
 
+// Add a show to a user's collection and distinguish duplicates from missing records.
 export const addUserCollectionItem = async (req, res) => {
     const userId = parsePositiveId(req.params.id);
     const collectionId = parsePositiveId(req.params.collectionId);
@@ -683,6 +725,7 @@ export const addUserCollectionItem = async (req, res) => {
     }
 };
 
+// Remove a show from a collection owned by the specified user.
 export const deleteUserCollectionItem = async (req, res) => {
     const userId = parsePositiveId(req.params.id);
     const collectionId = parsePositiveId(req.params.collectionId);
@@ -708,6 +751,7 @@ export const deleteUserCollectionItem = async (req, res) => {
     }
 };
 
+// List collections the user follows and public collections they can follow.
 export const getUserFollowedCollections = async (req, res) => {
     const userId = parsePositiveId(req.params.id);
     if (!userId) {
@@ -756,6 +800,7 @@ export const getUserFollowedCollections = async (req, res) => {
     }
 };
 
+// Follow another user's public collection.
 export const followUserCollection = async (req, res) => {
     const userId = parsePositiveId(req.params.id);
     const collectionId = parsePositiveId(req.params.collectionId);
@@ -786,6 +831,7 @@ export const followUserCollection = async (req, res) => {
     }
 };
 
+// Remove a user's follow of a collection.
 export const unfollowUserCollection = async (req, res) => {
     const userId = parsePositiveId(req.params.id);
     const collectionId = parsePositiveId(req.params.collectionId);
@@ -808,6 +854,7 @@ export const unfollowUserCollection = async (req, res) => {
     }
 };
 
+// Validate and insert a record, then return its non-sensitive fields.
 export const createRecord = async (req, res) => {
     const entity = getEntity(req.params.entity);
     if (!entity) {
@@ -858,6 +905,7 @@ export const createRecord = async (req, res) => {
     }
 };
 
+// Validate and update a record transactionally, including user-account safeguards.
 export const updateRecord = async (req, res) => {
     const entity = getEntity(req.params.entity);
     if (!entity) {
@@ -944,6 +992,7 @@ export const updateRecord = async (req, res) => {
     }
 };
 
+// Delete a record transactionally while protecting the active and final admin accounts.
 export const deleteRecord = async (req, res) => {
     const entity = getEntity(req.params.entity);
     if (!entity) {
@@ -1001,6 +1050,7 @@ export const deleteRecord = async (req, res) => {
     }
 };
 
+// Wrap a controller to log unexpected errors and return a consistent server response.
 const wrapper = (errMsg, controller) => async (req, res) =>
     {try {
         await controller(req, res);
@@ -1009,6 +1059,7 @@ const wrapper = (errMsg, controller) => async (req, res) =>
         res.status(500).json({message: errMsg});
     }};
 
+// Mark the specified user account as suspended.
 export const suspendUser = wrapper("Unable to suspend user", async(req, res) => {
     const userId = req.user.id;
     const targetId = Number(req.params.targetId);
@@ -1023,6 +1074,7 @@ export const suspendUser = wrapper("Unable to suspend user", async(req, res) => 
     return res.json({message: "Suspend user successfully"})
 })
 
+// Clear the suspended flag for the specified user account.
 export const unsuspendUser = wrapper("Unable to unsuspend user", async(req, res) => {
     const userId = req.user.id;
     const targetId = Number(req.params.targetId);

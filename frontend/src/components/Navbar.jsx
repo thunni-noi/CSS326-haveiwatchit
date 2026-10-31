@@ -83,11 +83,11 @@ const UserMenu = ({ user, setUser }) => {
                     </span>
                     {!!user?.is_suspended && <span className="text-xs text-red-300"> You are currently suspended! </span>}
                 </div>
-                {(user?.role === "admin") &&
+                {(["admin", "moderator"].includes(user?.role)) &&
                     (
                         <>
                         <hr className="my-2 border-t-2 border-white/80" />
-                        <button
+                        {user.role === "admin" && <button
                                     type="button"
                                     role="menuitem"
                                     onClick={() => {
@@ -95,7 +95,18 @@ const UserMenu = ({ user, setUser }) => {
                                         setOpen(false);
                                     }}
                                     className="w-full rounded-md bg-[#EFAC61] mt-2 mb-2 py-2 text-sm text-[#000000] transition font-semibold hover:bg-[#ec9532]"
-                                >Admin Page</button>
+                                >Admin Page</button>}
+                        <button
+                            type="button"
+                            role="menuitem"
+                            onClick={() => {
+                                navigate("/moderation");
+                                setOpen(false);
+                            }}
+                            className="w-full rounded-md bg-[#303969] mt-2 mb-2 py-2 text-sm text-white transition font-semibold hover:bg-[#8D8AB5]"
+                        >
+                            Show Submissions
+                        </button>
                         </>
                     )
                 }
@@ -375,11 +386,18 @@ const Navbar = ({ user, setUser }) => {
                                             )
                                         </span>
 
-                                        {user?.role === "admin" && (
-                                            <Link to="/admin" className="ml-auto underline hover:text-[#ff9100] transition-colors">
-                                                Admin Page
-                                            </Link>
-                                        )}
+                                        <div className="ml-auto flex gap-3">
+                                            {user?.role === "admin" && (
+                                                <Link to="/admin" className="underline hover:text-[#ff9100] transition-colors">
+                                                    Admin Page
+                                                </Link>
+                                            )}
+                                            {["admin", "moderator"].includes(user?.role) && (
+                                                <Link to="/moderation" className="underline hover:text-[#ff9100] transition-colors">
+                                                    Show Submissions
+                                                </Link>
+                                            )}
+                                        </div>
                                         </div>
                                     ): (
                                     <>

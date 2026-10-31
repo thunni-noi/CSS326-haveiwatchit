@@ -2,7 +2,14 @@ import express from "express";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import cors from 'cors';
-import { adminRoute, authRoute, showsRoute, watchlistRoute, collectionsRoute } from "./routes/routes.js";
+import {
+    adminRoute,
+    authRoute,
+    showsRoute,
+    watchlistRoute,
+    collectionsRoute,
+    submissionModRoute,
+} from "./routes/routes.js";
 import path from "path";
 import accountRoutes from "./middleware/account.js";
 
@@ -24,6 +31,7 @@ app.use("/images", express.static(path.join(path.resolve(), "images")));
 
 app.use('/api/auth', authRoute);
 app.use('/api/admin', adminRoute);
+app.use('/api/submission-mod', submissionModRoute);
 app.use('/api/shows', showsRoute);
 app.use('/api/watchlist', watchlistRoute);
 app.use('/api/collections', collectionsRoute);

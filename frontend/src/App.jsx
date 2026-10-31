@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "r
 import axios from "axios";
 import { HomePage, LoginPage, RegisterPage, CollectionsPage } from "./pages/PageIndex";
 import AdminPage from "./pages/Admin";
+import SubmissionModeration from "./pages/SubmissionModeration";
 import WatchlistPage from "./pages/Watchlist";
 import CollectionDetailPage from "./pages/CollectionDetail";
 import { useState, useEffect } from "react";
@@ -17,12 +18,13 @@ axios.defaults.withCredentials = true;
 
 function AppRoutes({ user, setUser, error }) {
   const location = useLocation();
-  const isAdminPage = location.pathname === "/admin";
+  const isStaffPage = ["/admin", "/moderation"].includes(location.pathname);
+  const canModerate = ["admin", "moderator"].includes(user?.role);
 
   return (
     <>
       <Navbar user={user} setUser={setUser} />
-      <PageBg hideCharacter={isAdminPage} />
+      <PageBg hideCharacter={isStaffPage} />
       <Routes>
         <Route path="/" element={<HomePage user={user} error={error} />} />
         <Route path="/watchlist" element={<WatchlistPage user={user} />} />
@@ -43,6 +45,10 @@ function AppRoutes({ user, setUser, error }) {
         <Route
           path="/admin"
           element={user?.role === "admin" ? <AdminPage user={user} /> : <Navigate to="/" />}
+        />
+        <Route
+          path="/moderation"
+          element={canModerate ? <SubmissionModeration user={user} /> : <Navigate to="/" />}
         />
         <Route path="*" element={<NotFound />} />
       </Routes>

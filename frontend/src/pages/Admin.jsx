@@ -28,6 +28,7 @@ const sections = [
 const PAGE_SIZE = 50;
 const ALLOWED_AVATAR_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const MAX_AVATAR_SIZE = 2 * 1024 * 1024;
+// Human-readable labels used when showing watchlist statuses in the admin UI.
 const WATCHLIST_STATUS_LABELS = {
   wishlist: "Want to watch",
   watching: "Watching",
@@ -37,9 +38,11 @@ const WATCHLIST_STATUS_LABELS = {
   dropped: "Dropped",
 };
 
+// Pick only the primary-key fields needed to identify a record in API requests.
 const getRecordKey = (row, keys) =>
   Object.fromEntries(keys.map((key) => [key, row[key]]));
 
+// Format database timestamps consistently in the application's Bangkok timezone.
 const formatDatabaseDateTime = (value) => {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "Invalid date";
@@ -55,6 +58,7 @@ const formatDatabaseDateTime = (value) => {
   }).format(date);
 };
 
+// Format date-only values in UTC so local timezone offsets cannot change the day.
 const formatDatabaseDate = (value) => {
   const datePart = String(value).slice(0, 10);
   const date = new Date(`${datePart}T00:00:00Z`);
@@ -68,6 +72,7 @@ const formatDatabaseDate = (value) => {
   }).format(date);
 };
 
+// Convert database values into readable text for record detail views.
 const displayValue = (value, type) => {
   if (value === null || value === undefined || value === "") return "—";
   if (type === "datetime") return formatDatabaseDateTime(value);
@@ -82,9 +87,11 @@ const displayValue = (value, type) => {
 // Main admin page component. It loads data from /api/admin, manages the active entity,
 // and renders the table, search bar, create/edit modal form, and show details.
 const Admin = ({ user }) => {
+  // Track the selected table, its records, paging, and request feedback.
   const [activeSection, setActiveSection] = useState("User");
   const [entityName, setEntityName] = useState("users");
   const [search, setSearch] = useState("");
+  const [submissionStatusFilter, setSubmissionStatusFilter] = useState("pending");
   const [page, setPage] = useState(0);
   const [records, setRecords] = useState([]);
   const [fields, setFields] = useState([]);
@@ -99,10 +106,12 @@ const Admin = ({ user }) => {
   const [avatarPreview, setAvatarPreview] = useState(null);
   const [saving, setSaving] = useState(false);
   const [reload, setReload] = useState(0);
+  // Track the selected show and the form for managing its platform and cast links.
   const [selectedShow, setSelectedShow] = useState(null);
   const [showAssociations, setShowAssociations] = useState(null);
   const [relationForm, setRelationForm] = useState(null);
   const [relationValues, setRelationValues] = useState({});
+  // Track the selected user's watchlist and collection management views.
   const [selectedWatchlistUser, setSelectedWatchlistUser] = useState(null);
   const [watchlistData, setWatchlistData] = useState(null);
   const [watchlistLoading, setWatchlistLoading] = useState(false);
@@ -124,6 +133,7 @@ const Admin = ({ user }) => {
   const editorRef = useRef(null);
   const avatarInputRef = useRef(null);
 
+  // Release temporary object URLs used to preview a selected avatar image.
   useEffect(() => () => {
     if (avatarPreview) URL.revokeObjectURL(avatarPreview);
   }, [avatarPreview]);
@@ -142,7 +152,14 @@ const Admin = ({ user }) => {
       setError("");
       try {
         const response = await axios.get(`/api/admin/${selectedEntity.name}`, {
-          params: { limit: PAGE_SIZE, offset: page * PAGE_SIZE, q: search.trim() },
+          params: {
+            limit: PAGE_SIZE,
+            offset: page * PAGE_SIZE,
+            q: search.trim(),
+            ...(selectedEntity.name === "show_submission"
+              ? { submission_status: submissionStatusFilter }
+              : {}),
+          },
         });
         if (cancelled) return;
         setRecords(response.data.rows);
@@ -167,7 +184,7 @@ const Admin = ({ user }) => {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [selectedEntity, page, search, reload]);
+  }, [selectedEntity, page, search, submissionStatusFilter, reload]);
 
   // Load detailed relations for the selected show, such as platforms, cast members, and crew credits.
   useEffect(() => {
@@ -191,6 +208,7 @@ const Admin = ({ user }) => {
     };
   }, [selectedShow, reload]);
 
+  // Bring the active editor or selected show's detail panel into view.
   useEffect(() => {
     const target = form
       ? editorRef.current
@@ -227,6 +245,7 @@ const Admin = ({ user }) => {
     };
   }, [selectedWatchlistUser, watchlistReload]);
 
+  // Load the selected user's owned collections.
   useEffect(() => {
     if (!selectedCollectionUser) {
       return undefined;
@@ -252,6 +271,7 @@ const Admin = ({ user }) => {
     };
   }, [selectedCollectionUser, collectionReload]);
 
+  // Load the public collections this user follows and the ones they may follow.
   useEffect(() => {
     if (!selectedCollectionUser) {
       return undefined;
@@ -277,6 +297,7 @@ const Admin = ({ user }) => {
     };
   }, [selectedCollectionUser, collectionReload]);
 
+  // Load the selected collection's items and the shows available to add.
   useEffect(() => {
     if (!selectedCollectionUser || !selectedUserCollection) {
       return undefined;
@@ -307,6 +328,7 @@ const Admin = ({ user }) => {
     [fields],
   );
 
+  // Initialize a blank form for creating a record.
   const startCreate = () => {
     setNotice("");
     setForm({ mode: "create", record: null });
@@ -316,6 +338,7 @@ const Admin = ({ user }) => {
     if (avatarInputRef.current) avatarInputRef.current.value = "";
   };
 
+  // Populate the editor from a record while excluding fields that cannot be edited.
   const startEdit = (record) => {
     setNotice("");
     setForm({ mode: "edit", record });
@@ -331,6 +354,7 @@ const Admin = ({ user }) => {
     );
   };
 
+  // Close the editor and clear any selected avatar upload or preview.
   const closeEditor = () => {
     setForm(null);
     setAvatarFile(null);
@@ -338,6 +362,7 @@ const Admin = ({ user }) => {
     if (avatarInputRef.current) avatarInputRef.current.value = "";
   };
 
+  // Switch dashboard sections and clear state belonging to the previous section.
   const changeSection = (section) => {
     const nextGroup = sections.find((item) => item.label === section);
     setActiveSection(section);
@@ -361,6 +386,7 @@ const Admin = ({ user }) => {
     setNotice("");
   };
 
+  // Change the selected entity table and reset its pagination and editor.
   const changeEntity = (name) => {
     setEntityName(name);
     setPage(0);
@@ -368,6 +394,7 @@ const Admin = ({ user }) => {
     setNotice("");
   };
 
+  // Create or update a show's platform or cast/crew association.
   const saveShowRelation = async (event) => {
     event.preventDefault();
     if (!selectedShow || !relationForm) return;
@@ -451,6 +478,7 @@ const Admin = ({ user }) => {
     }
   };
 
+  // Remove a platform or cast/crew association after confirmation.
   const removeShowRelation = async (entity, key, label) => {
     if (!window.confirm(`Remove ${label} from this show?`)) return;
     setError("");
@@ -464,6 +492,7 @@ const Admin = ({ user }) => {
     }
   };
 
+  // Submit the record editor and, when selected, upload a new user avatar.
   const submitForm = async (event) => {
     event.preventDefault();
     setSaving(true);
@@ -502,6 +531,7 @@ const Admin = ({ user }) => {
     }
   };
 
+  // Delete a record after confirmation and refresh the current admin list.
   const removeRecord = async (record) => {
     const key = getRecordKey(record, keys);
     const summary = keys.map((name) => `${name}: ${record[name]}`).join(", ");
@@ -523,6 +553,7 @@ const Admin = ({ user }) => {
     }
   };
 
+  // Add a selected show to the selected user's watchlist.
   const addWatchlistItem = async (event) => {
     event.preventDefault();
     if (!selectedWatchlistUser || !newWatchlistShowId) return;
@@ -544,6 +575,7 @@ const Admin = ({ user }) => {
     }
   };
 
+  // Update a watchlist item's status and reload the user's watchlist.
   const updateWatchlistStatus = async (showId, status) => {
     if (!selectedWatchlistUser) return;
     setError("");
@@ -557,6 +589,7 @@ const Admin = ({ user }) => {
     }
   };
 
+  // Open a user's watchlist and reset stale data from other user-management views.
   const openWatchlist = (record) => {
     setError("");
     setNotice("");
@@ -574,6 +607,7 @@ const Admin = ({ user }) => {
     setSelectedWatchlistUser(record);
   };
 
+  // Open a user's collections and reset stale watchlist or collection detail state.
   const openCollections = (record) => {
     setError("");
     setNotice("");
@@ -591,6 +625,7 @@ const Admin = ({ user }) => {
     setNewCollectionShowId("");
   };
 
+  // Follow or unfollow a collection on behalf of the selected user.
   const changeFollowedCollection = async (action, collectionId) => {
     if (!selectedCollectionUser || !collectionId) return;
     setError("");
@@ -617,6 +652,7 @@ const Admin = ({ user }) => {
     }
   };
 
+  // Select a collection and load its detail view.
   const openUserCollection = (collection) => {
     setError("");
     setNotice("");
@@ -626,6 +662,7 @@ const Admin = ({ user }) => {
     setSelectedUserCollection(collection);
   };
 
+  // Save changes to the selected collection's name and visibility.
   const updateCollectionDetails = async (event) => {
     event.preventDefault();
     if (!selectedCollectionUser || !userCollectionData) return;
@@ -651,6 +688,7 @@ const Admin = ({ user }) => {
     }
   };
 
+  // Add a show to the selected collection.
   const addUserCollectionItem = async (event) => {
     event.preventDefault();
     if (!selectedCollectionUser || !selectedUserCollection || !newCollectionShowId) return;
@@ -672,6 +710,7 @@ const Admin = ({ user }) => {
     }
   };
 
+  // Remove a show from the selected collection after confirmation.
   const removeUserCollectionItem = async (item) => {
     if (!selectedCollectionUser || !selectedUserCollection) return;
     if (!window.confirm(`Remove "${item.name}" from "${selectedUserCollection.name}"?`)) return;
@@ -688,6 +727,7 @@ const Admin = ({ user }) => {
     }
   };
 
+  // Remove a show from the selected user's watchlist after confirmation.
   const removeWatchlistItem = async (item) => {
     if (!selectedWatchlistUser) return;
     if (!window.confirm(`Remove "${item.name}" from ${selectedWatchlistUser.username}'s watchlist?`)) return;
@@ -895,6 +935,7 @@ const Admin = ({ user }) => {
     );
   };
 
+  // Identify whether this record's inline edit form is currently open.
   const isInlineEdit = (record) =>
     form?.mode === "edit" &&
     record &&
@@ -944,6 +985,7 @@ const Admin = ({ user }) => {
   return (
     <main className="min-h-screen px-4 pb-16 pt-26 text-white sm:pt-30">
       <div className="mx-auto max-w-6xl">
+        {/* Dashboard title, record search, and top-level admin sections. */}
         <header className="mb-8 flex flex-col justify-between gap-5 border-b border-white/10 pb-6 sm:flex-row sm:items-end">
           <div>
             <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">Admin Page</h1>
@@ -989,6 +1031,7 @@ const Admin = ({ user }) => {
           aria-label={`${selectedEntity?.label ?? "Admin"} management`}
           className="mx-auto max-w-5xl rounded-2xl border border-white/10 bg-neutral-900/90 p-4 shadow-2xl shadow-black/30 sm:p-7"
         >
+          {/* Current view title and actions for adding records or returning to users. */}
           <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
             <div>
               <h2 className="text-2xl font-bold">
@@ -1015,44 +1058,63 @@ const Admin = ({ user }) => {
                 </label>
               )}
             </div>
-            {selectedWatchlistUser || selectedCollectionUser ? (
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedWatchlistUser(null);
-                  setWatchlistData(null);
-                  setWatchlistLoading(false);
-                  setSelectedCollectionUser(null);
-                  setUserCollections(null);
-                  setSelectedUserCollection(null);
-                  setUserCollectionData(null);
-                  setCollectionsLoading(false);
-                  setCollectionLoading(false);
-                  setFollowedCollectionData(null);
-                  setFollowedCollectionLoading(false);
-                  setError("");
-                  setNotice("");
-                }}
-                className="inline-flex items-center gap-2 rounded-lg bg-neutral-700 px-4 py-2 text-sm font-semibold text-white hover:bg-neutral-600"
-              >
-                <ChevronLeft size={16} />
-                Back to users
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={startCreate}
-                className="inline-flex items-center gap-2 rounded-lg bg-[#3336cc] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#060863]"
-              >
-                <Plus size={16} />
-                Add {selectedEntity?.label.replace(/s$/, "")}
-              </button>
-            )}
+            <div className="flex flex-wrap items-center gap-3">
+              {selectedEntity?.name === "show_submission" && (
+                <label className="text-sm text-neutral-300">
+                  Submissions
+                  <select
+                    value={submissionStatusFilter}
+                    onChange={(event) => {
+                      setSubmissionStatusFilter(event.target.value);
+                      setPage(0);
+                    }}
+                    className="ml-2 rounded-lg border border-neutral-600 bg-neutral-800 px-3 py-2 text-white"
+                  >
+                    <option value="pending">Pending</option>
+                    <option value="all">All statuses</option>
+                  </select>
+                </label>
+              )}
+              {selectedWatchlistUser || selectedCollectionUser ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedWatchlistUser(null);
+                    setWatchlistData(null);
+                    setWatchlistLoading(false);
+                    setSelectedCollectionUser(null);
+                    setUserCollections(null);
+                    setSelectedUserCollection(null);
+                    setUserCollectionData(null);
+                    setCollectionsLoading(false);
+                    setCollectionLoading(false);
+                    setFollowedCollectionData(null);
+                    setFollowedCollectionLoading(false);
+                    setError("");
+                    setNotice("");
+                  }}
+                  className="inline-flex items-center gap-2 rounded-lg bg-neutral-700 px-4 py-2 text-sm font-semibold text-white hover:bg-neutral-600"
+                >
+                  <ChevronLeft size={16} />
+                  Back to users
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={startCreate}
+                  className="inline-flex items-center gap-2 rounded-lg bg-[#3336cc] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#060863]"
+                >
+                  <Plus size={16} />
+                  Add {selectedEntity?.label.replace(/s$/, "")}
+                </button>
+              )}
+            </div>
           </div>
 
           {notice && <p role="status" className="mb-4 rounded-lg border border-emerald-500/30 bg-emerald-950/70 p-3 text-sm text-emerald-200">{notice}</p>}
           {error && <p role="alert" className="mb-4 rounded-lg border border-rose-500/30 bg-rose-950/70 p-3 text-sm text-rose-200">{error}</p>}
 
+          {/* User watchlist view: add shows, update statuses, or remove entries. */}
           {selectedWatchlistUser ? (
             watchlistLoading ? (
               <p role="status" className="rounded-xl border border-white/10 bg-neutral-800 p-8 text-center text-sm text-neutral-400">
@@ -1145,6 +1207,7 @@ const Admin = ({ user }) => {
               </div>
             ) : null
             ) : selectedCollectionUser && !selectedUserCollection ? (
+              /* User collection overview and followed-collection management. */
               <div className="space-y-8">
                 <section className="space-y-3">
                   <h3 className="text-lg font-semibold">User collections</h3>
@@ -1260,6 +1323,7 @@ const Admin = ({ user }) => {
               </section>
             </div>
             ) : selectedCollectionUser ? (
+              /* Selected collection editor, including its details and show items. */
               collectionsLoading ? (
                 <p role="status" className="rounded-xl border border-white/10 bg-neutral-800 p-8 text-center text-sm text-neutral-400">
                   Loading {selectedCollectionUser.username}&apos;s collections…
@@ -1411,6 +1475,7 @@ const Admin = ({ user }) => {
               ) : null
             ) : (
           <>
+          {/* Selected show details, including platform and cast/crew associations. */}
           {activeSection === "Show" && selectedShow && (
             <section
               ref={showDetailsRef}
@@ -1683,6 +1748,7 @@ const Admin = ({ user }) => {
 
           {form && !isInlineEdit(form.record) && renderEditor()}
 
+          {/* Generic entity records: loading state, inline editing, and record actions. */}
           {loading ? (
             <p role="status" className="rounded-xl border border-white/10 bg-neutral-800 p-8 text-center text-sm text-neutral-400">Loading records…</p>
           ) : records.length ? (

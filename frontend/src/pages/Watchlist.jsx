@@ -17,6 +17,7 @@ import { Navigate } from "react-router-dom";
 import LoadingPlaceHolder from "../components/LoadingScreen";
 import ErrorDisplay from "../components/ErrorDisplay";
 
+// Status choices used by the watchlist filter and each item's status selector.
 const statuses = [
     { value: "wishlist", label: "Want to watch" },
     { value: "watching", label: "Watching" },
@@ -26,6 +27,7 @@ const statuses = [
     { value: "dropped", label: "Dropped" },
 ];
 
+// Display application-friendly labels for the database show types.
 const formatType = (type) => ({
     movie: "Movie",
     series: "TV Series",
@@ -33,6 +35,7 @@ const formatType = (type) => ({
     anime: "Anime",
 }[type] || type);
 
+// Show the most relevant length value available for a movie or series.
 const formatDuration = (show) => {
     if (show.duration) return `${show.duration} min`;
     if (show.episode_count) return `${show.episode_count} episodes`;
@@ -40,6 +43,7 @@ const formatDuration = (show) => {
 };
 
 function WatchlistPage({ user }) {
+    // Store the signed-in user's list, loading/error state, and list controls.
     const [items, setItems] = useState([]);
     const [loadedUserId, setLoadedUserId] = useState(null);
     const [error, setError] = useState("");
@@ -50,11 +54,13 @@ function WatchlistPage({ user }) {
     const [resultQuery, setResultQuery] = useState("");
     const [searching, setSearching] = useState(false);
     const [addingId, setAddingId] = useState(null);
+    // Track the show details modal and the item currently being updated or removed.
     const [selectedShow, setSelectedShow] = useState(null);
     const [busyId, setBusyId] = useState(null);
 
     const navigate = useNavigate();
 
+    // Load the user's watchlist and abort the request if the user/page changes.
     useEffect(() => {
         if (!user) {
             return undefined;
@@ -75,6 +81,7 @@ function WatchlistPage({ user }) {
         return () => controller.abort();
     }, [user]);
 
+    // Search for addable shows after a short pause and exclude current watchlist entries.
     useEffect(() => {
         const searchTerm = query.trim();
         if (searchTerm.length < 2) {
@@ -109,6 +116,7 @@ function WatchlistPage({ user }) {
         };
     }, [query, items]);
 
+    // Apply the selected status filter and sort order without changing the source list.
     const filteredItems = useMemo(() => {
         const visible = items.filter((item) => filter === "all" || item.status === filter);
         return visible.sort((first, second) => {
@@ -119,11 +127,13 @@ function WatchlistPage({ user }) {
         });
     }, [filter, items, sort]);
 
+    // Derive watch progress, current search results, and the initial loading state.
     const watchedCount = items.filter((item) => item.status === "watched").length;
     const watchedPercent = items.length ? Math.round((watchedCount / items.length) * 100) : 0;
     const currentResults = resultQuery === query.trim() ? results : [];
     const loading = Boolean(user && loadedUserId !== user.id);
 
+    // Add a show as "want to watch", then refresh the list from the server.
     const addShow = async (show) => {
         setAddingId(show.id);
         setError("");
@@ -139,6 +149,7 @@ function WatchlistPage({ user }) {
         }
     };
 
+    // Persist a status change and update both the list row and open detail modal.
     const updateStatus = async (item, status) => {
         setBusyId(item.show_id);
         setError("");
@@ -160,6 +171,7 @@ function WatchlistPage({ user }) {
         }
     };
 
+    // Remove a show from the watchlist and close its details if currently open.
     const removeShow = async (item) => {
         setBusyId(item.show_id);
         setError("");
@@ -177,6 +189,7 @@ function WatchlistPage({ user }) {
     return (
         <main className="container mx-auto px-4 py-6">
             <div className="py-24 mx-auto min-h-screen bg-black/50 backdrop-blur-lg text-white">
+            {/* Watchlist title and summary statistics. */}
             <section className= "border-b border-white/10">
                 <div className="mx-auto max-w-5xl px-5 py-9 sm:px-8">
                     <h1 className="text-3xl font-semibold tracking-tight sm:text-5xl">Your Watchlist</h1>
@@ -189,6 +202,7 @@ function WatchlistPage({ user }) {
             </section>
 
             <div className="mx-auto max-w-5xl sm:px-8">
+                {/* Prompt unauthenticated visitors to sign in before showing private data. */}
                 {!user ? (
                     <section className="mt-8 rounded-xl border border-white/10 bg-neutral-900/80 p-8 text-center">
                         <h2 className="text-xl font-semibold">You need to sign in to see your watchlist</h2>
@@ -199,6 +213,7 @@ function WatchlistPage({ user }) {
                     </section>
                 ) : (
                     <>
+                        {/* Search for new shows and control the list's filter and sort order. */}
                         <section className="flex flex-col gap-3 border-b border-white/10 py-5 sm:flex-row sm:items-center sm:justify-between">
                             <div className="relative w-full sm:max-w-sm">
                                 <Search className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-neutral-400" />
@@ -266,6 +281,7 @@ function WatchlistPage({ user }) {
                         </section>
 
                         {error && (
+                            // Show a general error state when a request fails.
                             <ErrorDisplay text="There is an error, Please try again later." className="py-3" />
                             // <div role="alert" className="mt-4 flex items-center justify-between gap-3 rounded-lg border border-red-400/30 bg-red-950/50 px-4 py-3 text-sm text-red-200">
                             //     <span>{error}</span>
@@ -273,6 +289,7 @@ function WatchlistPage({ user }) {
                             // </div>
                         )}
 
+                        {/* Render loading, empty, filtered-empty, or populated watchlist states. */}
                         {loading ? (
                             <div className="flex justify-center py-20 text-[#EFAC61]">
                                 <LoadingPlaceHolder/>
@@ -287,6 +304,7 @@ function WatchlistPage({ user }) {
                             <p className="py-12 text-center text-sm text-neutral-400">No titles match this filter.</p>
                         ) : (
                             <section className="mt-5 overflow-hidden rounded-xl border border-white/10 bg-neutral-950/65">
+                                {/* Each row shows show details and provides watchlist actions. */}
                                 {filteredItems.map((item, index) => (
                                     <article key={item.show_id} className={`p-4 sm:p-5 ${index ? "border-t border-white/10" : ""}`}>
                                         <div className="flex gap-4">
@@ -373,6 +391,7 @@ function WatchlistPage({ user }) {
                 )}
             </div>
 
+            {/* Show full details and watchlist controls for the selected title. */}
             {selectedShow && (
                 <div
                     className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
