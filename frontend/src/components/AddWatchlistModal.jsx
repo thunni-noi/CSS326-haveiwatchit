@@ -3,14 +3,14 @@ import { useEffect, useRef, useState } from "react";
 import LoadingPlaceHolder from "./LoadingScreen";
 import ErrorDisplay from "./ErrorDisplay"
 import { Check, LoaderCircle, X } from "lucide-react";
-import { Navigate, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import SuccessDisplay from "./SuccessDisplay";
 
 
 function AddWatchlistModal({user, show, initialStatus, onSubmit, onClose}){
     const [selectedStatus, setSelectedStatus] = useState(initialStatus ?? "wishlist");
     const [saving, setSaving] = useState(false);
-    const [loading ,setLoading] = useState(false);
+    const [loading ,setLoading] = useState(Boolean(user && initialStatus == null));
     const [error, setError] = useState("");
     const [success, setSuccess] = useState(false);
 
@@ -30,8 +30,7 @@ function AddWatchlistModal({user, show, initialStatus, onSubmit, onClose}){
         }, []);
 
     useEffect(() => {
-        if (initialStatus != null) return;
-        setLoading(true);
+        if (!user || initialStatus != null) return;
 
         const controller = new AbortController();
         axios.get(`/api/watchlist/${show.id}`, {signal: controller.signal})
@@ -43,7 +42,7 @@ function AddWatchlistModal({user, show, initialStatus, onSubmit, onClose}){
         .finally(() => {
             if (!controller.signal.aborted) setLoading(false);
         })
-    }, [initialStatus, show?.id])
+    }, [initialStatus, show?.id, user])
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -72,7 +71,7 @@ function AddWatchlistModal({user, show, initialStatus, onSubmit, onClose}){
                         role="dialog"
                         aria-modal="true"
                         aria-labelledby="home-watchlist-title"
-                        className="relative flex max-h-[calc(100dvh-2rem)] w-full max-w-md flex-col overflow-hidden rounded-sm border border-neutral-700 bg-neutral-900 text-white "
+                        className="relative flex max-h-[calc(100dvh-2rem)] w-full max-w-md flex-col overflow-hidden rounded-sm border border-neutral-700 bg-neutral-900 text-white"
                         >
                         {!user ? (
                             <div className="p-5">
