@@ -27,6 +27,14 @@ const sections = [
 const PAGE_SIZE = 50;
 const ALLOWED_AVATAR_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const MAX_AVATAR_SIZE = 2 * 1024 * 1024;
+const WATCHLIST_STATUS_LABELS = {
+  wishlist: "Want to watch",
+  watching: "Watching",
+  watched: "Watched",
+  rewatching: "Rewatching",
+  on_hold: "On hold",
+  dropped: "Dropped",
+};
 
 const getRecordKey = (row, keys) =>
   Object.fromEntries(keys.map((key) => [key, row[key]]));
@@ -848,7 +856,7 @@ const Admin = ({ user }) => {
                       className="mt-1 w-full rounded-lg border border-neutral-600 bg-neutral-900 px-3 py-2 text-sm text-white"
                     >
                       {watchlistData.statuses.map((status) => (
-                        <option key={status} value={status}>{status.replaceAll("_", " ")}</option>
+                        <option key={status} value={status}>{WATCHLIST_STATUS_LABELS[status] ?? status}</option>
                       ))}
                     </select>
                   </label>
@@ -879,15 +887,15 @@ const Admin = ({ user }) => {
                             {item.type} · Updated {formatDatabaseDateTime(item.updated_at)}
                           </p>
                         </div>
-                        <label className="w-full text-xs font-medium text-neutral-400 sm:w-44">
-                          Watch status
+                        <label className="inline-flex items-center gap-1.5 text-[#9596D6]">
+                          <span className="sr-only">Status for {item.name}</span>
                           <select
                             value={item.status}
                             onChange={(event) => updateWatchlistStatus(item.show_id, event.target.value)}
-                            className="mt-1 w-full rounded-lg border border-neutral-600 bg-neutral-900 px-3 py-2 text-sm text-white"
+                            className="max-w-40 rounded bg-transparent py-1 text-sm outline-none focus:ring-1 focus:ring-[#9596D6]"
                           >
                             {watchlistData.statuses.map((status) => (
-                              <option key={status} value={status}>{status.replaceAll("_", " ")}</option>
+                              <option key={status} value={status} className="bg-neutral-900">{WATCHLIST_STATUS_LABELS[status] ?? status}</option>
                             ))}
                           </select>
                         </label>
