@@ -11,7 +11,7 @@ cd frontend
 npm install
 ```
 
-Set up database by running file in `db/seedeed_with_reviews.sql` in haveiwatchit schema (If sql show error, delete line 22)
+Set up database by running file in `db/dump.sql` in haveiwatchit schema
 
 ## How to run
 Place an ".env" file into /backend/ with following format (Replace [] with your config)
