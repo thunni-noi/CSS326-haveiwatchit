@@ -254,7 +254,7 @@ function Account({ user, setUser }) {
                                 </div>
                                 <div className="flex flex-row items-center align-middle mt-1 gap-2">
                                     <h1 className="break-all text-2xl font-bold">{user.username}</h1>
-                                    {user?.is_verified && <span title="This user is verified!"> <VerifiedIcon color="#EFAC61" className="size-4" /> </span>}
+                                    {!!user?.is_verified && <span title="This user is verified!"> <VerifiedIcon color="#EFAC61" className="size-4" /> </span>}
                                     {user?.role === "moderator" && <span title="This user is a moderator!"> <ModBadge color="#EFAC61" className="size-4" /> </span>}
                                     {user?.role === "admin" && <span title="This user is an admin!"> <AdminBadge color="#EFAC61" className="size-4" /> </span>}
                                 </div>

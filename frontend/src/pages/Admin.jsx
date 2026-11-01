@@ -849,7 +849,7 @@ const Admin = ({ user }) => {
             onChange={(event) =>
               setFormValues((current) => ({ ...current, [field.name]: event.target.checked }))
             }
-            className="h-4 w-4 accent-fuchsia-600"
+            className="h-4 w-4 accent-blue-500"
           />
           {field.name.replaceAll("_", " ")}
         </label>
