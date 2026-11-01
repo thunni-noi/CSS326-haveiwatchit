@@ -84,3 +84,33 @@ export const approveShowSubmission = async (req, res) => {
         connection.release();
     }
 };
+
+// Delete a submission only while it is still pending moderator review.
+export const deletePendingSubmission = async (req, res) => {
+    const submissionId = parsePositiveId(req.params.id);
+    if (!submissionId) {
+        return res.status(400).json({ message: "Invalid submission ID." });
+    }
+
+    try {
+        const [result] = await pool.execute(
+            "DELETE FROM show_submission WHERE id = ? AND status = 'pending'",
+            [submissionId],
+        );
+        if (!result.affectedRows) {
+            const [[submission]] = await pool.execute(
+                "SELECT status FROM show_submission WHERE id = ?",
+                [submissionId],
+            );
+            if (!submission) {
+                return res.status(404).json({ message: "Show submission not found." });
+            }
+            return res.status(409).json({ message: "Only pending submissions can be deleted." });
+        }
+
+        return res.json({ message: "Show submission deleted." });
+    } catch (error) {
+        console.error("Show submission deletion failed:", error);
+        return res.status(500).json({ message: "Unable to delete this show submission." });
+    }
+};

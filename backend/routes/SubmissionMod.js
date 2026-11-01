@@ -7,5 +7,6 @@ const router = express.Router();
 router.use(protect, requireRole("admin", "moderator"));
 router.get("/", submissionMod.listPendingSubmissions);
 router.post("/:id/approve", submissionMod.approveShowSubmission);
+router.delete("/:id", submissionMod.deletePendingSubmission);
 
 export default router;

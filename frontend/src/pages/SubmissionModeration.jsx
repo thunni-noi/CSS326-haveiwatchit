@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { Check, LoaderCircle, RefreshCw } from "lucide-react";
+import { Check, LoaderCircle, RefreshCw, Trash2 } from "lucide-react";
 
 const showStatuses = [
   { value: "upcoming", label: "Upcoming" },
@@ -47,6 +47,22 @@ const SubmissionModeration = ({ user }) => {
       setNotice(`"${submission.name}" was approved and added to the catalog.`);
     } catch (requestError) {
       setError(requestError.response?.data?.message ?? "Unable to approve this submission.");
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  // Delete a pending request and remove it from the review queue.
+  const deleteSubmission = async (submission) => {
+    setBusyId(submission.id);
+    setError("");
+    setNotice("");
+    try {
+      await axios.delete(`/api/submission-mod/${submission.id}`);
+      setSubmissions((current) => current.filter((item) => item.id !== submission.id));
+      setNotice(`"${submission.name}" submission was deleted.`);
+    } catch (requestError) {
+      setError(requestError.response?.data?.message ?? "Unable to delete this submission.");
     } finally {
       setBusyId(null);
     }
@@ -155,6 +171,17 @@ const SubmissionModeration = ({ user }) => {
                       ))}
                     </select>
                   </label>
+                  <button
+                    type="button"
+                    onClick={() => deleteSubmission(submission)}
+                    disabled={busyId === submission.id}
+                    className="inline-flex items-center gap-2 rounded-lg bg-rose-950 px-4 py-2 text-sm font-semibold text-rose-200 hover:bg-rose-900 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {busyId === submission.id
+                      ? <LoaderCircle className="animate-spin" size={16} />
+                      : <Trash2 size={16} />}
+                    Delete submission
+                  </button>
                   <button
                     type="button"
                     onClick={() => approveSubmission(submission)}
