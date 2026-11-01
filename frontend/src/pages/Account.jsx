@@ -404,7 +404,7 @@ function Account({ user, setUser }) {
                                                 className="w-full cursor-not-allowed rounded-xl border border-white/5 bg-neutral-900/70 py-3.5 pl-11 pr-4 text-sm text-neutral-500 outline-none"
                                             />
                                         </div>
-                                        <p className="mt-2 text-xs text-neutral-500">Please contact admin if you wish to change you email or password!</p>
+                                        <p className="mt-2 text-xs text-neutral-500">Please contact admin if you wish to change your email or password!</p>
                                     </div>
 
                                     <div>
