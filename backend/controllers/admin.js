@@ -931,13 +931,37 @@ export const updateRecord = async (req, res) => {
         await connection.beginTransaction();
         if (entity.table === "users") {
             const [currentRows] = await connection.execute(
-                "SELECT avatar_url, role FROM users WHERE id = ? FOR UPDATE",
+                "SELECT avatar_url, role, is_suspended FROM users WHERE id = ? FOR UPDATE",
                 [keyResult.key.id],
             );
             const currentUser = currentRows[0];
             if (!currentUser) {
                 await connection.rollback();
                 return res.status(404).json({ message: "Record not found." });
+            }
+
+            if (values.is_suspended === true) {
+                if (Number(keyResult.key.id) === Number(req.user.id)) {
+                    await connection.rollback();
+                    return res.status(400).json({ message: "You cannot suspend your own account." });
+                }
+                if ((currentUser.role === "admin" || values.role === "admin") && req.user.role !== "admin") {
+                    await connection.rollback();
+                    return res.status(403).json({ message: "Only admins can suspend admin accounts." });
+                }
+                if (
+                    (currentUser.role === "admin" || values.role === "admin")
+                    && !currentUser.is_suspended
+                ) {
+                    await lockAdminUsers(connection);
+                    const [[{ activeAdminCount }]] = await connection.execute(
+                        "SELECT COUNT(*) AS activeAdminCount FROM users WHERE role = 'admin' AND is_suspended = 0",
+                    );
+                    if (Number(activeAdminCount) <= 1) {
+                        await connection.rollback();
+                        return res.status(400).json({ message: "The last active admin account cannot be suspended." });
+                    }
+                }
             }
 
             if (values.role !== undefined) {
@@ -1059,32 +1083,67 @@ const wrapper = (errMsg, controller) => async (req, res) =>
         res.status(500).json({message: errMsg});
     }};
 
-// Mark the specified user account as suspended.
-export const suspendUser = wrapper("Unable to suspend user", async(req, res) => {
-    const userId = req.user.id;
+const setUserSuspension = (suspended) => wrapper("Unable to update user suspension", async(req, res) => {
+    const userId = Number(req.user.id);
     const targetId = Number(req.params.targetId);
 
-    if (Number.isNaN(targetId) || targetId < 0) return res.status(400).json({message: "Invalid ID"});
-    const [r] = await pool.execute(`
-        UPDATE users SET is_suspended = 1 WHERE id = ?`, [targetId])
-    
-    if (r.affectedRows === 0){
-        return r.status(404).json({message: "Target ID not found!"})
+    if (!Number.isSafeInteger(targetId) || targetId <= 0) {
+        return res.status(400).json({ message: "Invalid ID." });
     }
-    return res.json({message: "Suspend user successfully"})
-})
-
-// Clear the suspended flag for the specified user account.
-export const unsuspendUser = wrapper("Unable to unsuspend user", async(req, res) => {
-    const userId = req.user.id;
-    const targetId = Number(req.params.targetId);
-
-    if (Number.isNaN(targetId) || targetId < 0) return res.status(400).json({message: "Invalid ID"});
-    const [r] = await pool.execute(`
-        UPDATE users SET is_suspended = 0 WHERE id = ?`, [targetId])
-    
-    if (r.affectedRows === 0){
-        return r.status(404).json({message: "Target ID not found!"})
+    if (targetId === userId && suspended) {
+        return res.status(400).json({ message: "You cannot suspend your own account." });
     }
-    return res.json({message: "User are now unsuspended"});
-})
+
+    const connection = await pool.getConnection();
+    try {
+        await connection.beginTransaction();
+        const [targetRows] = await connection.execute(
+            "SELECT role, is_suspended FROM users WHERE id = ? FOR UPDATE",
+            [targetId],
+        );
+        const target = targetRows[0];
+        if (!target) {
+            await connection.rollback();
+            return res.status(404).json({ message: "Target user not found." });
+        }
+
+        const allowedRoles = req.user.role === "admin"
+            ? ["user", "moderator", "admin"]
+            : ["user"];
+        if (!allowedRoles.includes(target.role)) {
+            await connection.rollback();
+            return res.status(403).json({
+                message: target.role === "admin"
+                    ? "Only admins can manage admin accounts."
+                    : "Moderators can only manage regular user accounts.",
+            });
+        }
+
+        if (suspended && target.role === "admin" && !target.is_suspended) {
+            await lockAdminUsers(connection);
+            const [[{ activeAdminCount }]] = await connection.execute(
+                "SELECT COUNT(*) AS activeAdminCount FROM users WHERE role = 'admin' AND is_suspended = 0",
+            );
+            if (Number(activeAdminCount) <= 1) {
+                await connection.rollback();
+                return res.status(400).json({ message: "The last active admin account cannot be suspended." });
+            }
+        }
+
+        await connection.execute(
+            "UPDATE users SET is_suspended = ? WHERE id = ?",
+            [suspended ? 1 : 0, targetId],
+        );
+        await connection.commit();
+        return res.json({ message: suspended ? "User suspended." : "User unsuspended." });
+    } catch (error) {
+        await connection.rollback();
+        throw error;
+    } finally {
+        connection.release();
+    }
+});
+
+// Suspend or restore an eligible user account.
+export const suspendUser = setUserSuspension(true);
+export const unsuspendUser = setUserSuspension(false);

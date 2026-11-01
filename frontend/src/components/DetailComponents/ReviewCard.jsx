@@ -21,6 +21,8 @@ function ReviewCard( {curUser, curShowId, review, isMine, onEdit, onRemove }) {
     const [error, setError] = useState("");
 
     const isMod = ["moderator", "admin"].includes(curUser?.role)
+    const canManageTarget = !isMine
+        && (curUser?.role === "admin" || (curUser?.role === "moderator" && review.role === "user"));
 
     const handleRemove = async(e) => {
         console.log("removing");
@@ -45,7 +47,7 @@ function ReviewCard( {curUser, curShowId, review, isMine, onEdit, onRemove }) {
 
         axios.post(`/api/admin/ban/${review.user_id}`)
         .then(() => {review.is_suspended = 1})
-        .catch((err) => setError(error))
+        .catch((err) => setError(err.response?.data?.message || "Unable to suspend this user."))
         .finally(() => {
             setBanning(false)
             setBanConfirm(false)});
@@ -59,7 +61,7 @@ function ReviewCard( {curUser, curShowId, review, isMine, onEdit, onRemove }) {
 
         axios.post(`/api/admin/unban/${review.user_id}`)
         .then(() => {review.is_suspended = 0})
-        .catch((err) => setError(error))
+        .catch((err) => setError(err.response?.data?.message || "Unable to unsuspend this user."))
         .finally(() => {
             setUnbanning(false)
             setUnbanConfirm(false)});
@@ -89,13 +91,13 @@ function ReviewCard( {curUser, curShowId, review, isMine, onEdit, onRemove }) {
                             )}
 
                             {/* Ban button */}
-                            {isMod && !isMine && !review.is_suspended && !removeConfirm && (
+                            {canManageTarget && !review.is_suspended && !removeConfirm && (
                                 banConfirm ? (
                                     <div className="flex items-center gap-2 text-xs">
                                         <span className="text-neutral-400">Confirm user suspension?</span>
                                         <button type="button" onClick={handleBan} disabled={banning}
                                         className="rounded-mg bg-red-800 px-2 py-1 font-semibold text-white transition-all hover:bg-red-950 disabled:opacity-60">
-                                            {removing ? "Suspending..." : "Confirm"}
+                                            {banning ? "Suspending..." : "Confirm"}
                                         </button>
                                         <button onClick={() => setBanConfirm(false)} disabled={banning}
                                         className="rounded-md bg-neutral-700 px-2 py-1 text-white transition-all hover:bg-neutral-600 disabled:opacity-60">
@@ -111,7 +113,7 @@ function ReviewCard( {curUser, curShowId, review, isMine, onEdit, onRemove }) {
                                 ))}
 
                             {/* Unban button */}
-                            {isMod && !isMine && !!review.is_suspended && !removeConfirm && (
+                            {canManageTarget && !!review.is_suspended && !removeConfirm && (
                                 unbanConfirm ? (
                                     <div className="flex items-center gap-2 text-xs">
                                         <span className="text-neutral-400">Confirm user un-suspension?</span>
@@ -157,6 +159,7 @@ function ReviewCard( {curUser, curShowId, review, isMine, onEdit, onRemove }) {
                     </div>
 
             </div>
+            {error && <p role="alert" className="mt-2 text-sm text-red-300">{error}</p>}
             <span className="inline-flex items-center gap-3 font-semibold text-yellow-400">
                 {review.score}/10
                 <p className="text-xs text-neutral-500">{formatDate(review.created_at)}</p>
