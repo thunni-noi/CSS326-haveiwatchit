@@ -60,8 +60,7 @@ function HomeContent({ user }){
                 <HeroUI shows={featured} error={featuredError} user={user} />
                 <div className="bg-linear-to-b from-neutral-900 to-neutral-950">
                     <ShowSlider 
-                        title="Top Rated"
-                        subtitle="Ranked by reviewed scores"
+
                         shows={topRated}
                         loading={isLoading}
                         error={topRatedError}

@@ -4,7 +4,7 @@ import ShowCard from "./ShowCard"
 import LoadingPlaceHolder from "../LoadingScreen";
 import ErrorDisplay from "../ErrorDisplay";
 
-function ShowSlider({ title, subtitle, shows =[], loading = false, error = false}) {
+function ShowSlider({shows =[], loading = false, error = false}) {
 
     const scrollRef = useRef(null);
 
@@ -17,13 +17,17 @@ function ShowSlider({ title, subtitle, shows =[], loading = false, error = false
 
 
     return(
-        <section className="py-12 relative z-10" id={title}>
+        <section className="py-12 relative z-10" id="Top_Rated">
             <div className="container mx-auto px-4">
                 <div className="flex items-baseline justify-between mb-8">
                     <div className="text-2xl md:text-3xl font-bold text-white">
-                        <h2>{title}</h2>
-
-                        {subtitle && <p className="text-neutral-400 text-sm mt-1">{subtitle}</p>}
+                        <h2>Top Rated</h2>
+                        <span className="text-neutral-400 text-sm mt-1">
+                            Ranked by reviews score
+                            <span className="text-neutral-500 text-xs px-1">
+                                (Score shown is normalize using Bayesian's Sum and will differ from average!)
+                            </span>
+                        </span>
                     </div>
                     <div className="flex space-x-2">
                         <button className="p-2 rounded-full bg-neutral-800/70 hover:bg-neutral-700 text-white transition-all" aria-label="Scroll left"

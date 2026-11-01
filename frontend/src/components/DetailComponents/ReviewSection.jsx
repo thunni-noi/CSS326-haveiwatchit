@@ -124,7 +124,7 @@ function ReviewSection( {showId, user, onUpdated }) {
             text: text,
             created_at: new Date().toISOString().slice(0, 10)
             });
-            setReviewFormOpen(false);
+        setReviewFormOpen(false);
         onUpdated?.();
         }
         
@@ -144,7 +144,7 @@ function ReviewSection( {showId, user, onUpdated }) {
 
     // Not included user's review
     const reviewList = reviews.filter((r) => !user || (r.username !== user.username));
-    const isMod = user?.role === "moderator" || user?.role === "admin";
+    const hasReview = reviews.length > 0 || !!myReview;
 
     return(
         <div>
@@ -167,10 +167,10 @@ function ReviewSection( {showId, user, onUpdated }) {
                 </div>
             )}
             {!loading && loadError && <ErrorDisplay text="Couldn't load reviews, Please try again" className="relative w-full h-40 bg-neutral-800/60" />}
-            {!loading && !loadError && reviews.length === 0 && (
+            {!loading && !loadError && !hasReview && (
                 <p className="text-sm text-neutral-500">No reviews yet.</p>
             )}
-            {!loading && !loadError && reviews.length !== 0 && (
+            {!loading && !loadError && hasReview && (
                 <>
                     <div className="space-y-3">
                         {myReview && !reviewFormOpen && (

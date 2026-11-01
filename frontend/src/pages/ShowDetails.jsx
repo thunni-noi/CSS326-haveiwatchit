@@ -208,7 +208,7 @@ function ShowDetails( {user} ) {
                                             ))}
                                         </ul>
                                     ) : (
-                                        <p className="text-sm text-neural-500">Not listed in database yet!</p>
+                                        <p className="text-sm text-neutral-400">Not listed in database yet!</p>
                                     )}
                             </section>
                         </aside>
