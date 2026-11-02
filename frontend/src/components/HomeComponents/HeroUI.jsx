@@ -32,7 +32,7 @@ function HeroUI( { shows =[], error = false, user = null }) {
 
     const heroShow = shows[showIndex];
     if (error || shows.length === 0) {
-        console.log("showing error?")
+        //console.log("showing error?")
         return (
             <div className="relative w-screen h-screen overflow-hidden bg-neutral-900">
             <ErrorDisplay

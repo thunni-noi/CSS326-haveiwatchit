@@ -50,7 +50,7 @@ function AddCollectionModal( {showInfo, user, onClose}){
         e.preventDefault();
 
         const updated = new Set(new FormData(e.currentTarget).getAll("collection").map(Number));
-        console.log(updated);
+        //console.log(updated);
 
         // Delta
         const added = userCollections.filter(c => updated.has(c.id) && !c.has_show).map(c => c.id);

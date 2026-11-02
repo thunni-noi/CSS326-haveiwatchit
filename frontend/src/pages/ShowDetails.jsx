@@ -25,7 +25,7 @@ const watchStatusLabel = {
 };
 
 function watchlistButton(status) {
-    console.log(status)
+    //console.log(status)
     switch(status){
         case 'wishlist':
             return <> <WantIcon className="h-4 w-4" /> Want To Watch</>;
@@ -90,7 +90,7 @@ function ShowDetails( {user} ) {
             user ? fetchWatchStatus(showId, controller.signal) : Promise.resolve(null)
         ])
         .then(([showInfo, watchStatus]) => {
-            console.log(showInfo);
+            // console.log(showInfo);
             setShowInfo(showInfo.data);
             setWatchlistStatus(watchStatus? watchStatus[0] : null);
         })

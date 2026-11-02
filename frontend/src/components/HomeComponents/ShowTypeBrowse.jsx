@@ -44,7 +44,7 @@ function ShowTypeSelect() {
             if(!axios.isCancel(err)) setError(true);
         })
         .finally(() => {
-            console.log(showList, currentType);
+            //console.log(showList, currentType);
             if (!controller.signal.aborted) setLoading(false);
         });
         

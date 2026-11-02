@@ -84,126 +84,6 @@ export const getShowById = wrapper("Unable to fetch shows/.", async (req, res) =
     });
 })
 
-// /api/shows/:id/reviews?limit=10&offset=0
-// query : {limit: 5 (max50)}
-export const getShowReviews = wrapper("Unable to load reviews", async(req, res) => {
-    const id = Number(req.params.id)
-    let limit = Number(req.query.limit ?? 10);
-    let offset = Number(req.query.offset ?? 0);
-
-    if (Number.isNaN(id) || id < 0) return res.status(400).json({message: "Invalid id!"});
-    if (Number.isNaN(limit) || limit <= 0) return res.status(400).json({message: "Invalid limit!"});
-    if (Number.isNaN(offset) || offset < 0) return res.status(400).json({message: "Invalid offset!"});
-    limit = Math.min(limit, 20);
-
-    const [shows] = await pool.execute(`SELECT id FROM shows WHERE id = ?`, [id]);
-    if (shows.length === 0) return res.status(404).json({message: "Show not found!"});
-
-    const [rows] = await pool.execute(`
-        SELECT  u.username, u.avatar_url, u.id AS user_id, u.is_verified, u.is_suspended, u.role,
-                r.review_score AS score, r.review_txt AS text,
-                DATE_FORMAT(r.created_at, '%Y-%m-%d') AS created_at
-        FROM    reviews r
-        JOIN users u ON u.id = r.user_id
-        WHERE r.show_id = ?
-        ORDER BY r.created_at DESC, r.user_id DESC
-        LIMIT ? OFFSET ?
-        `, [id, limit + 1, offset]
-    )
-
-    const stillMore = rows.length > limit
-
-    return res.json({
-        reviews: rows.slice(0, limit),
-        still_more: stillMore
-    })
-})
-
-// /api/shows/:showId/reviews/:userId
-export const getUserShowReviews = wrapper("Unable to load review", async(req, res) => {
-    const showId = Number(req.params.showId)
-    const userId = Number(req.params.userId)
-
-    if (Number.isNaN(showId) || showId < 0) return res.status(400).json({message: "Invalid showId!"});
-    if (Number.isNaN(userId) || userId < 0) return res.status(400).json({message: "Invalid userId!"});
-
-    const [rows] = await pool.execute(`
-        SELECT  u.username, u.avatar_url, u.id AS user_id, u.is_verified, u.is_suspended, u.role,
-                r.review_score AS score, r.review_txt AS text,
-                DATE_FORMAT(r.created_at, '%Y-%m-%d') AS created_at
-        FROM    reviews r
-        JOIN users u ON u.id = r.user_id
-        WHERE r.show_id = ? AND r.user_id = ?
-
-        `, [showId, userId]
-    )
-
-    if (rows.length === 0){
-        return res.status(404).json({message: "No review found!"})
-    }
-
-    return res.json({
-        reviews: rows,
-    })
-})
-
-// POST /api/shows/:id/reviews (authenticated)
-export const saveShowReview = wrapper("Unable to save review", async(req, res) => {
-    const showId = Number(req.params.id);
-    const score = Number(req.body?.score);
-    const text = typeof req.body?.text === "string" ? req.body.text.trim() : "";
-
-    if (req.user.is_suspended) {
-        return res.staus(403).json({ message: "Your account is suspended. "})
-    }
-
-    if (!Number.isInteger(showId) || showId <= 0) {
-        return res.status(400).json({ message: "Invalid show id." });
-    }
-    if (!Number.isInteger(score) || score < 1 || score > 10) {
-        return res.status(400).json({ message: "Score must be a whole number from 1 to 10." });
-    }
-    if (!text || text.length > 5000) {
-        return res.status(400).json({ message: "Comment must be between 1 and 5000 characters." });
-    }
-
-    const [shows] = await pool.execute("SELECT id FROM shows WHERE id = ?", [showId]);
-    if (shows.length === 0) return res.status(404).json({ message: "Show not found." });
-
-    await pool.execute(
-        `INSERT INTO reviews (user_id, show_id, review_txt, review_score)
-        VALUES (?, ?, ?, ?)
-        ON DUPLICATE KEY UPDATE review_txt = VALUES(review_txt), review_score = VALUES(review_score), created_at = CURRENT_TIMESTAMP`,
-        [req.user.id, showId, text, score]
-    );
-
-    return res.status(201).json({ message: "Review saved." });
-});
-
-// remove reviews
-// DELETE /:showId/reviews/:userId
-export const removeReview = wrapper("Unable to remove review", async(req, res) => {
-
-    const showId = Number(req.params.showId)
-    const userId = Number(req.params.userId);
-
-    if (!Number.isInteger(userId) || userId <= 0) {
-        return res.status(400).json({ message: "Invalid user id." })}
-    if (!Number.isInteger(showId) || showId <= 0) {
-        return res.status(400).json({ message: "Invalid show id." })}
-
-    const[r] = await pool.execute(`
-        DELETE FROM reviews WHERE user_id = ? AND show_id = ?
-        `, [userId, showId]
-    );
-
-    if (r.affectedRows === 0){
-        return res.status(404).json({message: "No reviews found!"})
-    }
-
-    return res.json({ message: "Review deleted!"})
-})
-
 // Search!
 // /api/shows/search?q=name&limit=num
 export const searchShows = wrapper("Search failed", async(req, res) => {
@@ -338,4 +218,124 @@ export const requestSubmission = wrapper("Unable to save submission", async(req,
         `, [req.user.id ,title, type, synopsis, content_rating, details])
 
     return res.json({message: "Added successfully"})
+})
+
+// /api/shows/:id/reviews?limit=10&offset=0
+// query : {limit: 5 (max50)}
+export const getShowReviews = wrapper("Unable to load reviews", async(req, res) => {
+    const id = Number(req.params.id)
+    let limit = Number(req.query.limit ?? 10);
+    let offset = Number(req.query.offset ?? 0);
+
+    if (Number.isNaN(id) || id < 0) return res.status(400).json({message: "Invalid id!"});
+    if (Number.isNaN(limit) || limit <= 0) return res.status(400).json({message: "Invalid limit!"});
+    if (Number.isNaN(offset) || offset < 0) return res.status(400).json({message: "Invalid offset!"});
+    limit = Math.min(limit, 20);
+
+    const [shows] = await pool.execute(`SELECT id FROM shows WHERE id = ?`, [id]);
+    if (shows.length === 0) return res.status(404).json({message: "Show not found!"});
+
+    const [rows] = await pool.execute(`
+        SELECT  u.username, u.avatar_url, u.id AS user_id, u.is_verified, u.is_suspended, u.role,
+                r.review_score AS score, r.review_txt AS text,
+                DATE_FORMAT(r.created_at, '%Y-%m-%d') AS created_at
+        FROM    reviews r
+        JOIN users u ON u.id = r.user_id
+        WHERE r.show_id = ?
+        ORDER BY r.created_at DESC, r.user_id DESC
+        LIMIT ? OFFSET ?
+        `, [id, limit + 1, offset]
+    )
+
+    const stillMore = rows.length > limit
+
+    return res.json({
+        reviews: rows.slice(0, limit),
+        still_more: stillMore
+    })
+})
+
+// /api/shows/:showId/reviews/:userId
+export const getUserShowReviews = wrapper("Unable to load review", async(req, res) => {
+    const showId = Number(req.params.showId)
+    const userId = Number(req.params.userId)
+
+    if (Number.isNaN(showId) || showId < 0) return res.status(400).json({message: "Invalid showId!"});
+    if (Number.isNaN(userId) || userId < 0) return res.status(400).json({message: "Invalid userId!"});
+
+    const [rows] = await pool.execute(`
+        SELECT  u.username, u.avatar_url, u.id AS user_id, u.is_verified, u.is_suspended, u.role,
+                r.review_score AS score, r.review_txt AS text,
+                DATE_FORMAT(r.created_at, '%Y-%m-%d') AS created_at
+        FROM    reviews r
+        JOIN users u ON u.id = r.user_id
+        WHERE r.show_id = ? AND r.user_id = ?
+
+        `, [showId, userId]
+    )
+
+    if (rows.length === 0){
+        return res.status(404).json({message: "No review found!"})
+    }
+
+    return res.json({
+        reviews: rows,
+    })
+})
+
+// POST /api/shows/:id/reviews (authenticated)
+export const saveShowReview = wrapper("Unable to save review", async(req, res) => {
+    const showId = Number(req.params.id);
+    const score = Number(req.body?.score);
+    const text = typeof req.body?.text === "string" ? req.body.text.trim() : "";
+
+    if (req.user.is_suspended) {
+        return res.staus(403).json({ message: "Your account is suspended. "})
+    }
+
+    if (!Number.isInteger(showId) || showId <= 0) {
+        return res.status(400).json({ message: "Invalid show id." });
+    }
+    if (!Number.isInteger(score) || score < 1 || score > 10) {
+        return res.status(400).json({ message: "Score must be a whole number from 1 to 10." });
+    }
+    if (!text || text.length > 5000) {
+        return res.status(400).json({ message: "Comment must be between 1 and 5000 characters." });
+    }
+
+    const [shows] = await pool.execute("SELECT id FROM shows WHERE id = ?", [showId]);
+    if (shows.length === 0) return res.status(404).json({ message: "Show not found." });
+
+    await pool.execute(
+        `INSERT INTO reviews (user_id, show_id, review_txt, review_score)
+        VALUES (?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE review_txt = VALUES(review_txt), review_score = VALUES(review_score), created_at = CURRENT_TIMESTAMP`,
+        [req.user.id, showId, text, score]
+    );
+
+    return res.status(201).json({ message: "Review saved." });
+});
+
+// remove reviews
+// DELETE /:showId/reviews/:userId
+export const removeReview = wrapper("Unable to remove review", async(req, res) => {
+
+    const showId = Number(req.params.showId)
+    const userId = Number(req.params.userId);
+
+    if (!Number.isInteger(userId) || userId <= 0) {
+        return res.status(400).json({ message: "Invalid user id." })}
+    if (!Number.isInteger(showId) || showId <= 0) {
+        return res.status(400).json({ message: "Invalid show id." })}
+
+    const[r] = await pool.execute(`
+        DELETE FROM reviews WHERE user_id = ? AND show_id = ?
+        `, [userId, showId]
+    );
+
+    if (r.affectedRows === 0){
+        return res.status(404).json({message: "No reviews found!"})
+    }
+
+    return res.json({ message: "Review deleted!"})
 })

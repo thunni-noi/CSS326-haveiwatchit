@@ -33,7 +33,7 @@ function ReviewCard( {curUser, review, isMine, onEdit, onRemove }) {
         && (curUser?.role === "admin" || (curUser?.role === "moderator" && review.role === "user"));
 
     const handleRemove = async(e) => {
-        console.log("removing");
+        //console.log("removing");
         e.preventDefault()
         setRemoving(true);
         setError("");
@@ -53,7 +53,7 @@ function ReviewCard( {curUser, review, isMine, onEdit, onRemove }) {
         e.preventDefault();
         setBanning(true);
         setError("");
-        console.log("yes")
+        //console.log("yes")
 
         axios.post(`/api/admin/ban/${review.user_id}`)
         .then(() => {review.is_suspended = 1})
@@ -67,7 +67,7 @@ function ReviewCard( {curUser, review, isMine, onEdit, onRemove }) {
         e.preventDefault();
         setUnbanning(true);
         setError("");
-        console.log("yes")
+        //console.log("yes")
 
         axios.post(`/api/admin/unban/${review.user_id}`)
         .then(() => {review.is_suspended = 0})

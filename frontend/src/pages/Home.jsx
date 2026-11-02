@@ -37,9 +37,9 @@ function HomeContent({ user }){
             if (toprated.status === "fulfilled") setTopRated(toprated.value.data);
 
             setLoading(false);
-            console.log(randoms);
-            console.log("toprated")
-            console.log(toprated);
+            // console.log(randoms);
+            // console.log("toprated")
+            // console.log(toprated);
         };
 
         load();

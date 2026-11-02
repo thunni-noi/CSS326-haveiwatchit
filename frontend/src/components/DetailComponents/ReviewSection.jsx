@@ -125,7 +125,7 @@ function ReviewSection( {showId, user, onUpdated }) {
         
 
     const handleRemove = async (review) => {
-        console.log(review)
+        //console.log(review)
         const isMine = Boolean(user) && review.user_id === user.id
 
         axios.delete(`/api/shows/${showId}/reviews/${review.user_id}`)
