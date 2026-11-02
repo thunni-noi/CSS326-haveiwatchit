@@ -22,6 +22,12 @@ export const authRegister = async (req, res) => {
         return res.status(400).json({ message: "Please provide all required fields!" });
     }
 
+    // check if username is valid
+    const usernameRegex = /^[a-zA-Z0-9_]{1,25}/;
+    if (!usernameRegex.test(username)) {
+        return res.status(400).json({ message: "Username must be only contains letters, number, underscore with max of 25 characters"})
+    }
+
     const [userExists] = await pool.execute(`SELECT * FROM users WHERE username = ? OR email = ?`, [username, email])
     if (userExists.length > 0){
         console.log(userExists);

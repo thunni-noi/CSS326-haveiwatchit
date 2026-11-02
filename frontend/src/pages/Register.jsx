@@ -79,6 +79,8 @@ const Register = ({ setUser }) => {
                             type="text"
                             placeholder="Choose a username"
                             autoComplete="username"
+                            pattern="[a-zA-Z0-9_]{1,25}"
+                            maxLength={25}
                             required
                             className="w-full rounded-xl border border-white/10 bg-neutral-800/80 p-3.5 text-white placeholder:text-neutral-500 transition focus:border-[#9596D6] focus:outline-none"
                             value={form.username}
@@ -86,6 +88,9 @@ const Register = ({ setUser }) => {
                                 setForm({ ...form, username: e.target.value })
                             }
                         />
+                        <p className="mt-2 text-xs text-gray-500">
+                            Only letters, numbers and underscore(_) are allowed. (Max 25 character)
+                        </p>
                     </div>
 
                     <div>

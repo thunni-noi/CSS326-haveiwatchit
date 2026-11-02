@@ -320,6 +320,7 @@ const Navbar = ({ user, setUser }) => {
                         <Link to="/" className={"text-white hover:text-[#9596D6] hover:underline decoration-[#EFAC61] decoration-4 transition-all font-medium"}>Home</Link>
                         <Link to="/watchlist" className={"text-white hover:text-[#9596D6] hover:underline decoration-[#EFAC61] decoration-4 transition-all font-medium"}>Watchlist</Link>
                         <Link to="/collections" className={"text-white hover:text-[#9596D6] hover:underline decoration-[#EFAC61] decoration-4 transition-all font-medium"}>Collections</Link>
+                        <Link to="/testing" className={"text-white hover:text-[#9596D6] hover:underline decoration-[#EFAC61] decoration-4 transition-all font-medium"}>!TEST!</Link>
                     </nav>
 
                     {/* Desktop: search */}

@@ -368,26 +368,30 @@ function Account({ user, setUser }) {
                                     <div>
                                         <div className="mb-2 flex items-center justify-between">
                                             <label htmlFor="username" className="text-sm font-medium text-neutral-300">
-                                                Display name
+                                                Username
                                             </label>
-                                            <span className="text-xs text-neutral-500">{username.length}/50</span>
+                                            <span className="text-xs text-neutral-500">{username.length}/25</span>
                                         </div>
                                         <div className="relative">
                                             <UserRound size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9596D6]" />
                                             <input
                                                 id="username"
                                                 type="text"
+                                                pattern="[a-zA-Z0-9_]{1,25}"
                                                 value={username}
                                                 onChange={(e) => {
                                                     setUsername(e.target.value);
                                                     setMessage({ type: "", text: "" });
                                                 }}
-                                                maxLength={50}
+                                                maxLength={25}
                                                 required
                                                 placeholder="Enter your display name"
                                                 className="w-full rounded-xl border border-white/10 bg-neutral-900/80 py-3.5 pl-11 pr-4 text-sm text-white outline-none transition placeholder:text-neutral-500 focus:border-[#9596D6]"
                                             />
                                         </div>
+                                        <p className="mt-2 text-xs text-gray-500">
+                                                Only letters, numbers and underscore(_) are allowed. Max 25 characters
+                                        </p>
                                     </div>
 
                                     <div>

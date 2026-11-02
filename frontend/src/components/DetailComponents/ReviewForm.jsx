@@ -1,10 +1,20 @@
-import { useState } from "react";
+import { useRef, useState, useEffect } from "react";
+import SuccessDisplay from "../SuccessDisplay";
+import ErrorDisplay from "../ErrorDisplay";
 
-function ReviewForm( {current, onSubmit, onCancel} ){
+function ReviewForm( {current, onSubmit, onClose} ){
     const[score, setScore] = useState(current?.score ?? 0);
     //const[text, setText] = useState(current?.text ?? "");
     const[posting, setPosting] = useState(false);
+    const[success, setSuccess] = useState("");
+    const[warning, setWarning] = useState("");
     const[error, setError] = useState("");
+
+    const timer = useRef(null);
+
+    useEffect(() => {
+            return () => clearTimeout(timer.current);
+        }, []);
 
     const scoreList = {
         1: "Appaling",
@@ -24,20 +34,31 @@ function ReviewForm( {current, onSubmit, onCancel} ){
         const formText = document.getElementById("review_text").value.trim();
         //setText(formText);
 
-        if (score < 1 || score > 10) return setError("Score must be in range 0 to 10");
+        if (formText === "") {
+            timer.current = setTimeout(() => {setError("")}, 3000);
+            return setError("Review text must not be empty!");
+        }
+
+        if (score < 1 || score > 10) {
+            timer.current = setTimeout(() => {setError("")}, 3000);
+            return setError("Score must be in range 0 to 10!");
+        }
 
         setPosting(true);
         setError("");
         try{
             await onSubmit({score: score, text: formText});
+            setSuccess("Your review has been saved");
+            timer.current = setTimeout(() => onClose(), 1500);
         } catch (err) {
             setError("Could not save your review, Please try again later.")
+            timer.current = setTimeout(() => {setError("")}, 3000);
             setPosting(false);
         }
     };
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-3 rounded-md border border-neutral-700 bg-neutral-800/60 p-4">
+        <form onSubmit={handleSubmit} className="relative space-y-3 rounded-md border border-neutral-700 bg-neutral-800/60 p-4">
             <h3 className="text-lg font-semibold text-white">
                 {current ? "Edit your review" : "Write a review"}
             </h3>
@@ -63,7 +84,7 @@ function ReviewForm( {current, onSubmit, onCancel} ){
                 </div>
 
                 <div className="flex flex-row gap-2 justify-start">
-                    <button type="button" onClick={() => onCancel()}
+                    <button type="button" onClick={() => onClose()}
                     className="text-white border-2 border-neutral-700 rounded-md py-1 w-40 hover:bg-neutral-700">
                         Cancel
                     </button>
@@ -74,6 +95,15 @@ function ReviewForm( {current, onSubmit, onCancel} ){
                 </div>
             </div>
             
+            {success && (
+                    <div className="absolute inset-0 z-10 flex items-center justify-center bg-neutral-900">
+                        <SuccessDisplay text={success} />
+                    </div>
+                )}
+            {error  && 
+                <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-neutral-900 text-neutral-300 text-sm md:text-base">
+                    <ErrorDisplay text={error} />
+                </div>}
 
         </form>
     )

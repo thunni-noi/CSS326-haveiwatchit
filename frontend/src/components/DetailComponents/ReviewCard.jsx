@@ -1,16 +1,18 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import axios from "axios";
 import {    Trash as RemoveIcon, Pencil as EditIcon, CircleCheck as VerifiedIcon, 
             UserRoundX as BanUserIcon, UserPlus as UnbanUserIcon,
             ShieldUser as AdminBadge, UserKey as ModBadge } from "lucide-react";
 import UserProfile from "../UserProfile";
+import ErrorDisplay from "../ErrorDisplay";
+import SuccessDisplay from "../SuccessDisplay";
 
 function formatDate(dateVal){
     if (!dateVal) return "N/A";
     return new Date(dateVal).toLocaleDateString("en-GB", {day: "2-digit", month: "2-digit", year: "numeric"});
 }
 
-function ReviewCard( {curUser, curShowId, review, isMine, onEdit, onRemove }) {
+function ReviewCard( {curUser, review, isMine, onEdit, onRemove }) {
 
     const [removeConfirm, setRemoveConfirm] = useState(false);
     const [removing, setRemoving] = useState(false);
@@ -19,6 +21,12 @@ function ReviewCard( {curUser, curShowId, review, isMine, onEdit, onRemove }) {
     const [unbanConfirm, setUnbanConfirm] = useState(false);
     const [unBanning, setUnbanning] = useState(false);
     const [error, setError] = useState("");
+
+    const timer = useRef(null);
+    
+        useEffect(() => {
+                return () => clearTimeout(timer.current);
+            }, []);
 
     const isMod = ["moderator", "admin"].includes(curUser?.role)
     const canManageTarget = !isMine
@@ -31,11 +39,13 @@ function ReviewCard( {curUser, curShowId, review, isMine, onEdit, onRemove }) {
         setError("");
 
         try {
+            //throw new Error("test error");
             await onRemove(review)
         } catch (err) {
             setError("Cannot remove this review, Please try again");
             setRemoving(false);
             setRemoveConfirm(false);
+            timer.current = setTimeout(() => {setError("")}, 3000);
         }
     };
 
@@ -68,7 +78,7 @@ function ReviewCard( {curUser, curShowId, review, isMine, onEdit, onRemove }) {
     }
 
     return(
-        <article className={`p-4 bg-neutral-700 ${isMine && "border-2 border-[#EFAC61] shadow-md transition-all"} ${review.is_suspended ? ("opacity-50"): ("hover:bg-[#302e2c]")}`}>
+        <article className={`relative p-4 bg-neutral-700 ${isMine && "border-2 border-[#EFAC61] shadow-md transition-all"} ${review.is_suspended ? ("opacity-50"): ("hover:bg-[#302e2c]")}`}>
             <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center justify-left gap-5">
                     <UserProfile user={ review.is_suspended && !isMine ? null : {username: review.username, avatar_url: review.avatar_url}}
@@ -159,7 +169,6 @@ function ReviewCard( {curUser, curShowId, review, isMine, onEdit, onRemove }) {
                     </div>
 
             </div>
-            {error && <p role="alert" className="mt-2 text-sm text-red-300">{error}</p>}
             <span className="inline-flex items-center gap-3 font-semibold text-yellow-400">
                 {review.score}/10
                 <p className="text-xs text-neutral-500">{formatDate(review.created_at)}</p>
@@ -167,6 +176,10 @@ function ReviewCard( {curUser, curShowId, review, isMine, onEdit, onRemove }) {
             {review.text && (
                 <p className="mt-1 whitespace-pre-line wrap-break-word text-sm leading-relaxed text-neutral-300">{review.text}</p>
             )}
+        {!!error  && 
+                <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-neutral-900 text-neutral-300 text-sm md:text-base">
+                    <ErrorDisplay text={error} />
+        </div>}
         </article>
     )
 }

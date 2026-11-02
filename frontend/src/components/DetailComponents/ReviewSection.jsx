@@ -35,10 +35,6 @@ const postReview = async (showId, score, text) => {
     return res.data;
 }
 
-const removeReview = async (showId, userId) => {
-    const res = await axios.delete(`/api/shows/${showId}/reviews/${userId}`);
-    return res.data;
-}
 
 function ReviewSection( {showId, user, onUpdated }) {
     
@@ -124,7 +120,6 @@ function ReviewSection( {showId, user, onUpdated }) {
             text: text,
             created_at: new Date().toISOString().slice(0, 10)
             });
-        setReviewFormOpen(false);
         onUpdated?.();
         }
         
@@ -163,7 +158,7 @@ function ReviewSection( {showId, user, onUpdated }) {
             )}
             {user && !loading && reviewFormOpen && (
                 <div className="mb-4">
-                    <ReviewForm current={myReview} onSubmit={handlePost} onCancel={() => setReviewFormOpen(false)} />
+                    <ReviewForm current={myReview} onSubmit={handlePost} onClose={() => setReviewFormOpen(false)} />
                 </div>
             )}
             {!loading && loadError && <ErrorDisplay text="Couldn't load reviews, Please try again" className="relative w-full h-40 bg-neutral-800/60" />}

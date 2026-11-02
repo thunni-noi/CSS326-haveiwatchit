@@ -13,6 +13,7 @@ import NotFound from "./components/NotFound";
 import ShowDetails from "./pages/ShowDetails";
 import Account from "./pages/Account";
 import RequestPage from "./pages/RequestShow";
+import TestCasePage from "./pages/TestCases";
 
 axios.defaults.withCredentials = true;
 
@@ -50,6 +51,7 @@ function AppRoutes({ user, setUser, error }) {
           path="/moderation"
           element={canModerate ? <SubmissionModeration user={user} /> : <Navigate to="/" />}
         />
+        <Route path="testing" element={<TestCasePage user={user} />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </>
