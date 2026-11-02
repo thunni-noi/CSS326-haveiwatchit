@@ -1,4 +1,4 @@
-//Shared toolbox(things) used by Admin UI
+// Shared constants and formatters used by the admin dashboard and its tabs.
 
 export const PAGE_SIZE = 50;
 

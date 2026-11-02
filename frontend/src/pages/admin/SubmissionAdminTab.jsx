@@ -1,5 +1,4 @@
-// import data from Admin.jsx
-// wrapper for submission
+// Submission tab wrapper that displays the shared record list with parent-provided data.
 import AdminRecords from "./AdminRecords";
 
 const SubmissionAdminTab = ({ recordsProps }) => <AdminRecords recordsProps={recordsProps} />;

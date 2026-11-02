@@ -1,5 +1,4 @@
-// MAIN Admin controller(handles actions such as saving & deleting, renders the page header, tab navigation, search, and shared controls.)
-// fetch backend data, create recordsProps
+// Admin dashboard for users, shows, and submissions, including their related details.
 import { useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import {
@@ -23,11 +22,11 @@ const sections = [
   { label: "Submission", entities: [{ name: "show_submission", label: "Submissions" }] },
 ];
 
-// Shared constant for paginated admin queries.
+// Validate avatar uploads before previewing or sending them to the backend.
 const ALLOWED_AVATAR_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const MAX_AVATAR_SIZE = 2 * 1024 * 1024;
-// Main admin page component. It loads data from /api/admin, manages the active entity,
-// and renders the table, search bar, create/edit modal form, and show details.
+
+// Main admin page: loads records and coordinates the entity-specific tabs and editors.
 const Admin = ({ user }) => {
   // Track the selected table, its records, paging, and request feedback.
   const [activeSection, setActiveSection] = useState("User");
@@ -36,6 +35,7 @@ const Admin = ({ user }) => {
   const [submissionStatusFilter, setSubmissionStatusFilter] = useState("pending");
   const [page, setPage] = useState(0);
   const [records, setRecords] = useState([]);
+  const [submissionUsers, setSubmissionUsers] = useState(null);
   const [fields, setFields] = useState([]);
   const [keys, setKeys] = useState([]);
   const [total, setTotal] = useState(0);
@@ -127,6 +127,29 @@ const Admin = ({ user }) => {
       clearTimeout(timer);
     };
   }, [selectedEntity, page, search, submissionStatusFilter, reload]);
+
+  // Load user names and IDs for the submission form's Submitted By dropdown.
+  useEffect(() => {
+    if (selectedEntity?.name !== "show_submission") {
+      return undefined;
+    }
+
+    let cancelled = false;
+    axios.get("/api/admin/users/options")
+      .then(({ data }) => {
+        if (!cancelled) setSubmissionUsers(data.users);
+      })
+      .catch((requestError) => {
+        if (!cancelled) {
+          setSubmissionUsers([]);
+          setError(requestError.response?.data?.message ?? "Unable to load users for the submission form.");
+        }
+      })
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedEntity?.name]);
 
   // Load detailed relations for the selected show, such as platforms, cast members, and crew credits.
   useEffect(() => {
@@ -798,6 +821,36 @@ const Admin = ({ user }) => {
       );
     }
 
+    // Let admins choose a user by name while storing that user's numeric ID.
+    if (selectedEntity.name === "show_submission" && field.name === "submitted_by") {
+      return (
+        <label key={field.name} className="block text-sm font-medium capitalize text-neutral-200">
+          Submitted by
+          <select
+            required
+            disabled={submissionUsers === null}
+            value={value}
+            onChange={(event) =>
+              setFormValues((current) => ({
+                ...current,
+                [field.name]: event.target.value === "" ? "" : Number(event.target.value),
+              }))
+            }
+            className={sharedClass}
+          >
+            <option value="">
+              {submissionUsers === null ? "Loading users…" : "Select a user…"}
+            </option>
+            {(submissionUsers ?? []).map((submissionUser) => (
+              <option key={submissionUser.id} value={submissionUser.id}>
+                {submissionUser.username} ({submissionUser.email})
+              </option>
+            ))}
+          </select>
+        </label>
+      );
+    }
+
     let control;
     if (field.type === "enum") {
       control = (
@@ -923,12 +976,14 @@ const Admin = ({ user }) => {
     </form>
   );
 
+  // Pass shared record-list state and actions to each entity tab.
   const recordsProps = {
     form,
     isInlineEdit,
     renderEditor,
     loading,
     records,
+    submissionUsers,
     keys,
     selectedEntity,
     setShowAssociations,
@@ -943,6 +998,7 @@ const Admin = ({ user }) => {
     setPage,
     total,
   };
+  // Pass the selected user's watchlist and collection state/actions to the user tab.
   const userProps = {
     selectedWatchlistUser,
     watchlistLoading,
@@ -977,6 +1033,7 @@ const Admin = ({ user }) => {
     setNewCollectionShowId,
     removeUserCollectionItem,
   };
+  // Pass the selected show's details and association state/actions to the show tab.
   const showProps = {
     activeSection,
     selectedShow,
@@ -1128,11 +1185,11 @@ const Admin = ({ user }) => {
           {error && <p role="alert" className="mb-4 rounded-lg border border-rose-500/30 bg-rose-950/70 p-3 text-sm text-rose-200">{error}</p>}
 
           {activeSection === "User" ? (
-            <UserAdminTab userProps={userProps} recordsProps={recordsProps} /> // send recordProps to UserAdminTab
+            <UserAdminTab userProps={userProps} recordsProps={recordsProps} /> // Render user tools and the shared user records list.
           ) : activeSection === "Show" ? (
-            <ShowAdminTab showProps={showProps} recordsProps={recordsProps} /> // same here
+            <ShowAdminTab showProps={showProps} recordsProps={recordsProps} /> // Render show details and the shared show records list.
           ) : (
-            <SubmissionAdminTab recordsProps={recordsProps} /> // same here
+            <SubmissionAdminTab recordsProps={recordsProps} /> // Render the shared submission records list.
           )}
         </section>
       </div>

@@ -1,14 +1,16 @@
 import pool from "../db/db.js";
 
+// Keep accepted watchlist states aligned with the API and database values.
 const statuses = ["wishlist", "watching", "watched", "rewatching", "on_hold", "dropped"];
 
+// Parse route/body IDs and reject malformed, unsafe, or non-positive values.
 const parsePositiveId = (value) => {
     if (!/^\d+$/.test(String(value))) return null;
     const id = Number(value);
     return Number.isSafeInteger(id) && id > 0 ? id : null;
 };
 
-// Wrapper used to handle error for all api calls
+// Wrap controller handlers with consistent logging and a JSON 500 response.
 const wrapper = (errMsg, controller) => async (req, res) =>
     {try {
         await controller(req, res);
@@ -17,6 +19,7 @@ const wrapper = (errMsg, controller) => async (req, res) =>
         res.status(500).json({message: errMsg});
     }};
 
+// Return the signed-in user's watchlist with show details and aggregate review scores.
 export const getWatchlist = async (req, res) => {
     try {
         const [items] = await pool.execute(
@@ -46,6 +49,7 @@ export const getWatchlist = async (req, res) => {
     }
 };
 
+// Validate and add a show to the signed-in user's watchlist.
 export const addWatchlistItem = async (req, res) => {
     const showId = parsePositiveId(req.body?.show_id);
     const status = req.body?.status ?? "wishlist";
@@ -77,6 +81,7 @@ export const addWatchlistItem = async (req, res) => {
     }
 };
 
+// Change the status of one show already on the signed-in user's watchlist.
 export const updateWatchlistItem = async (req, res) => {
     const showId = parsePositiveId(req.params.showId);
     const status = req.body?.status;
@@ -102,6 +107,7 @@ export const updateWatchlistItem = async (req, res) => {
     }
 };
 
+// Remove one show from the signed-in user's watchlist.
 export const deleteWatchlistItem = async (req, res) => {
     const showId = parsePositiveId(req.params.showId);
     if (!showId) {

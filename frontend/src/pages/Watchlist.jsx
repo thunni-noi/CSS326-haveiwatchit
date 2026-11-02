@@ -186,6 +186,7 @@ function WatchlistPage({ user }) {
         }
     };
 
+    // Main page layout combines the sign-in prompt, show search, watchlist, and details modal.
     return (
         <main className="container mx-auto px-4 py-6">
             <div className="py-24 mx-auto min-h-screen bg-black/50 backdrop-blur-lg text-white">

@@ -63,6 +63,7 @@ Users with the `admin` role can open `/admin` to search, page through, create, e
 ### How to set Admin
  in sql
  SELECT username, email, role FROM users;
+ 
  UPDATE users
  SET role = 'admin'
  WHERE email = 'user email';

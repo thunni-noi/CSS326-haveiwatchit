@@ -10,6 +10,8 @@ router.post("/unban/:targetId", protect, requireRole("admin", "moderator"), admi
 
 router.use(protect, requireRole("admin"));
 router.get("/shows/:id/associations", admin.getShowAssociations);
+// Supply user IDs and display labels for the submission editor's Submitted By dropdown.
+router.get("/users/options", admin.listUserOptions);
 router.get("/users/:id/watchlist", admin.getUserWatchlist);
 router.post("/users/:id/watchlist", admin.addUserWatchlistItem);
 router.put("/users/:id/watchlist/:showId", admin.updateUserWatchlistItem);

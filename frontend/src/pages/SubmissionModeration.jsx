@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { Check, LoaderCircle, RefreshCw, Trash2 } from "lucide-react";
 
+// Status to assign to a show when approving its submission.
 const showStatuses = [
   { value: "upcoming", label: "Upcoming" },
   { value: "airing", label: "Airing" },
@@ -9,6 +10,7 @@ const showStatuses = [
 ];
 
 const SubmissionModeration = ({ user }) => {
+  // Track queued submissions, chosen approval statuses, request feedback, and loading state.
   const [submissions, setSubmissions] = useState([]);
   const [showStatusesById, setShowStatusesById] = useState({});
   const [loading, setLoading] = useState(true);
@@ -68,6 +70,7 @@ const SubmissionModeration = ({ user }) => {
     }
   };
 
+  // Render the review queue with controls to refresh, approve, or delete each request.
   return (
     <main className="min-h-screen px-4 pb-16 pt-26 text-white sm:pt-30">
       <div className="mx-auto max-w-5xl rounded-2xl border border-white/10 bg-neutral-900/90 p-4 shadow-2xl shadow-black/30 sm:p-7">
@@ -106,6 +109,7 @@ const SubmissionModeration = ({ user }) => {
           </p>
         )}
 
+        {/* Switch between loading, populated, and empty queue states. */}
         {loading ? (
           <div role="status" className="flex items-center justify-center gap-3 rounded-xl border border-white/10 bg-neutral-800 p-12 text-neutral-300">
             <LoaderCircle className="animate-spin" size={20} />

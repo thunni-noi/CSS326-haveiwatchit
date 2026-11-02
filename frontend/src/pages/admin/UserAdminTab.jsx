@@ -1,5 +1,4 @@
-// renders user-management views, including watchlists and collections.
-// wrapper for user
+// Renders the user records list or the selected user's watchlist and collection tools.
 import { ChevronLeft, Pencil, Plus, Trash2 } from "lucide-react";
 import AdminRecords from "./AdminRecords";
 import { formatDatabaseDateTime, WATCHLIST_STATUS_LABELS } from "./adminUtils";
@@ -42,7 +41,8 @@ const UserAdminTab = ({ userProps, recordsProps }) => {
 
   return (
     <>
-{selectedWatchlistUser ? (
+      {/* Show the selected user's watchlist tools and entries when opened from the records list. */}
+      {selectedWatchlistUser ? (
             watchlistLoading ? (
               <p role="status" className="rounded-xl border border-white/10 bg-neutral-800 p-8 text-center text-sm text-neutral-400">
                 Loading {selectedWatchlistUser.username}&apos;s watchlist…
@@ -400,7 +400,12 @@ const UserAdminTab = ({ userProps, recordsProps }) => {
                   This user has no collections.
                 </p>
               ) : null
-            ) : <AdminRecords recordsProps={recordsProps} />}
+            ) : (
+              <>
+                {/* Default to the shared user records list when no user detail view is open. */}
+                <AdminRecords recordsProps={recordsProps} />
+              </>
+            )}
     </>
   );
 };

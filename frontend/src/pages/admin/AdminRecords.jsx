@@ -1,6 +1,5 @@
-// renders the (UI) records list shared by the User, Show, and Submission admin tabs.
-// handles loading and empty states, record cards and their actions, inline editing, and pagination.
-// in other word, shared UI for all admin tabs
+// Shared searchable record list for the User, Show, and Submission admin tabs.
+// Renders loading/empty states, record cards, edit/delete actions, and pagination.
 import {
   BookMarked,
   CircleUserRound,
@@ -12,14 +11,15 @@ import {
 import UserProfile from "../../components/UserProfile";
 import { displayValue, getRecordKey, PAGE_SIZE } from "./adminUtils";
 
-// Shared searchable record list used by all admin tabs.
 const AdminRecords = ({ recordsProps }) => {
+  // Collect the list data, current edit state, and callbacks supplied by the parent.
   const {
     form,
     isInlineEdit,
     renderEditor,
     loading,
     records,
+    submissionUsers,
     keys,
     selectedEntity,
     setShowAssociations,
@@ -47,6 +47,12 @@ const AdminRecords = ({ recordsProps }) => {
             <div className="space-y-3">
               {records.map((record) => {
                 const key = getRecordKey(record, keys);
+                // Resolve the submission's stored user ID to the user's display information.
+                const submissionUser = selectedEntity.name === "show_submission"
+                  ? submissionUsers?.find(
+                    (user) => Number(user.id) === Number(record.submitted_by),
+                  )
+                  : null;
                 // User-only role/status badges are omitted for shows and submissions.
                 const userFlairs = selectedEntity.name === "users"
                   ? [
@@ -160,8 +166,13 @@ const AdminRecords = ({ recordsProps }) => {
                               <dt className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
                                 {field.name.replaceAll("_", " ")}
                               </dt>
+                              {/* Show a readable submitter name instead of the foreign-key ID. */}
                               <dd className="mt-1 break-words text-sm text-neutral-200">
-                                {displayValue(record[field.name], field.type)}
+                                {selectedEntity.name === "show_submission" && field.name === "submitted_by"
+                                  ? submissionUser
+                                    ? `${submissionUser.username} (${submissionUser.email})`
+                                    : displayValue(record[field.name], field.type)
+                                  : displayValue(record[field.name], field.type)}
                               </dd>
                             </div>
                           ))}

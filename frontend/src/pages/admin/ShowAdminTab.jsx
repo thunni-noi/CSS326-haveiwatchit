@@ -1,5 +1,4 @@
-// renders show details and manages platform and cast/crew associations.
-// wrapper for show
+// Renders the show records list and manages the selected show's details and associations.
 import { Pencil, Trash2, X } from "lucide-react";
 import AdminRecords from "./AdminRecords";
 import { displayValue, formatDatabaseDate } from "./adminUtils";
@@ -95,6 +94,7 @@ const ShowAdminTab = ({ showProps, recordsProps }) => {
                 </div>
 
                 <div className="grid gap-5 lg:grid-cols-2">
+                  {/* List and edit the streaming platforms associated with this show. */}
                   <section className="rounded-lg border border-white/10 bg-neutral-900 p-4">
                     <div className="mb-3 flex items-center justify-between gap-2">
                       <h4 className="font-semibold">Available on</h4>
@@ -158,6 +158,7 @@ const ShowAdminTab = ({ showProps, recordsProps }) => {
                     )}
                   </section>
 
+                  {/* List and edit the cast and crew credits associated with this show. */}
                   <section className="rounded-lg border border-white/10 bg-neutral-900 p-4">
                     <div className="mb-3 flex items-center justify-between gap-2">
                       <h4 className="font-semibold">Cast and crew</h4>
@@ -225,6 +226,7 @@ const ShowAdminTab = ({ showProps, recordsProps }) => {
                   </section>
                 </div>
 
+                {/* Reuse one form to add or edit a platform or cast/crew association. */}
                 {relationForm && (
                   <form onSubmit={saveShowRelation} className="rounded-lg border border-white/10 bg-neutral-950 p-4">
                     <div className="mb-3 flex items-center justify-between">
@@ -294,6 +296,7 @@ const ShowAdminTab = ({ showProps, recordsProps }) => {
               </div>
             </section>
           )}
+      {/* Keep the shared show list available below the selected show's detail panel. */}
       <AdminRecords recordsProps={recordsProps} />
     </>
   );

@@ -1,5 +1,6 @@
 import pool from "../db/db.js";
 
+// Accept only positive safe-integer IDs from route parameters.
 const parsePositiveId = (value) => {
     if (!/^\d+$/.test(String(value))) return null;
     const id = Number(value);
