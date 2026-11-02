@@ -173,7 +173,7 @@ UNLOCK TABLES;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
-/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER `tgr_review_on_insert` AFTER INSERT ON `reviews` FOR EACH ROW CALL recalc_review_rating(NEW.show_id) */;;
+/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER `tgr_review_on_insert` AFTER INSERT ON `reviews` FOR EACH ROW CALL calc_show_score(NEW.show_id) */;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
 /*!50003 SET character_set_client  = @saved_cs_client */ ;
@@ -188,7 +188,7 @@ DELIMITER ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
-/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER `tgr_review_on_update` AFTER UPDATE ON `reviews` FOR EACH ROW CALL recalc_review_rating(NEW.show_id) */;;
+/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER `tgr_review_on_update` AFTER UPDATE ON `reviews` FOR EACH ROW CALL calc_show_score(NEW.show_id) */;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
 /*!50003 SET character_set_client  = @saved_cs_client */ ;
@@ -203,7 +203,7 @@ DELIMITER ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
-/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER `tgr_review_on_delete` AFTER DELETE ON `reviews` FOR EACH ROW CALL recalc_review_rating(OLD.show_id) */;;
+/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER `tgr_review_on_delete` AFTER DELETE ON `reviews` FOR EACH ROW CALL calc_show_score(OLD.show_id) */;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
 /*!50003 SET character_set_client  = @saved_cs_client */ ;
@@ -451,12 +451,25 @@ BEGIN
 	INTO r_count, r_avg
     FROM reviews
     WHERE show_id = p_show_id;
+
+	IF r_count = 0 THEN
+		SET r_avg = 0;
+	END IF;
     
     UPDATE shows
     SET review_count = r_count,
 		avg_score = ROUND(r_avg, 2)
 	WHERE id = p_show_id;
 END ;;
+
+UPDATE shows s
+LEFT JOIN (
+    SELECT show_id, COUNT(*) AS review_count, AVG(review_score) AS avg_score
+    FROM reviews
+    GROUP BY show_id
+) r ON r.show_id = s.id
+SET s.review_count = COALESCE(r.review_count, 0),
+    s.avg_score = ROUND(r.avg_score, 2);
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
 /*!50003 SET character_set_client  = @saved_cs_client */ ;
@@ -474,10 +487,7 @@ DELIMITER ;
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `recalc_review_rating`(IN p_show_id INT)
 BEGIN
-	UPDATE shows
-	SET avg_score = (SELECT AVG(review_score) FROM reviews WHERE show_id = p_show_id),
-    review_count = (SELECT COUNT(*) FROM reviews WHERE show_id = p_show_id)
-	WHERE id = p_show_id;
+	CALL calc_show_score(p_show_id);
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
