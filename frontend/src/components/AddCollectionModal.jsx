@@ -32,7 +32,7 @@ function AddCollectionModal( {showInfo, user, onClose}){
             setUserCollections(res.data);
         })
         .catch((err) => {
-            if (err.response.status === 404) setUserCollections([]);
+            if (err.response?.status === 404) setUserCollections([]);
             else if (!axios.isCancel(err))setError(err.response?.data?.message ?? "Unable to load your collections.");
         })
         .finally(() => {

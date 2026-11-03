@@ -107,12 +107,14 @@ function ShowDetails( {user} ) {
     }, [showId, refresh]);
 
     const updateWatchStatus = async (watchStatus)  => {
-        axios.patch(`/api/watchlist/${showId}`, {status: watchStatus})
+        return axios.patch(`/api/watchlist/${showId}`, {status: watchStatus})
         .then((res) => {
             setWatchlistStatus({status: watchStatus});
             return(res.data)
         })
-        .catch((err) => {throw err})
+        .catch((err) => {
+            throw err
+        })
     }
 
     if (isLoading) {

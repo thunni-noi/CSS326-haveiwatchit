@@ -29,7 +29,7 @@ function TestCasePage ({ user }) {
         setSuccess("");
         setResult({});
         setError("")
-        axios.post("/api/shows/1/reviews", {
+        axios.post("/api/shows/2/reviews", {
             score: score,
             text: text
         })
@@ -48,7 +48,7 @@ function TestCasePage ({ user }) {
         setSuccess("");
         setResult({});
         setError("")
-        axios.get("/api/shows/1/reviews")
+        axios.get("/api/shows/2/reviews")
         .then((res) => {
             setSuccess("Success")
             setResult(res);
@@ -64,7 +64,7 @@ function TestCasePage ({ user }) {
         setSuccess("");
         setResult({});
         setError("")
-        axios.delete(`/api/shows/1/reviews/5`)
+        axios.delete(`/api/shows/2/reviews/5`)
         .then((res) => {
             setSuccess("Success")
             setResult(res);
@@ -80,7 +80,7 @@ function TestCasePage ({ user }) {
         setSuccess("");
         setResult({});
         setError("")
-        axios.get(`/api/shows/1`)
+        axios.get(`/api/shows/2`)
         .then((res) => {
             setSuccess("Success")
             setResult(res);
@@ -126,7 +126,7 @@ function TestCasePage ({ user }) {
                 <div className="flex flex-col gap-y-2">
                     <div className="flex flex-col mx-5 my-5 bg-neutral-700">
                         <span className="text-2xl font-bold px-2 pt-2"> [07 VALIDATE] (LOGGED IN) - FAILED</span>
-                        <span className="text-sm font-light px-2 pb-2">POST /api/shows/1/reviews</span>
+                        <span className="text-sm font-light px-2 pb-2">POST /api/shows/2/reviews</span>
                         <div className="flex flex-row bg-neutral-900 px-2 py-2 justify-between">
                             <div className="flex flex-col justify-start items-start">  
                                 Body
@@ -141,7 +141,7 @@ function TestCasePage ({ user }) {
 
                     <div className="flex flex-col mx-5 my-5 bg-neutral-700">
                         <span className="text-2xl font-bold px-2 pt-2"> [07 VALIDATE] - FAILED</span>
-                        <span className="text-sm font-light px-2 pb-2">POST /api/shows/1/reviews</span>
+                        <span className="text-sm font-light px-2 pb-2">POST /api/shows/2/reviews</span>
                         <div className="flex flex-row bg-neutral-900 px-2 py-2 justify-between">
                             <div className="flex flex-col justify-start items-start">  
                                 Body
@@ -156,7 +156,7 @@ function TestCasePage ({ user }) {
 
                     <div className="flex flex-col mx-5 my-5 bg-neutral-700">
                         <span className="text-2xl font-bold px-2 pt-2"> [07 VALIDATE] - SUCCESS</span>
-                        <span className="text-sm font-light px-2 pb-2">POST /api/shows/1/reviews</span>
+                        <span className="text-sm font-light px-2 pb-2">POST /api/shows/2/reviews</span>
                         <div className="flex flex-row bg-neutral-900 px-2 py-2 justify-between">
                             <div className="flex flex-col justify-start items-start">  
                                 Body
@@ -171,7 +171,7 @@ function TestCasePage ({ user }) {
 
                     <div className="flex flex-col mx-5 my-5 bg-neutral-700">
                         <span className="text-2xl font-bold px-2 pt-2"> [07 VALIDATE] - CHECK REVIEW</span>
-                        <span className="text-sm font-light px-2 pb-2">GET /api/shows/1/reviews</span>
+                        <span className="text-sm font-light px-2 pb-2">GET /api/shows/2/reviews</span>
                         <div className="flex flex-row bg-neutral-900 px-2 py-2 justify-between">
                             <div className="flex justify-center items-center">  
                                 No Body
@@ -185,7 +185,7 @@ function TestCasePage ({ user }) {
 
                     <div className="flex flex-col mx-5 my-5 bg-neutral-700">
                         <span className="text-2xl font-bold px-2 pt-2"> [08 NON-AUTHORIZED DELETION] (LOGOUT FIRST) </span>
-                        <span className="text-sm font-light px-2 pb-2">DELETE /api/shows/9/reviews/2</span>
+                        <span className="text-sm font-light px-2 pb-2">DELETE /api/shows/2/reviews/5</span>
                         <div className="flex flex-row bg-neutral-900 px-2 py-2 justify-between">
                             <div className="flex justify-center items-center">  
                                 No Body
@@ -199,7 +199,7 @@ function TestCasePage ({ user }) {
 
                     <div className="flex flex-col mx-5 my-5 bg-neutral-700">
                         <span className="text-2xl font-bold px-2 pt-2"> [14 TRIGGER]</span>
-                        <span className="text-sm font-light px-2 pb-2">GET /api/shows/9</span>
+                        <span className="text-sm font-light px-2 pb-2">GET /api/shows/2</span>
                         <span className="text-sm font-light px-2 pb-2">Compare before and after add/delete review</span>
                         <div className="flex flex-row bg-neutral-900 px-2 py-2 justify-between">
                             <div className="flex justify-center items-center">  

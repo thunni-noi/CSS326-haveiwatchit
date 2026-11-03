@@ -290,7 +290,7 @@ export const saveShowReview = wrapper("Unable to save review", async(req, res) =
     const text = typeof req.body?.text === "string" ? req.body.text.trim() : "";
 
     if (req.user.is_suspended) {
-        return res.staus(403).json({ message: "Your account is suspended. "})
+        return res.status(403).json({ message: "Your account is suspended. "})
     }
 
     if (!Number.isInteger(showId) || showId <= 0) {

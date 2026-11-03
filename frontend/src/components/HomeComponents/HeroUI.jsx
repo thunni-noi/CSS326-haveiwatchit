@@ -49,7 +49,7 @@ function HeroUI( { shows =[], error = false, user = null }) {
                     <div 
                         key={show.id}
                         aria-hidden="true"
-                        className={`absolute inset-0 bg-cover bg-center transition-[opacity,visibility] duration-1000 ease-in-out motion-reduce:transition-none
+                        className={`absolute inset-0 bg-cover bg-center transition-[opacity,visibility] duration-1000 ease-in-out
                             ${i === showIndex ? "opacity-100" : "opacity-0"}`}
                         style={show.backdrop_url ? {backgroundImage: `url("${show.backdrop_url}")`} :undefined}/>
                 ))}
@@ -64,7 +64,7 @@ function HeroUI( { shows =[], error = false, user = null }) {
                     return (
                     <div key={show.id}
                         aria-hidden={!isActive}
-                        className={`absolute inset-0 flex items-center z-10 container mx-auto px-4 transition-[opacity,visibility] duration-1000 ease-in-out motion-reduce:transition-none
+                        className={`absolute inset-0 flex items-center z-10 container mx-auto px-4 transition-[opacity,visibility] duration-1000 ease-in-out 
                         ${isActive ? "opacity-100 visible" : "opacity-0 invisible"}`}>
                         <div className="max-w-3xl">
                         {/* Infos */}

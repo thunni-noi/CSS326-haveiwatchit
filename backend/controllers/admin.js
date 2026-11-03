@@ -1,3 +1,5 @@
+// this file is redundant(supposed to be an export hub, but adminRecords.js already take care of that)
+
 export {
     createRecord,
     deleteRecord,

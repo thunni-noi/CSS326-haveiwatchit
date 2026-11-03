@@ -1,3 +1,5 @@
+//request file from adminRecords.js
+
 import express from "express";
 import * as adminRecords from "../controllers/adminRecords.js";
 import * as adminShows from "../controllers/adminShows.js";
