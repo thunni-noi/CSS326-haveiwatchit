@@ -41,27 +41,18 @@ const attachPreviewItems = async (collections) => {
     const ids = collections.map((collection) => collection.id);
     const placeholders = ids.map(() => "?").join(", ");
     const [previewRows] = await pool.execute(
-        `SELECT previews.collection_id, previews.id, previews.name,
-                previews.type, previews.photo_url
-        FROM (
-            SELECT ci.collection_id, s.id, s.name, s.type, s.photo_url,
-                    ROW_NUMBER() OVER (
-                        PARTITION BY ci.collection_id
-                        ORDER BY ci.show_id DESC
-                    ) AS preview_order
-            FROM collection_items ci
-            JOIN shows s ON s.id = ci.show_id
-            WHERE ci.collection_id IN (${placeholders})
-        ) AS previews
-        WHERE previews.preview_order <= 5
-        ORDER BY previews.collection_id, previews.preview_order`,
+        `SELECT ci.collection_id, s.id, s.name, s.type, s.photo_url
+        FROM collection_items ci
+        JOIN shows s ON s.id = ci.show_id
+        WHERE ci.collection_id IN (${placeholders})
+        ORDER BY ci.collection_id, ci.show_id DESC`,
         ids
     );
     const previewsByCollection = new Map();
     for (const item of previewRows) {
         const key = String(item.collection_id);
         const items = previewsByCollection.get(key) ?? [];
-        items.push(item);
+        if (items.length < 5) items.push(item);
         previewsByCollection.set(key, items);
     }
     for (const collection of collections) {
